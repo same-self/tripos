@@ -17,8 +17,8 @@ class SeedersTest extends TestCase
     {
         $this->seed(DatabaseSeeder::class);
 
-        $this->assertTrue(User::where('username', 'admin')->firstOrFail()->isAdmin());
-        $this->assertTrue(User::where('username', 'kasir')->firstOrFail()->isCashier());
+        $this->assertTrue(User::where('username', 'admin.toko')->firstOrFail()->isAdmin());
+        $this->assertTrue(User::where('username', 'kasir.toko')->firstOrFail()->isCashier());
 
         $this->assertGreaterThan(0, Item::count());
         $this->assertGreaterThan(0, Service::count());
@@ -38,7 +38,7 @@ class SeedersTest extends TestCase
         $this->seed(DatabaseSeeder::class);
 
         $this->post('/login', [
-            'username' => 'kasir',
+            'username' => 'kasir.toko',
             'password' => env('SEED_CASHIER_PASSWORD', 'password'),
         ])->assertSessionHasNoErrors();
 
@@ -50,7 +50,7 @@ class SeedersTest extends TestCase
         $this->seed(DatabaseSeeder::class);
 
         $this->post('/login', [
-            'username' => 'admin',
+            'username' => 'admin.toko',
             'password' => env('SEED_ADMIN_PASSWORD', 'password'),
         ])->assertSessionHasNoErrors()
             ->assertRedirect(route('dashboard', absolute: false));
