@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Masuk | TRIPOS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="login-page">
+  <main class="login">
+    <section class="brand-panel" aria-hidden="true">
+      <div class="brand-top">
+        <div class="brand-name">TRIPOS</div>
+        <div class="brand-sub">Point of Sale · UMKM Fotocopy Trisanet</div>
+      </div>
+      <div class="brand-body">
+        <h2>Kelola kasir dan stok dari satu layar.</h2>
+        <ul class="features">
+          <li>
+            <span class="tick">✓</span>
+            <div><strong>Transaksi kasir lebih cepat</strong><p>Pilih barang, hitung kembalian, dan cetak struk dalam satu layar.</p></div>
+          </li>
+          <li>
+            <span class="tick">✓</span>
+            <div><strong>Stok berkurang otomatis</strong><p>Setiap penjualan dan restok langsung tercatat di riwayat stok.</p></div>
+          </li>
+          <li>
+            <span class="tick">✓</span>
+            <div><strong>Laporan siap kapan saja</strong><p>Penjualan, pembelian, dan arus kas tersedia untuk pemilik toko.</p></div>
+          </li>
+        </ul>
+      </div>
+      <div class="brand-foot">UMKM Fotocopy Trisanet · Cileungsi, Kab. Bogor</div>
+    </section>
+
+    <section class="form-panel">
+      <form id="login-form" class="login-form" novalidate>
+        <h1>Selamat datang</h1>
+        <p class="muted">Masuk dengan username dan password Anda.</p>
+
+        <label for="username">Username</label>
+        <input id="username" name="username" type="text" autocomplete="username" placeholder="nama.pengguna" autofocus>
+
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Password">
+
+        <p id="error" class="error" role="alert" hidden></p>
+        <p class="muted small">Lupa password? Hubungi pemilik toko.</p>
+
+        <button type="submit" class="btn-primary">Masuk</button>
+        <p class="muted small center">Akun dibuat dan diatur oleh pemilik toko.</p>
+      </form>
+    </section>
+  </main>
+  <script src="js/app.js"></script>
+</body>
+</html>
