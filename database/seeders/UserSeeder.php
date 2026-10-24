@@ -12,8 +12,8 @@ class UserSeeder extends Seeder
     {
         // DEVELOPMENT ONLY. "password" is guessable: set real passwords in .env (not in Git):
         //   SEED_ADMIN_PASSWORD='...'   SEED_CASHIER_PASSWORD='...'
-        $this->upsert('admin', 'Pemilik Toko', 'admin@trisanet.test', Role::Admin, env('SEED_ADMIN_PASSWORD', 'password'));
-        $this->upsert('kasir', 'Kasir Trisanet', 'kasir@trisanet.test', Role::Cashier, env('SEED_CASHIER_PASSWORD', 'password'));
+        $this->upsert('admin.toko', 'Pemilik Toko', 'admin@trisanet.test', Role::Admin, env('SEED_ADMIN_PASSWORD', 'password'));
+        $this->upsert('kasir.toko', 'Kasir Trisanet', 'kasir@trisanet.test', Role::Cashier, env('SEED_CASHIER_PASSWORD', 'password'));
     }
 
     /**
