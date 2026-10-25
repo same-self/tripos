@@ -14,6 +14,10 @@ Route::get('/riwayat', [SalesHistoryController::class, 'index'])
     ->middleware(['auth', 'verified', 'role:admin'])
     ->name('riwayat.index');
 
+Route::get('/riwayat/{sale}', [SalesHistoryController::class, 'show'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('riwayat.show');
+
 Route::get('/kasir/pos', [PosController::class, 'index'])
     ->middleware(['auth', 'verified', 'role:cashier,admin'])
     ->name('kasir.pos');
