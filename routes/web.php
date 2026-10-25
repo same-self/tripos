@@ -7,6 +7,7 @@ use App\Http\Controllers\PosController;
 use App\Http\Controllers\SalesHistoryController;
 use App\Http\Controllers\BarangController;
 use App\Http\Controllers\PenggunaController;
+use App\Http\Controllers\ForcePasswordController;
 
 Route::get('/', fn () => redirect()->route('login'));
 
@@ -69,6 +70,11 @@ Route::post('/kasir/pos', [PosController::class, 'store'])
 Route::get('/kasir/harga', [PosController::class, 'priceList'])
     ->middleware(['auth', 'verified', 'role:cashier,admin'])
     ->name('kasir.harga');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/password/ganti', [ForcePasswordController::class, 'edit'])->name('password.force');
+    Route::put('/password/ganti', [ForcePasswordController::class, 'update'])->name('password.force.update');
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
