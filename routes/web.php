@@ -3,10 +3,15 @@
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\PosController;
 
 Route::get('/', fn () => redirect()->route('login'));
 
 Route::get('/dashboard', DashboardController::class)->middleware(['auth', 'verified', 'role:admin'])->name('dashboard');
+
+Route::get('/kasir/pos', [PosController::class, 'index'])
+    ->middleware(['auth', 'verified', 'role:cashier,admin'])
+    ->name('kasir.pos');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
