@@ -3,8 +3,10 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 const QUICK_AMOUNTS = [20000, 50000, 100000];
+const QUICK_PAGES = [10, 50, 100, 200];
 
 const rupiah = (n) => 'Rp ' + Number(n).toLocaleString('id-ID');
+const fmt = (n) => Number(n).toLocaleString('id-ID', { maximumFractionDigits: 4 });
 
 const ICON_PATHS = {
     'Alat Tulis': ['M12 20h9', 'M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z'],
@@ -63,6 +65,8 @@ export default function Index({ items, services, paymentMethods }) {
     const [paid, setPaid] = useState(0);
     const [printReceipt, setPrintReceipt] = useState(false);
     const [processing, setProcessing] = useState(false);
+    const [serviceId, setServiceId] = useState(services[0]?.id ?? null);
+    const [pages, setPages] = useState(10);
 
     const total = cart.reduce((sum, line) => sum + line.qty * line.price, 0);
     const change = Math.max(0, paid - total);
@@ -72,13 +76,16 @@ export default function Index({ items, services, paymentMethods }) {
     const shownItems = items.filter((item) => item.name.toLowerCase().includes(keyword));
     const shownServices = services.filter((service) => service.name.toLowerCase().includes(keyword));
 
-    function addToCart(key, name, price, unit) {
+    const selectedService = services.find((service) => service.id === serviceId) ?? null;
+    const paper = selectedService?.materials?.[0] ?? null;
+
+    function addToCart(key, name, price, unit, amount = 1) {
         setCart((prev) => {
             const found = prev.find((line) => line.key === key);
             if (found) {
-                return prev.map((line) => (line.key === key ? { ...line, qty: line.qty + 1 } : line));
+                return prev.map((line) => (line.key === key ? { ...line, qty: line.qty + amount } : line));
             }
-            return [...prev, { key, name, price, unit, qty: 1 }];
+            return [...prev, { key, name, price, unit, qty: amount }];
         });
     }
 
@@ -129,7 +136,7 @@ export default function Index({ items, services, paymentMethods }) {
             )}
 
             <div className="flex flex-col gap-6 lg:flex-row">
-                {/* Left: search, tabs, and product cards */}
+                {/* Left: search, tabs, product cards, and the service panel */}
                 <section className="flex min-w-0 flex-1 flex-col gap-4">
                     <label className="flex items-center gap-3 rounded-xl border-2 border-[#1D4ED8] bg-white px-4 py-3.5">
                         <span className="sr-only">Cari barang atau jasa</span>
@@ -177,27 +184,103 @@ export default function Index({ items, services, paymentMethods }) {
                             ))}
                         </ul>
                     ) : (
-                        <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
-                            {shownServices.map((service) => (
-                                <li key={service.id} className="flex flex-col gap-1.5 rounded-xl border border-[#E5E7EB] bg-white p-3.5">
-                                    <span className="text-xs font-medium text-[#4B5563]">{service.category}</span>
-                                    <p className="text-sm font-semibold">{service.name}</p>
-                                    <p className="text-base font-bold text-[#1D4ED8]">
-                                        {rupiah(service.unit_price)}{' '}
-                                        <span className="text-xs font-normal text-[#4B5563]">per {service.unit}</span>
-                                    </p>
+                        <>
+                            <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+                                {shownServices.map((service) => {
+                                    const selected = service.id === serviceId;
+                                    return (
+                                        <li key={service.id}>
+                                            <button
+                                                type="button"
+                                                onClick={() => setServiceId(service.id)}
+                                                aria-pressed={selected}
+                                                className={`flex w-full flex-col gap-1.5 rounded-xl border p-3.5 text-left ${
+                                                    selected ? 'border-[#1D4ED8] bg-[#DBEAFE]' : 'border-[#E5E7EB] bg-white'
+                                                }`}
+                                            >
+                                                <span className="text-xs font-medium text-[#4B5563]">{service.category}</span>
+                                                <span className="text-sm font-semibold">{service.name}</span>
+                                                <span className="text-base font-bold text-[#1D4ED8]">
+                                                    {rupiah(service.unit_price)}{' '}
+                                                    <span className="text-xs font-normal text-[#4B5563]">per {service.unit}</span>
+                                                </span>
+                                            </button>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+
+                            {selectedService && (
+                                <div className="flex flex-col gap-4 rounded-2xl border border-[#6B7280] bg-white p-5">
+                                    <div className="flex items-center justify-between">
+                                        <h2 className="text-base font-semibold">{selectedService.name}</h2>
+                                        <span className="text-[13px] text-[#4B5563]">
+                                            {rupiah(selectedService.unit_price)} per {selectedService.unit}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex flex-col gap-1.5">
+                                        <label htmlFor="pages" className="text-xs font-medium text-[#4B5563]">
+                                            Jumlah {selectedService.unit}
+                                        </label>
+                                        <div className="flex items-center justify-between rounded-xl border border-[#1D4ED8] px-3.5 py-2.5">
+                                            <input
+                                                id="pages"
+                                                type="number"
+                                                min="1"
+                                                inputMode="numeric"
+                                                value={pages}
+                                                onChange={(e) => setPages(Number(e.target.value) || 0)}
+                                                className="w-full border-0 p-0 text-xl font-bold focus:ring-0"
+                                            />
+                                            <span className="text-[13px] text-[#4B5563]">{selectedService.unit}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-wrap gap-2">
+                                        {QUICK_PAGES.map((n) => (
+                                            <button
+                                                key={n}
+                                                type="button"
+                                                onClick={() => setPages(n)}
+                                                className="rounded-lg bg-[#F3F4F6] px-3 py-1.5 text-xs font-medium"
+                                            >
+                                                {n}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    {paper && (
+                                        <div className="flex flex-col gap-1 rounded-xl bg-[#F3F4F6] p-3">
+                                            <p className="text-[13px] font-semibold">
+                                                {paper.name} terpakai: {fmt(pages * paper.per_unit)} {paper.unit}
+                                            </p>
+                                            <p className="text-xs text-[#4B5563]">
+                                                {pages} {selectedService.unit} × {fmt(paper.per_unit)} {paper.unit} per{' '}
+                                                {selectedService.unit}
+                                            </p>
+                                        </div>
+                                    )}
+
                                     <button
                                         type="button"
+                                        disabled={pages < 1}
                                         onClick={() =>
-                                            addToCart(`jasa-${service.id}`, service.name, service.unit_price, service.unit)
+                                            addToCart(
+                                                `jasa-${selectedService.id}`,
+                                                selectedService.name,
+                                                selectedService.unit_price,
+                                                selectedService.unit,
+                                                pages,
+                                            )
                                         }
-                                        className="mt-1 rounded-lg bg-[#1D4ED8] py-1.5 text-xs font-semibold text-white"
+                                        className="rounded-xl bg-[#1D4ED8] py-3.5 font-semibold text-white disabled:opacity-50"
                                     >
-                                        Tambah
+                                        Tambah ke keranjang
                                     </button>
-                                </li>
-                            ))}
-                        </ul>
+                                </div>
+                            )}
+                        </>
                     )}
                 </section>
 
