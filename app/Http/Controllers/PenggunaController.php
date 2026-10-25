@@ -53,6 +53,8 @@ class PenggunaController extends Controller
         $user->forceFill([
             'role' => $data['role'],
             'must_change_password' => true,
+            // The placeholder email cannot receive a verification link, so mark it verified
+            'email_verified_at' => now(),
         ])->save();
 
         return redirect()->route('pengguna.index')->with('success', 'Pengguna berhasil ditambahkan.');
