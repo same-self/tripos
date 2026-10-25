@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\SalesHistoryController;
 use App\Http\Controllers\BarangController;
+use App\Http\Controllers\PenggunaController;
 
 Route::get('/', fn () => redirect()->route('login'));
 
@@ -38,6 +39,24 @@ Route::get('/barang/{item}/ubah', [BarangController::class, 'edit'])
 Route::put('/barang/{item}', [BarangController::class, 'update'])
     ->middleware(['auth', 'verified', 'role:admin'])
     ->name('barang.update');
+
+Route::get('/pengguna', [PenggunaController::class, 'index'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('pengguna.index');
+
+Route::post('/pengguna', [PenggunaController::class, 'store'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('pengguna.store');
+
+Route::get('/pengguna/{user}/ubah', [PenggunaController::class, 'edit'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->withTrashed()
+    ->name('pengguna.edit');
+
+Route::put('/pengguna/{user}', [PenggunaController::class, 'update'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->withTrashed()
+    ->name('pengguna.update');
 
 Route::get('/kasir/pos', [PosController::class, 'index'])
     ->middleware(['auth', 'verified', 'role:cashier,admin'])
