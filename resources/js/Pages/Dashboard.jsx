@@ -1,5 +1,5 @@
 import TriposLayout from '@/Layouts/TriposLayout';
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 
 const TAG = {
     primary: 'bg-[#DBEAFE] text-[#1D4ED8]',
@@ -136,7 +136,9 @@ export default function Dashboard({ report }) {
                 <div className="rounded-xl border border-[#E5E7EB] bg-white p-5">
                     <div className="mb-2 flex items-center justify-between">
                         <h2 className="text-[15px] font-semibold">Transaksi terbaru</h2>
-                        <a href="#" className="text-sm font-semibold text-[#1D4ED8]">Lihat semua</a>
+                        <Link href={route('riwayat.index')} className="text-sm font-semibold text-[#1D4ED8]">
+                            Lihat semua
+                        </Link>
                     </div>
 
                     {recent.length === 0 ? (
@@ -144,14 +146,19 @@ export default function Dashboard({ report }) {
                     ) : (
                         <ul>
                             {recent.map((t) => (
-                                <li key={t.id} className="flex items-center justify-between border-b border-[#E5E7EB] py-3 last:border-b-0">
-                                    <div>
-                                        <p className="text-sm font-semibold">Penjualan · {t.cashier}</p>
-                                        <p className="mt-0.5 text-xs text-[#4B5563]">
-                                            {t.time} · {t.method}
-                                        </p>
-                                    </div>
-                                    <p className="text-sm font-semibold">{rupiah(t.amount)}</p>
+                                <li key={t.id} className="border-b border-[#E5E7EB] last:border-b-0">
+                                    <Link
+                                        href={route('riwayat.show', t.id)}
+                                        className="flex items-center justify-between py-3 hover:bg-[#F3F4F6]"
+                                    >
+                                        <div>
+                                            <p className="text-sm font-semibold">Penjualan · {t.cashier}</p>
+                                            <p className="mt-0.5 text-xs text-[#4B5563]">
+                                                {t.time} · {t.method}
+                                            </p>
+                                        </div>
+                                        <p className="text-sm font-semibold">{rupiah(t.amount)}</p>
+                                    </Link>
                                 </li>
                             ))}
                         </ul>
