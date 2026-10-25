@@ -5,6 +5,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\SalesHistoryController;
+use App\Http\Controllers\BarangController;
 
 Route::get('/', fn () => redirect()->route('login'));
 
@@ -17,6 +18,10 @@ Route::get('/riwayat', [SalesHistoryController::class, 'index'])
 Route::get('/riwayat/{sale}', [SalesHistoryController::class, 'show'])
     ->middleware(['auth', 'verified', 'role:admin'])
     ->name('riwayat.show');
+
+Route::get('/barang', [BarangController::class, 'index'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('barang.index');
 
 Route::get('/kasir/pos', [PosController::class, 'index'])
     ->middleware(['auth', 'verified', 'role:cashier,admin'])
