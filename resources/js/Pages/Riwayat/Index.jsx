@@ -98,7 +98,11 @@ export default function Index({ sales, filters, totals }) {
                                 </td>
                                 <td className="px-4 py-3 text-[#4B5563]">{sale.items} item</td>
                                 <td className="px-4 py-3 text-right font-semibold">{rupiah(sale.total)}</td>
-                                <td className="px-4 py-3 text-right text-sm font-semibold text-[#1D4ED8]">Lihat</td>
+                                <td className="px-4 py-3 text-right">
+                                    <Link href={route('riwayat.show', sale.id)} className="text-sm font-semibold text-[#1D4ED8]">
+                                        Lihat
+                                    </Link>
+                                </td>
                             </tr>
                         ))}
                     </tbody>
