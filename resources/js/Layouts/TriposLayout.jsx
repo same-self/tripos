@@ -5,7 +5,7 @@ const MENU = [
     { label: 'Dashboard', href: '/dashboard' },
     { label: 'Transaksi (POS)', href: '#' },
     { label: 'Barang', href: '/barang' },
-    { label: 'Layanan', href: '#' },
+    { label: 'Layanan', href: '/layanan' },
     { label: 'Supplier', href: '/supplier' },
     { label: 'Restok', href: '#' },
     { label: 'Stok', href: '#' },

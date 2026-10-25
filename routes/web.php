@@ -9,6 +9,8 @@ use App\Http\Controllers\BarangController;
 use App\Http\Controllers\PenggunaController;
 use App\Http\Controllers\ForcePasswordController;
 use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\LayananController;
+
 
 Route::get('/', fn () => redirect()->route('login'));
 
@@ -79,6 +81,30 @@ Route::get('/supplier/{supplier}/ubah', [SupplierController::class, 'edit'])
 Route::put('/supplier/{supplier}', [SupplierController::class, 'update'])
     ->middleware(['auth', 'verified', 'role:admin'])
     ->name('supplier.update');
+
+Route::get('/layanan', [LayananController::class, 'index'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('layanan.index');
+
+Route::get('/layanan/tambah', [LayananController::class, 'create'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('layanan.create');
+
+Route::post('/layanan', [LayananController::class, 'store'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('layanan.store');
+
+Route::put('/layanan/pengaturan', [LayananController::class, 'updateSetting'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('layanan.pengaturan');
+
+Route::get('/layanan/{service}/ubah', [LayananController::class, 'edit'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('layanan.edit');
+
+Route::put('/layanan/{service}', [LayananController::class, 'update'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('layanan.update');
 
 Route::get('/kasir/pos', [PosController::class, 'index'])
     ->middleware(['auth', 'verified', 'role:cashier,admin'])
