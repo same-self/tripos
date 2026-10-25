@@ -8,6 +8,7 @@ use App\Http\Controllers\SalesHistoryController;
 use App\Http\Controllers\BarangController;
 use App\Http\Controllers\PenggunaController;
 use App\Http\Controllers\ForcePasswordController;
+use App\Http\Controllers\SupplierController;
 
 Route::get('/', fn () => redirect()->route('login'));
 
@@ -58,6 +59,26 @@ Route::put('/pengguna/{user}', [PenggunaController::class, 'update'])
     ->middleware(['auth', 'verified', 'role:admin'])
     ->withTrashed()
     ->name('pengguna.update');
+
+Route::get('/supplier', [SupplierController::class, 'index'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('supplier.index');
+
+Route::get('/supplier/tambah', [SupplierController::class, 'create'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('supplier.create');
+
+Route::post('/supplier', [SupplierController::class, 'store'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('supplier.store');
+
+Route::get('/supplier/{supplier}/ubah', [SupplierController::class, 'edit'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('supplier.edit');
+
+Route::put('/supplier/{supplier}', [SupplierController::class, 'update'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('supplier.update');
 
 Route::get('/kasir/pos', [PosController::class, 'index'])
     ->middleware(['auth', 'verified', 'role:cashier,admin'])
