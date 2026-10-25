@@ -19,9 +19,13 @@ export default function CashierLayout({ active = 'Transaksi (POS)', children }) 
                 >
                     Transaksi (POS)
                 </Link>
-                <a href="#" className={tabClass(active === 'Price List')}>
+                <Link
+                    href={route('kasir.harga')}
+                    className={tabClass(active === 'Price List')}
+                    aria-current={active === 'Price List' ? 'page' : undefined}
+                >
                     Price List
-                </a>
+                </Link>
             </nav>
 
             <main className="px-6 pb-6">{children}</main>

@@ -17,6 +17,10 @@ Route::post('/kasir/pos', [PosController::class, 'store'])
     ->middleware(['auth', 'verified', 'role:cashier,admin'])
     ->name('kasir.pos.store');
 
+Route::get('/kasir/harga', [PosController::class, 'priceList'])
+    ->middleware(['auth', 'verified', 'role:cashier,admin'])
+    ->name('kasir.harga');
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
