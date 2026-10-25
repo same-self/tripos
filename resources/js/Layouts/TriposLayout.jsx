@@ -14,7 +14,7 @@ const MENU = [
 ];
 
 export default function TriposLayout({ active = 'Dashboard', children }) {
-    const { auth } = usePage().props;
+    const { auth, flash } = usePage().props;
     const userName = auth?.user?.name ?? 'Pengguna';
     const initial = 'A';
 
@@ -124,7 +124,14 @@ export default function TriposLayout({ active = 'Dashboard', children }) {
                     </nav>
                 </aside>
 
-                <main className="flex-1 p-6 md:p-8">{children}</main>
+                <main className="flex-1 p-6 md:p-8">
+                    {flash?.success && (
+                        <p className="mb-5 rounded-xl bg-[#DCFCE7] px-4 py-3 text-sm font-medium text-[#15803D]">
+                            {flash.success}
+                        </p>
+                    )}
+                    {children}
+                </main>
             </div>
         </div>
     );
