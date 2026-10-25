@@ -23,6 +23,22 @@ Route::get('/barang', [BarangController::class, 'index'])
     ->middleware(['auth', 'verified', 'role:admin'])
     ->name('barang.index');
 
+Route::get('/barang/tambah', [BarangController::class, 'create'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('barang.create');
+
+Route::post('/barang', [BarangController::class, 'store'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('barang.store');
+
+Route::get('/barang/{item}/ubah', [BarangController::class, 'edit'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('barang.edit');
+
+Route::put('/barang/{item}', [BarangController::class, 'update'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('barang.update');
+
 Route::get('/kasir/pos', [PosController::class, 'index'])
     ->middleware(['auth', 'verified', 'role:cashier,admin'])
     ->name('kasir.pos');

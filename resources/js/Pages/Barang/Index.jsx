@@ -1,5 +1,5 @@
 import TriposLayout from '@/Layouts/TriposLayout';
-import { Head, router } from '@inertiajs/react';
+  import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 
 const rupiah = (n) => 'Rp ' + Number(n).toLocaleString('id-ID');
@@ -43,13 +43,12 @@ export default function Index({ items, categories, total, filters }) {
                         <p className="mt-1 text-[13px] text-[#4B5563]">Kelola data barang ATK, harga jual, dan kategorinya.</p>
                     </div>
                     {/* Connected to the add form in the next step */}
-                    <button
-                        type="button"
-                        disabled
-                        className="rounded-[10px] bg-[#1D4ED8] px-4 py-2.5 text-sm font-semibold text-white opacity-60"
-                    >
-                        Tambah Barang
-                    </button>
+                  <Link
+                      href={route('barang.create')}
+                      className="rounded-[10px] bg-[#1D4ED8] px-4 py-2.5 text-sm font-semibold text-white"
+                  >
+                      Tambah Barang
+                  </Link>
                 </div>
 
                 <div className="flex flex-col gap-5 lg:flex-row">
@@ -123,7 +122,9 @@ export default function Index({ items, categories, total, filters }) {
                                             </td>
                                             <td className="px-2 py-3.5">
                                                 {/* Connected to the edit form in the next step */}
-                                                <span className="text-[13px] font-medium text-[#1D4ED8]">Ubah</span>
+                                                <Link href={route('barang.edit', item.id)} className="text-[13px] font-medium text-[#1D4ED8]">
+                                                      Ubah
+                                                </Link>
                                             </td>
                                         </tr>
                                     ))}
