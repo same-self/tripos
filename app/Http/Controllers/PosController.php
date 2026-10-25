@@ -30,7 +30,7 @@ class PosController extends Controller
                 'low_stock' => $item->isLowStock(),
             ]);
 
-        $services = Service::with('category')
+        $services = Service::with(['category', 'materials.item'])
             ->orderBy('name')
             ->get()
             ->map(fn (Service $service) => [
@@ -39,6 +39,15 @@ class PosController extends Controller
                 'category' => $service->category->name,
                 'unit' => $service->unit,
                 'unit_price' => $service->unit_price,
+                // Paper or other materials used per unit, for the "terpakai" line
+                'materials' => $service->materials
+                    ->filter(fn ($material) => $material->item !== null)
+                    ->map(fn ($material) => [
+                        'name' => $material->item->name,
+                        'unit' => $material->item->unit,
+                        'per_unit' => (float) $material->quantity_used_per_unit,
+                    ])
+                    ->values(),
             ]);
 
         return Inertia::render('Pos/Index', [
