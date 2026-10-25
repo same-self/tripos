@@ -10,7 +10,7 @@ const MENU = [
     { label: 'Restok', href: '#' },
     { label: 'Stok', href: '#' },
     { label: 'Laporan', href: '#' },
-    { label: 'Pengguna', href: '#' },
+    { label: 'Pengguna', href: '/pengguna' },
 ];
 
 export default function TriposLayout({ active = 'Dashboard', children }) {
