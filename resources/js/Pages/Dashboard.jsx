@@ -99,29 +99,40 @@ export default function Dashboard({ report }) {
             <section className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
                 <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 lg:col-span-2">
                     <h2 className="text-[15px] font-semibold">Penghasilan harian (Rp ribu)</h2>
+
+                    {/* Bars */}
                     <div
                         className={`mt-4 grid h-[260px] items-end border-b border-[#E5E7EB] ${daily.length > 14 ? 'gap-1' : 'gap-3'}`}
                         style={{ gridTemplateColumns: `repeat(${daily.length}, minmax(0, 1fr))` }}
                     >
-                        {daily.map((d, i) => {
+                        {daily.map((d) => {
                             const height = maxIncome > 0 ? Math.round((d.income / maxIncome) * CHART_HEIGHT) : 0;
 
                             return (
-                                <div key={d.date} className="flex h-full flex-col items-center justify-end">
+                                <div key={d.date} className="flex h-full items-end justify-center">
                                     <div
                                         className="w-full max-w-[44px] rounded-t bg-[#1D4ED8]"
                                         style={{ height: `${height}px` }}
                                         title={`${d.date}: ${rupiah(d.income)}`}
                                     />
-                                    <span className="mt-1.5 h-4 whitespace-nowrap text-xs text-[#4B5563]">
-                                        {i % labelEvery === 0 ? d.label : ''}
-                                    </span>
                                 </div>
                             );
                         })}
                     </div>
-                </div>
 
+                    {/* Date labels, in their own row below the bars */}
+                    <div
+                        className={`mt-2 grid ${daily.length > 14 ? 'gap-1' : 'gap-3'}`}
+                        style={{ gridTemplateColumns: `repeat(${daily.length}, minmax(0, 1fr))` }}
+                    >
+                        {daily.map((d, i) => (
+                            <span key={d.date} className="h-5 whitespace-nowrap text-center text-xs text-[#4B5563]">
+                                {i % labelEvery === 0 ? d.label : ''}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+                
                 <div className="rounded-xl border border-[#E5E7EB] bg-white p-5">
                     <div className="mb-2 flex items-center justify-between">
                         <h2 className="text-[15px] font-semibold">Transaksi terbaru</h2>
