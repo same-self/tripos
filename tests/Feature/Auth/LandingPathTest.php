@@ -24,9 +24,9 @@ class LandingPathTest extends TestCase
     {
         $cashier = User::factory()->cashier()->create();
 
-        // Until the POS route exists, cashiers land on their profile page.
+        // Cashiers land on the POS screen.
         $this->post('/login', ['username' => $cashier->username, 'password' => 'password'])
-            ->assertRedirect(route('profile.edit', absolute: false));
+            ->assertRedirect(route('kasir.pos', absolute: false));
     }
 
     public function test_a_signed_in_admin_who_opens_login_is_sent_to_the_dashboard(): void

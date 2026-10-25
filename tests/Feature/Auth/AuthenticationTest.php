@@ -28,7 +28,7 @@ class AuthenticationTest extends TestCase
 
         // A default factory user is a cashier; the admin case is in LandingPathTest.
         $this->assertAuthenticated();
-        $response->assertRedirect(route('profile.edit', absolute: false));
+        $response->assertRedirect(route('kasir.pos', absolute: false));
     }
 
     public function test_users_can_not_authenticate_with_invalid_password(): void
