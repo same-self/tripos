@@ -5,6 +5,11 @@ namespace App\Http\Controllers;
 use App\Enums\PaymentMethod;
 use App\Models\Item;
 use App\Models\Service;
+use App\Services\SaleService;
+use DomainException;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -43,5 +48,29 @@ class PosController extends Controller
                 ->map(fn (PaymentMethod $method) => ['value' => $method->value, 'label' => $method->label()])
                 ->values(),
         ]);
+    }
+
+    public function store(Request $request, SaleService $sales): RedirectResponse
+    {
+        $data = $request->validate([
+            'items' => ['array'],
+            'items.*.item_id' => ['required', 'integer'],
+            'items.*.qty' => ['required', 'integer', 'min:1'],
+            'services' => ['array'],
+            'services.*.service_id' => ['required', 'integer'],
+            'services.*.qty' => ['required', 'integer', 'min:1'],
+            'payment_method' => ['required', Rule::enum(PaymentMethod::class)],
+            'amount_paid' => ['nullable', 'integer', 'min:0'],
+        ]);
+
+        try {
+            $sale = $sales->create($request->user(), $data);
+        } catch (DomainException $e) {
+            // Empty cart, short payment, and low stock all come back as readable messages
+            return back()->withErrors(['sale' => $e->getMessage()]);
+        }
+
+        return redirect()->route('kasir.pos')
+            ->with('success', 'Transaksi #'.$sale->id.' berhasil disimpan.');
     }
 }

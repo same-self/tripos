@@ -13,6 +13,10 @@ Route::get('/kasir/pos', [PosController::class, 'index'])
     ->middleware(['auth', 'verified', 'role:cashier,admin'])
     ->name('kasir.pos');
 
+Route::post('/kasir/pos', [PosController::class, 'store'])
+    ->middleware(['auth', 'verified', 'role:cashier,admin'])
+    ->name('kasir.pos.store');
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

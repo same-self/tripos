@@ -1,5 +1,5 @@
 import CashierLayout from '@/Layouts/CashierLayout';
-import { Head } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 const QUICK_AMOUNTS = [20000, 50000, 100000];
@@ -54,12 +54,15 @@ function TabButton({ active, onClick, children }) {
 }
 
 export default function Index({ items, services, paymentMethods }) {
+    const { flash, errors } = usePage().props;
+
     const [tab, setTab] = useState('barang');
     const [search, setSearch] = useState('');
     const [cart, setCart] = useState([]);
     const [method, setMethod] = useState('cash');
     const [paid, setPaid] = useState(0);
     const [printReceipt, setPrintReceipt] = useState(false);
+    const [processing, setProcessing] = useState(false);
 
     const total = cart.reduce((sum, line) => sum + line.qty * line.price, 0);
     const change = Math.max(0, paid - total);
@@ -87,9 +90,43 @@ export default function Index({ items, services, paymentMethods }) {
         );
     }
 
+    function submitSale() {
+        // Keys look like "barang-3" or "jasa-5": the number after the dash is the database id
+        const itemLines = cart
+            .filter((line) => line.key.startsWith('barang-'))
+            .map((line) => ({ item_id: Number(line.key.split('-')[1]), qty: line.qty }));
+        const serviceLines = cart
+            .filter((line) => line.key.startsWith('jasa-'))
+            .map((line) => ({ service_id: Number(line.key.split('-')[1]), qty: line.qty }));
+
+        router.post(
+            route('kasir.pos.store'),
+            {
+                items: itemLines,
+                services: serviceLines,
+                payment_method: method,
+                amount_paid: isCash ? paid : 0,
+            },
+            {
+                preserveScroll: true,
+                onStart: () => setProcessing(true),
+                onFinish: () => setProcessing(false),
+                onSuccess: () => {
+                    setCart([]);
+                    setPaid(0);
+                    setPrintReceipt(false);
+                },
+            },
+        );
+    }
+
     return (
         <CashierLayout active="Transaksi (POS)">
             <Head title="Transaksi (POS)" />
+
+            {flash?.success && (
+                <p className="mb-4 rounded-xl bg-[#DCFCE7] px-4 py-3 text-sm font-medium text-[#15803D]">{flash.success}</p>
+            )}
 
             <div className="flex flex-col gap-6 lg:flex-row">
                 {/* Left: search, tabs, and product cards */}
@@ -282,13 +319,17 @@ export default function Index({ items, services, paymentMethods }) {
                         Cetak struk thermal
                     </label>
 
-                    {/* The sale is saved to the database in the next step (SaleService) */}
+                    {errors?.sale && (
+                        <p className="rounded-xl bg-[#FEE2E2] px-4 py-3 text-sm text-[#B91C1C]">{errors.sale}</p>
+                    )}
+
                     <button
                         type="button"
-                        disabled={cart.length === 0}
+                        onClick={submitSale}
+                        disabled={cart.length === 0 || processing}
                         className="rounded-xl bg-[#1D4ED8] py-4 font-semibold text-white disabled:opacity-50"
                     >
-                        Selesaikan Transaksi
+                        {processing ? 'Menyimpan...' : 'Selesaikan Transaksi'}
                     </button>
                 </aside>
             </div>
