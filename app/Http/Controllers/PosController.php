@@ -82,4 +82,33 @@ class PosController extends Controller
         return redirect()->route('kasir.pos')
             ->with('success', 'Transaksi #'.$sale->id.' berhasil disimpan.');
     }
+
+    public function priceList(): Response
+    {
+        $items = Item::with('category')
+            ->orderBy('name')
+            ->get()
+            ->map(fn (Item $item) => [
+                'kind' => 'barang',
+                'name' => $item->name,
+                'category' => $item->category->name,
+                'unit' => $item->unit,
+                'price' => $item->sell_price,
+            ]);
+
+        $services = Service::with('category')
+            ->orderBy('name')
+            ->get()
+            ->map(fn (Service $service) => [
+                'kind' => 'jasa',
+                'name' => $service->name,
+                'category' => $service->category->name,
+                'unit' => $service->unit,
+                'price' => $service->unit_price,
+            ]);
+
+        return Inertia::render('Pos/PriceList', [
+            'rows' => $items->concat($services)->values(),
+        ]);
+    }
 }
