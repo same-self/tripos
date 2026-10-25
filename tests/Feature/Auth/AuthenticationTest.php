@@ -26,8 +26,9 @@ class AuthenticationTest extends TestCase
             'password' => 'password',
         ]);
 
+        // A default factory user is a cashier; the admin case is in LandingPathTest.
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('profile.edit', absolute: false));
     }
 
     public function test_users_can_not_authenticate_with_invalid_password(): void
@@ -35,9 +36,9 @@ class AuthenticationTest extends TestCase
         $user = User::factory()->create();
 
         $this->post('/login', [
-            'email' => $user->email,
+            'username' => $user->username,
             'password' => 'wrong-password',
-        ]);
+        ])->assertSessionHasErrors('username');
 
         $this->assertGuest();
     }
