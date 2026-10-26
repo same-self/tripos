@@ -47,7 +47,7 @@ export default function TriposLayout({ active = 'Dashboard', children }) {
 
     return (
         <div className="min-h-screen bg-[#F5F7FA] text-[#111827]">
-            <header className="sticky top-0 z-10 flex h-[72px] items-center justify-between border-b border-[#E5E7EB] bg-white px-6">
+            <header className="sticky top-0 z-10 flex h-[72px] items-center justify-between border-b border-[#E5E7EB] bg-white px-6 print:hidden">
                 <div className="flex items-baseline gap-2.5">
                     <span className="text-lg font-bold text-[#1D4ED8]">TRIPOS</span>
                     <span className="hidden text-sm text-[#4B5563] md:inline">
@@ -92,7 +92,7 @@ export default function TriposLayout({ active = 'Dashboard', children }) {
             </header>
 
             <div className="flex min-h-[calc(100vh-72px)]">
-                <aside className="hidden w-60 shrink-0 border-r border-[#E5E7EB] bg-white p-4 md:block">
+                <aside className="hidden w-60 shrink-0 border-r border-[#E5E7EB] bg-white p-4 md:block print:hidden">
                     <p className="px-3 pb-2 text-xs tracking-wide text-[#4B5563]">MENU</p>
                     <nav className="flex flex-col gap-0.5" aria-label="Menu utama">
                         {MENU.map((item) => {
