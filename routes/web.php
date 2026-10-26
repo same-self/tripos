@@ -10,6 +10,7 @@ use App\Http\Controllers\PenggunaController;
 use App\Http\Controllers\ForcePasswordController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\LayananController;
+use App\Http\Controllers\RestokController;
 
 
 Route::get('/', fn () => redirect()->route('login'));
@@ -113,6 +114,18 @@ Route::get('/layanan/{service}/bahan', [LayananController::class, 'bahan'])
 Route::put('/layanan/{service}/bahan', [LayananController::class, 'updateBahan'])
     ->middleware(['auth', 'verified', 'role:admin'])
     ->name('layanan.bahan.update');
+
+Route::get('/restok', [RestokController::class, 'create'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('restok.create');
+
+Route::post('/restok', [RestokController::class, 'store'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('restok.store');
+
+Route::get('/restok/riwayat', [RestokController::class, 'riwayat'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('restok.riwayat');
 
 Route::get('/kasir/pos', [PosController::class, 'index'])
     ->middleware(['auth', 'verified', 'role:cashier,admin'])
