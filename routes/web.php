@@ -12,6 +12,7 @@ use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\LayananController;
 use App\Http\Controllers\RestokController;
 use App\Http\Controllers\StokController;
+use App\Http\Controllers\LaporanController;
 
 
 Route::get('/', fn () => redirect()->route('login'));
@@ -131,6 +132,10 @@ Route::get('/restok/riwayat', [RestokController::class, 'riwayat'])
 Route::get('/stok', [StokController::class, 'index'])
     ->middleware(['auth', 'verified', 'role:admin'])
     ->name('stok.index');
+
+Route::get('/laporan', [LaporanController::class, 'index'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('laporan.index');
 
 Route::get('/kasir/pos', [PosController::class, 'index'])
     ->middleware(['auth', 'verified', 'role:cashier,admin'])
