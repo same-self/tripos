@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Enums\PaymentMethod;
 use App\Models\Item;
+use App\Models\Sale;
 use App\Models\Service;
 use App\Services\SaleService;
+use App\Support\Receipt;
 use DomainException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -79,8 +81,14 @@ class PosController extends Controller
             return back()->withErrors(['sale' => $e->getMessage()]);
         }
 
-        return redirect()->route('kasir.pos')
-            ->with('success', 'Transaksi #'.$sale->id.' berhasil disimpan.');
+        return redirect()->route('kasir.struk', $sale);
+    }
+
+    public function struk(Sale $sale): Response
+    {
+        return Inertia::render('Pos/Struk', [
+            'receipt' => Receipt::for($sale),
+        ]);
     }
 
     public function priceList(): Response
