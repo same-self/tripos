@@ -9,7 +9,7 @@ const MENU = [
     { label: 'Supplier', href: '/supplier' },
     { label: 'Restok', href: '/restok' },
     { label: 'Stok', href: '/stok' },
-    { label: 'Laporan', href: '#' },
+    { label: 'Laporan', href: '/laporan' },
     { label: 'Pengguna', href: '/pengguna' },
 ];
 
