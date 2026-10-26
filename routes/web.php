@@ -11,6 +11,7 @@ use App\Http\Controllers\ForcePasswordController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\LayananController;
 use App\Http\Controllers\RestokController;
+use App\Http\Controllers\StokController;
 
 
 Route::get('/', fn () => redirect()->route('login'));
@@ -126,6 +127,10 @@ Route::post('/restok', [RestokController::class, 'store'])
 Route::get('/restok/riwayat', [RestokController::class, 'riwayat'])
     ->middleware(['auth', 'verified', 'role:admin'])
     ->name('restok.riwayat');
+
+Route::get('/stok', [StokController::class, 'index'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('stok.index');
 
 Route::get('/kasir/pos', [PosController::class, 'index'])
     ->middleware(['auth', 'verified', 'role:cashier,admin'])
