@@ -9,6 +9,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Models\Item;
+use Illuminate\Support\Facades\DB;
 
 class LayananController extends Controller
 {
@@ -122,6 +124,66 @@ class LayananController extends Controller
         Setting::put('auto_deduct_service_materials', $data['auto_deduct']);
 
         return back()->with('success', 'Pengaturan stok bahan diperbarui.');
+    }
+
+    public function bahan(Service $service): Response
+    {
+        $service->load('materials.item');
+
+        return Inertia::render('Layanan/Bahan', [
+            'service' => [
+                'id' => $service->id,
+                'name' => $service->name,
+                'unit' => $service->unit,
+            ],
+            'materials' => $service->materials
+                ->filter(fn ($material) => $material->item !== null)
+                ->map(fn ($material) => [
+                    'item_id' => $material->item_id,
+                    'quantity' => (float) $material->quantity_used_per_unit,
+                ])
+                ->values(),
+            'items' => Item::orderBy('name')
+                ->get(['id', 'name', 'unit'])
+                ->map(fn (Item $item) => [
+                    'id' => $item->id,
+                    'name' => $item->name,
+                    'unit' => $item->unit,
+                ]),
+        ]);
+    }
+
+    public function updateBahan(Request $request, Service $service): RedirectResponse
+    {
+        $data = $request->validate([
+            'materials' => ['present', 'array'],
+            'materials.*.item_id' => ['required', 'integer', 'distinct', 'exists:items,id'],
+            'materials.*.quantity' => ['required', 'numeric', 'gt:0', 'max:9999.9999'],
+        ], [
+            'materials.*.item_id.required' => 'Pilih bahan untuk setiap baris.',
+            'materials.*.item_id.distinct' => 'Bahan yang sama tidak boleh dipilih dua kali.',
+            'materials.*.item_id.exists' => 'Bahan yang dipilih tidak ada.',
+            'materials.*.quantity.required' => 'Jumlah bahan wajib diisi.',
+            'materials.*.quantity.numeric' => 'Jumlah bahan harus berupa angka.',
+            'materials.*.quantity.gt' => 'Jumlah bahan harus lebih dari 0.',
+            'materials.*.quantity.max' => 'Jumlah bahan terlalu besar.',
+        ]);
+
+        DB::transaction(function () use ($service, $data) {
+            // Old rows are soft-deleted, so past sales still show what was used at the time
+            $service->materials()->delete();
+
+            foreach ($data['materials'] as $row) {
+                $service->materials()->create([
+                    'item_id' => $row['item_id'],
+                    'quantity_used_per_unit' => $row['quantity'],
+                ]);
+            }
+        });
+
+        return redirect()
+            ->route('layanan.index', ['pilih' => $service->id])
+            ->with('success', 'Bahan layanan berhasil diperbarui.');
     }
 
     private function materialsSummary(Service $service): ?string

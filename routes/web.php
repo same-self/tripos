@@ -106,6 +106,14 @@ Route::put('/layanan/{service}', [LayananController::class, 'update'])
     ->middleware(['auth', 'verified', 'role:admin'])
     ->name('layanan.update');
 
+Route::get('/layanan/{service}/bahan', [LayananController::class, 'bahan'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('layanan.bahan');
+
+Route::put('/layanan/{service}/bahan', [LayananController::class, 'updateBahan'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('layanan.bahan.update');
+
 Route::get('/kasir/pos', [PosController::class, 'index'])
     ->middleware(['auth', 'verified', 'role:cashier,admin'])
     ->name('kasir.pos');
