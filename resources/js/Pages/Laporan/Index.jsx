@@ -341,6 +341,8 @@ function Keuntungan({ data, window }) {
 }
 
 export default function Index({ tab, periode, window, penjualan, pembelian, arusKas, terlaris, keuntungan }) {
+    const tabLabel = TABS.find((t) => t.key === tab)?.label ?? 'Penjualan';
+
     return (
         <TriposLayout active="Laporan">
             <Head title="Laporan" />
@@ -354,24 +356,32 @@ export default function Index({ tab, periode, window, penjualan, pembelian, arus
                         </p>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    {/* Period and export button: hidden when printing */}
+                    <div className="flex items-center gap-3 print:hidden">
                         {[7, 30].map((p) => (
                             <PillLink key={p} active={periode === p} href={route('laporan.index', { tab, periode: p })}>
                                 {p} hari
                             </PillLink>
                         ))}
-                        {/* Connected to the PDF export in a later step */}
                         <button
                             type="button"
-                            disabled
-                            className="rounded-[10px] bg-[#1D4ED8] px-4 py-2.5 text-sm font-semibold text-white opacity-60"
+                            onClick={() => globalThis.print()}
+                            className="rounded-[10px] bg-[#1D4ED8] px-4 py-2.5 text-sm font-semibold text-white"
                         >
                             Ekspor PDF
                         </button>
                     </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
+                {/* Shown only on the printed page */}
+                <div className="hidden print:block">
+                    <p className="text-sm font-semibold">
+                        Laporan {tabLabel} · {periode} hari terakhir
+                    </p>
+                    <p className="text-xs text-[#4B5563]">Dicetak {new Date().toLocaleString('id-ID')}</p>
+                </div>
+
+                <div className="flex flex-wrap gap-2 print:hidden">
                     {TABS.map((t) => (
                         <PillLink key={t.key} active={tab === t.key} href={route('laporan.index', { tab: t.key, periode })}>
                             {t.label}
@@ -382,7 +392,6 @@ export default function Index({ tab, periode, window, penjualan, pembelian, arus
                 {tab === 'penjualan' && penjualan && <Penjualan data={penjualan} window={window} />}
                 {tab === 'pembelian' && pembelian && <Pembelian data={pembelian} />}
                 {tab === 'arus-kas' && arusKas && <ArusKas data={arusKas} />}
-
                 {tab === 'terlaris' && terlaris && <TerlarisLambat data={terlaris} />}
                 {tab === 'keuntungan' && keuntungan && <Keuntungan data={keuntungan} window={window} />}
             </div>
