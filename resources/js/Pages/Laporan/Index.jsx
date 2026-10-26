@@ -202,7 +202,145 @@ function ArusKas({ data }) {
     );
 }
 
-export default function Index({ tab, periode, window, penjualan, pembelian, arusKas }) {
+function TerlarisLambat({ data }) {
+    return (
+        <div className="flex flex-col gap-5 lg:flex-row">
+            <section className="min-w-0 flex-1 overflow-x-auto rounded-2xl border border-[#E5E7EB] bg-white p-5">
+                <h2 className="text-[15px] font-semibold">Barang paling laku</h2>
+                <p className="mt-1 text-xs text-[#4B5563]">
+                    Terjual {data.fast} atau lebih dalam {data.window} hari terakhir
+                </p>
+                <table className="mt-4 w-full text-left text-sm">
+                    <thead className="border-b border-[#E5E7EB] text-xs font-medium text-[#4B5563]">
+                        <tr>
+                            <th scope="col" className="px-2 py-3">Barang</th>
+                            <th scope="col" className="px-2 py-3">Terjual</th>
+                            <th scope="col" className="px-2 py-3">Stok</th>
+                            <th scope="col" className="px-2 py-3">Habis dalam</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {data.laku.map((item, i) => (
+                            <tr key={i} className="border-b border-[#E5E7EB]">
+                                <td className="px-2 py-3 font-medium">{item.name}</td>
+                                <td className="px-2 py-3">{item.sold}</td>
+                                <td className="px-2 py-3">
+                                    {item.stock} {item.unit}
+                                </td>
+                                <td className="px-2 py-3">{item.days_left !== null ? `±${item.days_left} hari` : '-'}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+                {data.laku.length === 0 && (
+                    <p className="py-6 text-center text-sm text-[#4B5563]">Belum ada barang yang laku keras.</p>
+                )}
+            </section>
+
+            <section className="min-w-0 flex-1 overflow-x-auto rounded-2xl border border-[#E5E7EB] bg-white p-5">
+                <h2 className="text-[15px] font-semibold">Barang paling lambat</h2>
+                <p className="mt-1 text-xs text-[#4B5563]">
+                    Terjual kurang dari {data.slow} dalam {data.window} hari terakhir
+                </p>
+                <table className="mt-4 w-full text-left text-sm">
+                    <thead className="border-b border-[#E5E7EB] text-xs font-medium text-[#4B5563]">
+                        <tr>
+                            <th scope="col" className="px-2 py-3">Barang</th>
+                            <th scope="col" className="px-2 py-3">Terjual</th>
+                            <th scope="col" className="px-2 py-3">Stok</th>
+                            <th scope="col" className="px-2 py-3">Modal mengendap</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {data.lambat.map((item, i) => (
+                            <tr key={i} className="border-b border-[#E5E7EB]">
+                                <td className="px-2 py-3 font-medium">{item.name}</td>
+                                <td className="px-2 py-3">{item.sold}</td>
+                                <td className="px-2 py-3">
+                                    {item.stock} {item.unit}
+                                </td>
+                                <td className="px-2 py-3 font-semibold">{rupiah(item.idle_capital)}</td>
+                            </tr>
+                        ))}
+                        <tr className="font-bold">
+                            <td className="px-2 py-3">Total</td>
+                            <td className="px-2 py-3"></td>
+                            <td className="px-2 py-3"></td>
+                            <td className="px-2 py-3">{rupiah(data.lambatTotal)}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                {data.lambat.length === 0 && (
+                    <p className="py-6 text-center text-sm text-[#4B5563]">Tidak ada barang yang lambat.</p>
+                )}
+            </section>
+        </div>
+    );
+}
+
+function Keuntungan({ data, window }) {
+    return (
+        <div className="flex flex-col gap-5 lg:flex-row">
+            <section className="min-w-0 flex-1 overflow-x-auto rounded-2xl border border-[#E5E7EB] bg-white p-5">
+                <h2 className="text-[15px] font-semibold">Ranking keuntungan</h2>
+                <p className="mt-1 text-xs text-[#4B5563]">Untung per barang dalam {window} hari terakhir</p>
+                <table className="mt-4 w-full text-left text-sm">
+                    <thead className="border-b border-[#E5E7EB] text-xs font-medium text-[#4B5563]">
+                        <tr>
+                            <th scope="col" className="px-2 py-3">No</th>
+                            <th scope="col" className="px-2 py-3">Barang</th>
+                            <th scope="col" className="px-2 py-3">Terjual</th>
+                            <th scope="col" className="px-2 py-3">Untung / unit</th>
+                            <th scope="col" className="px-2 py-3">Total untung</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {data.rows.map((row, i) => (
+                            <tr key={i} className="border-b border-[#E5E7EB]">
+                                <td className="px-2 py-3 text-[#4B5563]">{i + 1}</td>
+                                <td className="px-2 py-3 font-medium">{row.name}</td>
+                                <td className="px-2 py-3">{row.sold}</td>
+                                <td className={`px-2 py-3 ${row.per_unit < 0 ? 'text-[#B91C1C]' : ''}`}>
+                                    {rupiah(row.per_unit)}
+                                </td>
+                                <td className={`px-2 py-3 font-semibold ${row.total < 0 ? 'text-[#B91C1C]' : ''}`}>
+                                    {rupiah(row.total)}
+                                </td>
+                            </tr>
+                        ))}
+                        <tr className="font-bold">
+                            <td className="px-2 py-3"></td>
+                            <td className="px-2 py-3">Total keuntungan</td>
+                            <td className="px-2 py-3"></td>
+                            <td className="px-2 py-3"></td>
+                            <td className="px-2 py-3">{rupiah(data.total)}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                {data.rows.length === 0 && (
+                    <p className="py-6 text-center text-sm text-[#4B5563]">Belum ada penjualan barang di periode ini.</p>
+                )}
+            </section>
+
+            <aside className="flex w-full shrink-0 flex-col gap-4 rounded-2xl border border-[#E5E7EB] bg-white p-5 lg:w-[320px]">
+                <h2 className="text-[15px] font-semibold">Untung dan rugi</h2>
+                <p className="text-xs text-[#4B5563]">Jumlah barang berdasarkan hasil penjualan {window} hari</p>
+
+                <div className="flex flex-col gap-1">
+                    <p className="text-lg font-bold text-[#15803D]">{data.untung} barang</p>
+                    <p className="text-xs text-[#4B5563]">Dijual di atas harga modal</p>
+                </div>
+
+                <div className="flex flex-col gap-1">
+                    <p className="text-lg font-bold text-[#B91C1C]">{data.rugi} barang</p>
+                    <p className="text-xs text-[#4B5563]">Dijual di bawah harga modal</p>
+                </div>
+            </aside>
+        </div>
+    );
+}
+
+export default function Index({ tab, periode, window, penjualan, pembelian, arusKas, terlaris, keuntungan }) {
     return (
         <TriposLayout active="Laporan">
             <Head title="Laporan" />
@@ -245,11 +383,8 @@ export default function Index({ tab, periode, window, penjualan, pembelian, arus
                 {tab === 'pembelian' && pembelian && <Pembelian data={pembelian} />}
                 {tab === 'arus-kas' && arusKas && <ArusKas data={arusKas} />}
 
-                {(tab === 'terlaris' || tab === 'keuntungan') && (
-                    <div className="rounded-2xl border border-[#E5E7EB] bg-white p-6 text-sm text-[#4B5563]">
-                        Bagian ini dibuat di langkah berikutnya.
-                    </div>
-                )}
+                {tab === 'terlaris' && terlaris && <TerlarisLambat data={terlaris} />}
+                {tab === 'keuntungan' && keuntungan && <Keuntungan data={keuntungan} window={window} />}
             </div>
         </TriposLayout>
     );
