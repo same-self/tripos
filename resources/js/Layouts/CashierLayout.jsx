@@ -11,7 +11,7 @@ export default function CashierLayout({ active = 'Transaksi (POS)', children }) 
         <div className="min-h-screen bg-[#F5F7FA] text-[#111827]">
             <TriposTopbar role="Kasir" />
 
-            <nav className="flex gap-2 px-6 py-2.5" aria-label="Menu kasir">
+            <nav className="flex gap-2 px-6 py-2.5 print:hidden" aria-label="Menu kasir">
                 <Link
                     href={route('kasir.pos')}
                     className={tabClass(active === 'Transaksi (POS)')}

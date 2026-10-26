@@ -31,7 +31,7 @@ export default function TriposTopbar({ role = 'Admin' }) {
         now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 
     return (
-        <header className="sticky top-0 z-10 flex h-[72px] items-center justify-between border-b border-[#E5E7EB] bg-white px-6">
+        <header className="sticky top-0 z-10 flex h-[72px] items-center justify-between border-b border-[#E5E7EB] bg-white px-6 print:hidden">
             <div className="flex items-baseline gap-2.5">
                 <span className="text-lg font-bold text-[#1D4ED8]">TRIPOS</span>
                 <span className="hidden text-sm text-[#4B5563] md:inline">Point of Sale · UMKM Fotocopy Trisanet</span>
