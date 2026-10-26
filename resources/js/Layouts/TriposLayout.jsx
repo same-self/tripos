@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 
 const MENU = [
     { label: 'Dashboard', href: '/dashboard' },
-    { label: 'Transaksi (POS)', href: '#' },
+    { label: 'Transaksi (POS)', href: '/riwayat' },
     { label: 'Barang', href: '/barang' },
     { label: 'Layanan', href: '/layanan' },
     { label: 'Supplier', href: '/supplier' },
