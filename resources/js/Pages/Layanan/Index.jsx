@@ -134,6 +134,12 @@ export default function Index({ services, categories, total, detail, autoDeduct,
                                 >
                                     Ubah Layanan
                                 </Link>
+                                <Link
+                                    href={route('layanan.bahan', detail.id)}
+                                    className="rounded-[10px] border border-[#6B7280] py-2.5 text-center text-sm font-medium"
+                                >
+                                    Ubah Bahan
+                                </Link>
 
                                 <div className="h-px bg-[#E5E7EB]" />
                             </>
