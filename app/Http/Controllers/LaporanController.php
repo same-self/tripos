@@ -43,6 +43,14 @@ class LaporanController extends Controller
             $props['arusKas'] = $this->arusKas($start, $end, $periode);
         }
 
+        if ($tab === 'terlaris') {
+            $props['terlaris'] = $this->terlarisLambat();
+        }
+
+        if ($tab === 'keuntungan') {
+            $props['keuntungan'] = $this->keuntungan();
+        }
+
         return Inertia::render('Laporan/Index', $props);
     }
 
@@ -147,6 +155,92 @@ class LaporanController extends Controller
             'spending' => $spending,
             'net' => $income - $spending,
             'weeks' => $weeks,
+        ];
+    }
+
+    private function terlarisLambat(): array
+    {
+        $window = max(1, Setting::int('report_window_days', 30));
+        $fast = Setting::int('fast_moving_threshold', 80);
+        $slow = Setting::int('slow_moving_threshold', 10);
+        $sold = $this->soldPerItem($window);
+
+        $items = Item::orderBy('name')->get(['id', 'name', 'unit', 'stock', 'cost_price']);
+
+        $laku = $items
+            ->filter(fn (Item $item) => (int) ($sold[$item->id] ?? 0) >= $fast)
+            ->map(function (Item $item) use ($sold, $window) {
+                $qty = (int) $sold[$item->id];
+
+                return [
+                    'name' => $item->name,
+                    'unit' => $item->unit,
+                    'sold' => $qty,
+                    'stock' => $item->stock,
+                    'days_left' => $qty > 0 ? max(0, (int) round($item->stock / ($qty / $window))) : null,
+                ];
+            })
+            ->sortByDesc('sold')
+            ->take(5)
+            ->values();
+
+        $lambatAll = $items
+            ->filter(fn (Item $item) => (int) ($sold[$item->id] ?? 0) < $slow)
+            ->map(fn (Item $item) => [
+                'name' => $item->name,
+                'unit' => $item->unit,
+                'sold' => (int) ($sold[$item->id] ?? 0),
+                'stock' => $item->stock,
+                // Money tied up in stock that is not moving
+                'idle_capital' => (int) $item->stock * (int) $item->cost_price,
+            ])
+            ->sortBy('sold')
+            ->values();
+
+        return [
+            'laku' => $laku,
+            'lambat' => $lambatAll->take(5)->values(),
+            'lambatTotal' => (int) $lambatAll->sum('idle_capital'),
+            'fast' => $fast,
+            'slow' => $slow,
+            'window' => $window,
+        ];
+    }
+
+    private function keuntungan(): array
+    {
+        $window = max(1, Setting::int('report_window_days', 30));
+        $start = now()->startOfDay()->subDays($window - 1);
+
+        // Only items sold directly to customers; paper used by services is already in the service price
+        $rows = DB::table('item_details as d')
+            ->join('sales_transactions as s', 's.id', '=', 'd.sales_id')
+            ->join('items as i', 'i.id', '=', 'd.item_id')
+            ->whereNull('d.deleted_at')
+            ->whereNull('s.deleted_at')
+            ->whereBetween('s.transacted_at', [$start, now()->endOfDay()])
+            ->groupBy('d.item_id', 'i.name', 'i.cost_price', 'i.sell_price')
+            ->selectRaw('d.item_id, i.name, i.cost_price, i.sell_price, SUM(d.amount) as qty, SUM(d.subtotal) as revenue')
+            ->get()
+            ->map(function ($row) {
+                $cost = (int) $row->cost_price;
+                $qty = (int) $row->qty;
+
+                return [
+                    'name' => $row->name,
+                    'sold' => $qty,
+                    'per_unit' => (int) $row->sell_price - $cost,
+                    'total' => (int) $row->revenue - ($qty * $cost),
+                ];
+            })
+            ->sortByDesc('total')
+            ->values();
+
+        return [
+            'rows' => $rows,
+            'total' => (int) $rows->sum('total'),
+            'untung' => $rows->where('per_unit', '>', 0)->count(),
+            'rugi' => $rows->where('per_unit', '<', 0)->count(),
         ];
     }
 
