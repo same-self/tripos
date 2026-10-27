@@ -1,5 +1,6 @@
 import TriposLayout from '@/Layouts/TriposLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
+import EditButton from '@/Components/EditButton';
 
 const inputClass = 'h-11 rounded-xl border border-[#6B7280] bg-white px-3.5 text-sm';
 
@@ -93,9 +94,7 @@ export default function Index({ users }) {
                                             </span>
                                         </td>
                                         <td className="px-2 py-3.5">
-                                            <Link href={route('pengguna.edit', u.id)} className="text-[13px] font-medium text-[#1D4ED8]">
-                                                Ubah
-                                            </Link>
+                                            <EditButton href={route('pengguna.edit', u.id)} />
                                         </td>
                                     </tr>
                                 ))}
