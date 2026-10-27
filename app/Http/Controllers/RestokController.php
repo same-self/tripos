@@ -63,7 +63,10 @@ class RestokController extends Controller
     {
         $search = trim((string) $request->query('cari', ''));
 
-        $purchases = Purchase::with(['supplier', 'user' => fn ($q) => $q->withTrashed()])
+        $purchases = Purchase::with([
+            'supplier' => fn ($q) => $q->withTrashed(),
+            'user' => fn ($q) => $q->withTrashed(),
+        ])
             ->withCount('details')
             ->when($search !== '', fn ($q) => $q->whereHas('supplier', fn ($s) => $s->where('name', 'like', '%'.$search.'%')))
             ->orderByDesc('transacted_at')
