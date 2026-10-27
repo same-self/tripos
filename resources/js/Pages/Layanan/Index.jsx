@@ -1,5 +1,6 @@
 import TriposLayout from '@/Layouts/TriposLayout';
 import { Head, Link, router } from '@inertiajs/react';
+import EditButton from '@/Components/EditButton';
 
 const rupiah = (n) => 'Rp ' + Number(n).toLocaleString('id-ID');
 const fmt = (n) => Number(n).toLocaleString('id-ID', { maximumFractionDigits: 4 });
@@ -90,9 +91,7 @@ export default function Index({ services, categories, total, detail, autoDeduct,
                                                 {s.materials_summary ?? 'Belum ada bahan'}
                                             </td>
                                             <td className="px-2 py-3.5">
-                                                <Link href={route('layanan.edit', s.id)} className="text-[13px] font-medium text-[#1D4ED8]">
-                                                    Ubah
-                                                </Link>
+                                                <EditButton href={route('layanan.edit', s.id)} />
                                             </td>
                                         </tr>
                                     );

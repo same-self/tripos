@@ -1,6 +1,8 @@
 import TriposLayout from '@/Layouts/TriposLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
+import EditButton from '@/Components/EditButton';
+import { Eye } from 'lucide-react';
 
 const rupiah = (n) => 'Rp ' + Number(n).toLocaleString('id-ID');
 
@@ -99,9 +101,7 @@ export default function Index({ sales, filters, totals }) {
                                 <td className="px-4 py-3 text-[#4B5563]">{sale.items} item</td>
                                 <td className="px-4 py-3 text-right font-semibold">{rupiah(sale.total)}</td>
                                 <td className="px-4 py-3 text-right">
-                                    <Link href={route('riwayat.show', sale.id)} className="text-sm font-semibold text-[#1D4ED8]">
-                                        Lihat
-                                    </Link>
+                                    <EditButton href={route('riwayat.show', sale.id)} label="Lihat" icon={Eye} />
                                 </td>
                             </tr>
                         ))}

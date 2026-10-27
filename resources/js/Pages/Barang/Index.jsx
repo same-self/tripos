@@ -1,6 +1,8 @@
 import TriposLayout from '@/Layouts/TriposLayout';
   import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
+import CategoryBadge from '@/Components/CategoryBadge';
+import EditButton from '@/Components/EditButton';
 
 const rupiah = (n) => 'Rp ' + Number(n).toLocaleString('id-ID');
 
@@ -10,12 +12,15 @@ function CategoryButton({ active, label, count, onClick }) {
             type="button"
             onClick={onClick}
             aria-pressed={active}
-            className={`flex items-center justify-between rounded-lg px-3 py-2.5 text-sm ${
+            className={`flex items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-sm ${
                 active ? 'bg-[#DBEAFE] font-semibold text-[#1D4ED8]' : 'font-medium text-[#111827] hover:bg-[#F3F4F6]'
             }`}
         >
-            <span>{label}</span>
-            <span className="text-xs text-[#4B5563]">{count}</span>
+            <span className="flex items-center gap-2.5">
+                <CategoryBadge name={label} size="sm" />
+                {label}
+            </span>
+            <span className="rounded-full bg-white px-2 py-0.5 text-xs text-[#4B5563]">{count}</span>
         </button>
     );
 }
@@ -138,9 +143,7 @@ export default function Index({ items, categories, total, filters, summary }) {
                                             </td>
                                             <td className="px-2 py-3.5">
                                                 {/* Connected to the edit form in the next step */}
-                                                <Link href={route('barang.edit', item.id)} className="text-[13px] font-medium text-[#1D4ED8]">
-                                                      Ubah
-                                                </Link>
+                                                <EditButton href={route('barang.edit', item.id)} />
                                             </td>
                                         </tr>
                                     ))}
