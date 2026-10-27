@@ -1,7 +1,7 @@
 import TriposLayout from '@/Layouts/TriposLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import EditButton from '@/Components/EditButton';
-import { Trash2 } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 
 const rupiah = (n) => 'Rp ' + Number(n).toLocaleString('id-ID');
 const fmt = (n) => Number(n).toLocaleString('id-ID', { maximumFractionDigits: 4 });
@@ -46,8 +46,9 @@ export default function Index({ services, categories, total, detail, autoDeduct,
                     </div>
                     <Link
                         href={route('layanan.create')}
-                        className="rounded-[10px] bg-[#1D4ED8] px-4 py-2.5 text-sm font-semibold text-white"
+                        className="inline-flex items-center gap-2 rounded-[10px] bg-[#1D4ED8] px-4 py-2.5 text-sm font-semibold text-white"
                     >
+                        <Plus size={18} strokeWidth={2.5} aria-hidden="true" />
                         Tambah Layanan
                     </Link>
                 </div>
