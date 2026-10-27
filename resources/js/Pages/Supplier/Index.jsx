@@ -1,6 +1,8 @@
 import TriposLayout from '@/Layouts/TriposLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
+import EditButton from '@/Components/EditButton';
+import { Plus } from 'lucide-react';
 
 const rupiah = (n) => 'Rp ' + Number(n).toLocaleString('id-ID');
 
@@ -29,8 +31,9 @@ export default function Index({ suppliers, detail, filters }) {
                     </div>
                     <Link
                         href={route('supplier.create')}
-                        className="rounded-[10px] bg-[#1D4ED8] px-4 py-2.5 text-sm font-semibold text-white"
+                        className="inline-flex items-center gap-2 rounded-[10px] bg-[#1D4ED8] px-4 py-2.5 text-sm font-semibold text-white"
                     >
+                        <Plus size={18} strokeWidth={2.5} aria-hidden="true" />
                         Tambah Supplier
                     </Link>
                 </div>
@@ -89,12 +92,7 @@ export default function Index({ suppliers, detail, filters }) {
                                                 <td className="px-2 py-3.5 text-[#4B5563]">{s.phone ?? '-'}</td>
                                                 <td className="px-2 py-3.5">{s.last_purchase ?? 'Belum ada'}</td>
                                                 <td className="px-2 py-3.5">
-                                                    <Link
-                                                        href={route('supplier.edit', s.id)}
-                                                        className="text-[13px] font-medium text-[#1D4ED8]"
-                                                    >
-                                                        Ubah
-                                                    </Link>
+                                                    <EditButton href={route('supplier.edit', s.id)} />
                                                 </td>
                                             </tr>
                                         );
