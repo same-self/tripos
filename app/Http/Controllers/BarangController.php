@@ -7,6 +7,7 @@ use App\Models\ItemCategory;
 use App\Models\ServiceMaterial;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -40,9 +41,9 @@ class BarangController extends Controller
                 'sell_price' => $item->sell_price,
                 'stock' => $item->stock,
                 'low_stock' => $item->isLowStock(),
+                'image_url' => $this->imageUrl($item),
             ]);
 
-        // Summary for the cards at the top, always over the whole catalog
         $all = Item::all(['stock', 'min_stock', 'cost_price']);
 
         return Inertia::render('Barang/Index', [
@@ -72,10 +73,14 @@ class BarangController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $data = $request->validate($this->rules(), $this->messages());
+        $data = $request->validate($this->rules() + $this->imageRules(), $this->messages());
 
         // New products start at 0 stock; stock changes come from restok and sales
-        Item::create($data);
+        $item = Item::create(collect($data)->except(['gambar', 'hapus_gambar'])->all());
+
+        if ($request->hasFile('gambar')) {
+            $item->forceFill(['image_path' => $request->file('gambar')->store('barang', 'public')])->save();
+        }
 
         return redirect()->route('barang.index')->with('success', 'Barang berhasil ditambahkan.');
     }
@@ -92,6 +97,7 @@ class BarangController extends Controller
                 'sell_price' => $item->sell_price,
                 'min_stock' => $item->min_stock,
                 'stock' => $item->stock,
+                'image_url' => $this->imageUrl($item),
             ],
             'categories' => $this->categoryOptions(),
         ]);
@@ -99,7 +105,17 @@ class BarangController extends Controller
 
     public function update(Request $request, Item $item): RedirectResponse
     {
-        $item->update($request->validate($this->rules(), $this->messages()));
+        $data = $request->validate($this->rules() + $this->imageRules(), $this->messages());
+
+        $item->update(collect($data)->except(['gambar', 'hapus_gambar'])->all());
+
+        if ($request->hasFile('gambar')) {
+            $this->deleteImage($item);
+            $item->forceFill(['image_path' => $request->file('gambar')->store('barang', 'public')])->save();
+        } elseif ($request->boolean('hapus_gambar')) {
+            $this->deleteImage($item);
+            $item->forceFill(['image_path' => null])->save();
+        }
 
         return redirect()->route('barang.index')->with('success', 'Barang berhasil diubah.');
     }
@@ -119,6 +135,18 @@ class BarangController extends Controller
         return redirect()->route('barang.index')->with('success', 'Barang berhasil dihapus.');
     }
 
+    private function imageUrl(Item $item): ?string
+    {
+        return $item->image_path ? Storage::disk('public')->url($item->image_path) : null;
+    }
+
+    private function deleteImage(Item $item): void
+    {
+        if ($item->image_path) {
+            Storage::disk('public')->delete($item->image_path);
+        }
+    }
+
     private function categoryOptions()
     {
         return ItemCategory::orderBy('name')->get(['id', 'name']);
@@ -133,6 +161,14 @@ class BarangController extends Controller
             'cost_price' => ['required', 'integer', 'min:0'],
             'sell_price' => ['required', 'integer', 'min:1', 'gte:cost_price'],
             'min_stock' => ['required', 'integer', 'min:0'],
+        ];
+    }
+
+    private function imageRules(): array
+    {
+        return [
+            'gambar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'hapus_gambar' => ['nullable', 'boolean'],
         ];
     }
 
@@ -153,6 +189,9 @@ class BarangController extends Controller
             'min_stock.required' => 'Stok minimum wajib diisi. Isi 0 jika tidak perlu peringatan.',
             'min_stock.integer' => 'Stok minimum harus berupa angka bulat.',
             'min_stock.min' => 'Stok minimum tidak boleh negatif.',
+            'gambar.image' => 'File harus berupa gambar.',
+            'gambar.mimes' => 'Gambar harus berformat JPG, PNG, atau WEBP.',
+            'gambar.max' => 'Ukuran gambar maksimal 2 MB.',
         ];
     }
 }

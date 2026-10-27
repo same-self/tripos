@@ -30,6 +30,7 @@ class PosController extends Controller
                 'sell_price' => $item->sell_price,
                 'stock' => $item->stock,
                 'low_stock' => $item->isLowStock(),
+                'image_url' => $item->image_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($item->image_path) : null,
             ]);
 
         $services = Service::with(['category', 'materials.item'])
