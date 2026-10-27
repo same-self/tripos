@@ -4,6 +4,7 @@ import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import CategoryBadge from '@/Components/CategoryBadge';
 import EditButton from '@/Components/EditButton';
+import ItemThumb from '@/Components/ItemThumb';
 
 const rupiah = (n) => 'Rp ' + Number(n).toLocaleString('id-ID');
 
@@ -145,7 +146,12 @@ export default function Index({ items, categories, total, filters, summary }) {
                                 <tbody>
                                     {items.map((item) => (
                                         <tr key={item.id} className="border-b border-[#E5E7EB] last:border-b-0">
-                                            <td className="px-2 py-3.5 font-medium">{item.name}</td>
+                                            <td className="px-2 py-3.5">
+                                                <div className="flex items-center gap-3">
+                                                    <ItemThumb src={item.image_url} name={item.name} />
+                                                    <span className="font-medium">{item.name}</span>
+                                                </div>
+                                            </td>
                                             <td className="px-2 py-3.5 text-[#4B5563]">{item.category}</td>
                                             <td className="px-2 py-3.5 text-[#4B5563]">{item.unit}</td>
                                             <td className="px-2 py-3.5">{rupiah(item.cost_price)}</td>

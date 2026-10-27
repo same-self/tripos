@@ -2,6 +2,7 @@ import CashierLayout from '@/Layouts/CashierLayout';
 import { Head, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import { Trash2 } from 'lucide-react';
+import ItemThumb from '@/Components/ItemThumb';
 
 const QUICK_AMOUNTS = [20000, 50000, 100000];
 const QUICK_PAGES = [10, 50, 100, 200];
@@ -175,6 +176,7 @@ export default function Index({ items, services, paymentMethods }) {
                         <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
                             {shownItems.map((item) => (
                                 <li key={item.id} className="flex flex-col gap-1.5 rounded-xl border border-[#E5E7EB] bg-white p-3.5">
+                                    <ItemThumb src={item.image_url} name={item.name} size="lg" />
                                     <div className="flex items-center gap-2">
                                         <CategoryIcon category={item.category} />
                                         <span className="text-xs font-medium text-[#4B5563]">{item.category}</span>
