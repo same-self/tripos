@@ -41,10 +41,19 @@ class BarangController extends Controller
                 'low_stock' => $item->isLowStock(),
             ]);
 
+        // Summary for the cards at the top, always over the whole catalog
+        $all = Item::all(['stock', 'min_stock', 'cost_price']);
+
         return Inertia::render('Barang/Index', [
             'items' => $items,
             'categories' => $categories,
             'total' => Item::count(),
+            'summary' => [
+                'total' => $all->count(),
+                'low_stock' => $all->filter(fn (Item $item) => $item->isLowStock())->count(),
+                'stock_value' => (int) $all->sum(fn (Item $item) => $item->stock * $item->cost_price),
+                'categories' => $categories->count(),
+            ],
             'filters' => [
                 'kategori' => $categoryId ? (int) $categoryId : null,
                 'cari' => $search,

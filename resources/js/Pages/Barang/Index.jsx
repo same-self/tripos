@@ -20,7 +20,16 @@ function CategoryButton({ active, label, count, onClick }) {
     );
 }
 
-export default function Index({ items, categories, total, filters }) {
+function SummaryCard({ label, value, tone }) {
+    return (
+        <div className="flex flex-col gap-1 rounded-2xl border border-[#E5E7EB] bg-white p-4">
+            <p className="text-xs font-medium text-[#4B5563]">{label}</p>
+            <p className={`text-[22px] font-bold ${tone === 'danger' ? 'text-[#B91C1C]' : 'text-[#111827]'}`}>{value}</p>
+        </div>
+    );
+}
+
+export default function Index({ items, categories, total, filters, summary }) {
     const [search, setSearch] = useState(filters.cari);
 
     // Every filter change reloads the list from the server with the other filters kept
@@ -49,6 +58,13 @@ export default function Index({ items, categories, total, filters }) {
                   >
                       Tambah Barang
                   </Link>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    <SummaryCard label="Total barang" value={summary.total} />
+                    <SummaryCard label="Stok menipis" value={summary.low_stock} tone="danger" />
+                    <SummaryCard label="Nilai stok (modal)" value={rupiah(summary.stock_value)} />
+                    <SummaryCard label="Kategori" value={summary.categories} />
                 </div>
 
                 <div className="flex flex-col gap-5 lg:flex-row">

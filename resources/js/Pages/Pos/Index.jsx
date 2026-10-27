@@ -1,6 +1,7 @@
 import CashierLayout from '@/Layouts/CashierLayout';
 import { Head, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
+import { Trash2 } from 'lucide-react';
 
 const QUICK_AMOUNTS = [20000, 50000, 100000];
 const QUICK_PAGES = [10, 50, 100, 200];
@@ -95,6 +96,17 @@ export default function Index({ items, services, paymentMethods }) {
                 .map((line) => (line.key === key ? { ...line, qty: line.qty + delta } : line))
                 .filter((line) => line.qty > 0),
         );
+    }
+
+    function setQty(key, value) {
+        const n = Math.floor(Number(value));
+        setCart((prev) =>
+            prev.map((line) => (line.key === key ? { ...line, qty: Number.isFinite(n) && n >= 1 ? n : 1 } : line)),
+        );
+    }
+
+    function removeLine(key) {
+        setCart((prev) => prev.filter((line) => line.key !== key));
     }
 
     function submitSale() {
@@ -303,8 +315,8 @@ export default function Index({ items, services, paymentMethods }) {
                                     {line.qty} × {rupiah(line.price)}
                                 </p>
                             </div>
-                            <div className="flex shrink-0 items-center gap-2.5">
-                                <div className="flex items-center gap-1.5">
+                            <div className="flex shrink-0 items-center gap-2">
+                                <div className="flex items-center gap-1">
                                     <button
                                         type="button"
                                         aria-label={`Kurangi ${line.name}`}
@@ -313,7 +325,15 @@ export default function Index({ items, services, paymentMethods }) {
                                     >
                                         −
                                     </button>
-                                    <span className="w-6 text-center text-[13px] font-semibold">{line.qty}</span>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        inputMode="numeric"
+                                        aria-label={`Jumlah ${line.name}`}
+                                        value={line.qty}
+                                        onChange={(e) => setQty(line.key, e.target.value)}
+                                        className="h-7 w-14 rounded-lg border border-[#6B7280] text-center text-[13px] font-semibold"
+                                    />
                                     <button
                                         type="button"
                                         aria-label={`Tambah ${line.name}`}
@@ -324,6 +344,14 @@ export default function Index({ items, services, paymentMethods }) {
                                     </button>
                                 </div>
                                 <p className="w-24 text-right text-sm font-semibold">{rupiah(line.qty * line.price)}</p>
+                                <button
+                                    type="button"
+                                    aria-label={`Hapus ${line.name}`}
+                                    onClick={() => removeLine(line.key)}
+                                    className="flex h-7 w-7 items-center justify-center rounded-lg text-[#B91C1C] hover:bg-[#FEE2E2]"
+                                >
+                                    <Trash2 size={16} aria-hidden="true" />
+                                </button>
                             </div>
                         </div>
                     ))}
