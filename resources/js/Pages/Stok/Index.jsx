@@ -1,5 +1,6 @@
 import TriposLayout from '@/Layouts/TriposLayout';
 import { Head, Link } from '@inertiajs/react';
+import { Plus } from 'lucide-react';
 
 const rupiah = (n) => 'Rp ' + Number(n).toLocaleString('id-ID');
 
@@ -42,8 +43,9 @@ export default function Index({ items, restokSegera, restokNanti, window, segera
                     </div>
                     <Link
                         href={route('restok.create')}
-                        className="rounded-[10px] bg-[#1D4ED8] px-4 py-2.5 text-sm font-semibold text-white"
+                        className="inline-flex items-center gap-2 rounded-[10px] bg-[#1D4ED8] px-4 py-2.5 text-sm font-semibold text-white"
                     >
+                        <Plus size={18} strokeWidth={2.5} aria-hidden="true" />
                         Tambah Restok
                     </Link>
                 </div>

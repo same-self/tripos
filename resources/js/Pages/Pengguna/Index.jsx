@@ -1,7 +1,7 @@
 import TriposLayout from '@/Layouts/TriposLayout';
 import EditButton from '@/Components/EditButton';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { Trash2 } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 
 const inputClass = 'h-11 rounded-xl border border-[#6B7280] bg-white px-3.5 text-sm';
 
@@ -58,8 +58,9 @@ export default function Index({ users }) {
                     </div>
                     <a
                         href="#form-pengguna"
-                        className="rounded-[10px] bg-[#1D4ED8] px-4 py-2.5 text-sm font-semibold text-white"
+                        className="inline-flex items-center gap-2 rounded-[10px] bg-[#1D4ED8] px-4 py-2.5 text-sm font-semibold text-white"
                     >
+                        <Plus size={18} strokeWidth={2.5} aria-hidden="true" />
                         Tambah Pengguna
                     </a>
                 </div>

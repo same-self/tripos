@@ -1,6 +1,6 @@
 import TriposLayout from '@/Layouts/TriposLayout';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Trash2 } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import CategoryBadge from '@/Components/CategoryBadge';
 import EditButton from '@/Components/EditButton';
@@ -67,12 +67,13 @@ export default function Index({ items, categories, total, filters, summary }) {
                         <p className="mt-1 text-[13px] text-[#4B5563]">Kelola data barang ATK, harga jual, dan kategorinya.</p>
                     </div>
                     {/* Connected to the add form in the next step */}
-                  <Link
-                      href={route('barang.create')}
-                      className="rounded-[10px] bg-[#1D4ED8] px-4 py-2.5 text-sm font-semibold text-white"
-                  >
-                      Tambah Barang
-                  </Link>
+                    <Link
+                        href={route('barang.create')}
+                        className="inline-flex items-center gap-2 rounded-[10px] bg-[#1D4ED8] px-4 py-2.5 text-sm font-semibold text-white"
+                    >
+                        <Plus size={18} strokeWidth={2.5} aria-hidden="true" />
+                        Tambah Barang
+                    </Link>
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
