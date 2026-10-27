@@ -48,6 +48,10 @@ Route::put('/barang/{item}', [BarangController::class, 'update'])
     ->middleware(['auth', 'verified', 'role:admin'])
     ->name('barang.update');
 
+Route::delete('/barang/{item}', [BarangController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('barang.destroy');
+
 Route::get('/kategori', [KategoriController::class, 'index'])
     ->middleware(['auth', 'verified', 'role:admin'])
     ->name('kategori.index');
@@ -142,6 +146,10 @@ Route::get('/layanan/{service}/ubah', [LayananController::class, 'edit'])
 Route::put('/layanan/{service}', [LayananController::class, 'update'])
     ->middleware(['auth', 'verified', 'role:admin'])
     ->name('layanan.update');
+
+Route::delete('/layanan/{service}', [LayananController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('layanan.destroy');
 
 Route::get('/layanan/{service}/bahan', [LayananController::class, 'bahan'])
     ->middleware(['auth', 'verified', 'role:admin'])
