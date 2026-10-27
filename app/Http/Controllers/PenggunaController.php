@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Enums\Role;
+use App\Models\Purchase;
+use App\Models\Sale;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,6 +16,13 @@ class PenggunaController extends Controller
 {
     public function index(): Response
     {
+        // Accounts that already made a sale or a purchase can only be deactivated, not deleted
+        $usedIds = Sale::withTrashed()->distinct()->pluck('user_id')
+            ->merge(Purchase::withTrashed()->distinct()->pluck('user_id'))
+            ->unique()
+            ->values()
+            ->all();
+
         // withTrashed so deactivated accounts still show, marked as Nonaktif
         $users = User::withTrashed()
             ->orderBy('name')
@@ -25,6 +34,7 @@ class PenggunaController extends Controller
                 'role' => $user->role->value,
                 'role_label' => $user->role === Role::Admin ? 'Admin' : 'Kasir',
                 'active' => $user->deleted_at === null,
+                'can_delete' => ! in_array($user->id, $usedIds) && ! $user->is(auth()->user()),
             ]);
 
         return Inertia::render('Pengguna/Index', [
@@ -114,6 +124,27 @@ class PenggunaController extends Controller
         }
 
         return redirect()->route('pengguna.index')->with('success', 'Pengguna berhasil diperbarui.');
+    }
+
+    public function destroy(Request $request, User $user): RedirectResponse
+    {
+        if ($user->is($request->user())) {
+            return back()->withErrors(['hapus' => 'Akun yang sedang dipakai tidak bisa dihapus.']);
+        }
+
+        $hasHistory = Sale::withTrashed()->where('user_id', $user->id)->exists()
+            || Purchase::withTrashed()->where('user_id', $user->id)->exists();
+
+        if ($hasHistory) {
+            return back()->withErrors([
+                'hapus' => 'Pengguna "'.$user->name.'" sudah punya riwayat transaksi. Nonaktifkan saja.',
+            ]);
+        }
+
+        // No sales or purchases point to this account, so it can be removed completely
+        $user->forceDelete();
+
+        return redirect()->route('pengguna.index')->with('success', 'Pengguna berhasil dihapus.');
     }
 
     private function messages(): array
