@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Item;
 use App\Models\ItemCategory;
+use App\Models\ServiceMaterial;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -101,6 +102,21 @@ class BarangController extends Controller
         $item->update($request->validate($this->rules(), $this->messages()));
 
         return redirect()->route('barang.index')->with('success', 'Barang berhasil diubah.');
+    }
+
+    public function destroy(Item $item): RedirectResponse
+    {
+        // A service that still uses this product as material would break its sales
+        if (ServiceMaterial::where('item_id', $item->id)->exists()) {
+            return back()->withErrors([
+                'hapus' => 'Barang "'.$item->name.'" masih dipakai sebagai bahan layanan. Ubah bahan layanannya dulu.',
+            ]);
+        }
+
+        // Soft delete: old receipts and reports still show the product
+        $item->delete();
+
+        return redirect()->route('barang.index')->with('success', 'Barang berhasil dihapus.');
     }
 
     private function categoryOptions()

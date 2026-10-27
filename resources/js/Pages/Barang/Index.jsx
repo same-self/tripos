@@ -1,5 +1,6 @@
 import TriposLayout from '@/Layouts/TriposLayout';
-  import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import CategoryBadge from '@/Components/CategoryBadge';
 import EditButton from '@/Components/EditButton';
@@ -44,6 +45,14 @@ export default function Index({ items, categories, total, filters, summary }) {
             { kategori: filters.kategori, cari: filters.cari, ...changes },
             { preserveState: true, preserveScroll: true, replace: true },
         );
+    }
+
+    const { errors: pageErrors } = usePage().props;
+
+    function remove(item) {
+        if (window.confirm(`Hapus barang "${item.name}"? Riwayat penjualannya tetap tersimpan.`)) {
+            router.delete(route('barang.destroy', item.id), { preserveScroll: true });
+        }
     }
 
     return (
@@ -98,6 +107,9 @@ export default function Index({ items, categories, total, filters, summary }) {
 
                     {/* Product table */}
                     <section className="min-w-0 flex-1 rounded-2xl border border-[#E5E7EB] bg-white p-5">
+                        {pageErrors.hapus && (
+                            <p className="mb-4 rounded-xl bg-[#FEE2E2] px-4 py-3 text-sm text-[#B91C1C]">{pageErrors.hapus}</p>
+                        )}
                         <form
                             onSubmit={(e) => {
                                 e.preventDefault();
@@ -143,7 +155,17 @@ export default function Index({ items, categories, total, filters, summary }) {
                                             </td>
                                             <td className="px-2 py-3.5">
                                                 {/* Connected to the edit form in the next step */}
-                                                <EditButton href={route('barang.edit', item.id)} />
+                                                <div className="flex items-center gap-2">
+                                                    <EditButton href={route('barang.edit', item.id)} />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => remove(item)}
+                                                        className="inline-flex items-center gap-1.5 rounded-lg border border-[#FCA5A5] bg-[#FEE2E2] px-2.5 py-1.5 text-[13px] font-semibold text-[#B91C1C] hover:bg-[#FECACA]"
+                                                    >
+                                                        <Trash2 size={14} strokeWidth={2.25} aria-hidden="true" />
+                                                        Hapus
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}

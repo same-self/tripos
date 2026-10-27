@@ -115,6 +115,14 @@ class LayananController extends Controller
             ->with('success', 'Layanan berhasil diubah.');
     }
 
+    public function destroy(Service $service): RedirectResponse
+    {
+        // Soft delete: old receipts still show the service
+        $service->delete();
+
+        return redirect()->route('layanan.index')->with('success', 'Layanan berhasil dihapus.');
+    }
+
     public function updateSetting(Request $request): RedirectResponse
     {
         $data = $request->validate([
