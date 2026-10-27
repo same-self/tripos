@@ -91,9 +91,9 @@ export default function Index({ items, categories, total, filters, summary }) {
                                 onClick={() => go({ kategori: c.id })}
                             />
                         ))}
-                        <button type="button" disabled className="mt-3 px-3 text-left text-[13px] font-semibold text-[#1D4ED8] opacity-60">
-                            + Tambah kategori
-                        </button>
+                        <Link href={route('kategori.index')} className="mt-3 px-3 text-left text-[13px] font-semibold text-[#1D4ED8]">
+                            Kelola kategori
+                        </Link>
                     </aside>
 
                     {/* Product table */}
