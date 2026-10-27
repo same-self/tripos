@@ -93,7 +93,9 @@ class LaporanController extends Controller
 
     private function pembelian(Carbon $start, Carbon $end): array
     {
-        $purchases = Purchase::with('supplier')->whereBetween('transacted_at', [$start, $end])->get();
+        $purchases = Purchase::with(['supplier' => fn ($q) => $q->withTrashed()])
+            ->whereBetween('transacted_at', [$start, $end])
+            ->get();
         $total = (int) $purchases->sum('total_price');
 
         $suppliers = $purchases->groupBy('supplier_id')

@@ -110,6 +110,10 @@ Route::put('/supplier/{supplier}', [SupplierController::class, 'update'])
     ->middleware(['auth', 'verified', 'role:admin'])
     ->name('supplier.update');
 
+Route::delete('/supplier/{supplier}', [SupplierController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('supplier.destroy');
+
 Route::get('/layanan', [LayananController::class, 'index'])
     ->middleware(['auth', 'verified', 'role:admin'])
     ->name('layanan.index');

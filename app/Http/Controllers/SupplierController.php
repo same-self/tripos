@@ -98,6 +98,14 @@ class SupplierController extends Controller
             ->with('success', 'Supplier berhasil diubah.');
     }
 
+    public function destroy(Supplier $supplier): RedirectResponse
+    {
+        // Soft delete: old purchases still show the supplier's name
+        $supplier->delete();
+
+        return redirect()->route('supplier.index')->with('success', 'Supplier berhasil dihapus.');
+    }
+
     private function rules(): array
     {
         return [

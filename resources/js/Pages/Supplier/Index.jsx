@@ -2,7 +2,7 @@ import TriposLayout from '@/Layouts/TriposLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import EditButton from '@/Components/EditButton';
-import { Plus } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 
 const rupiah = (n) => 'Rp ' + Number(n).toLocaleString('id-ID');
 
@@ -15,6 +15,12 @@ export default function Index({ suppliers, detail, filters }) {
             { cari: filters.cari, pilih: filters.pilih, ...changes },
             { preserveState: true, preserveScroll: true, replace: true },
         );
+    }
+
+    function remove(supplier) {
+        if (window.confirm(`Hapus supplier "${supplier.name}"? Riwayat pembelian tetap tersimpan.`)) {
+            router.delete(route('supplier.destroy', supplier.id), { preserveScroll: true });
+        }
     }
 
     return (
@@ -92,7 +98,17 @@ export default function Index({ suppliers, detail, filters }) {
                                                 <td className="px-2 py-3.5 text-[#4B5563]">{s.phone ?? '-'}</td>
                                                 <td className="px-2 py-3.5">{s.last_purchase ?? 'Belum ada'}</td>
                                                 <td className="px-2 py-3.5">
-                                                    <EditButton href={route('supplier.edit', s.id)} />
+                                                    <div className="flex items-center gap-2">
+                                                        <EditButton href={route('supplier.edit', s.id)} />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => remove(s)}
+                                                            className="inline-flex items-center gap-1.5 rounded-lg border border-[#FCA5A5] bg-[#FEE2E2] px-2.5 py-1.5 text-[13px] font-semibold text-[#B91C1C] hover:bg-[#FECACA]"
+                                                        >
+                                                            <Trash2 size={14} strokeWidth={2.25} aria-hidden="true" />
+                                                            Hapus
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         );
