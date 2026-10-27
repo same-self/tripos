@@ -13,6 +13,7 @@ use App\Http\Controllers\LayananController;
 use App\Http\Controllers\RestokController;
 use App\Http\Controllers\StokController;
 use App\Http\Controllers\LaporanController;
+use App\Http\Controllers\KategoriController;
 
 
 Route::get('/', fn () => redirect()->route('login'));
@@ -46,6 +47,30 @@ Route::get('/barang/{item}/ubah', [BarangController::class, 'edit'])
 Route::put('/barang/{item}', [BarangController::class, 'update'])
     ->middleware(['auth', 'verified', 'role:admin'])
     ->name('barang.update');
+
+Route::get('/kategori', [KategoriController::class, 'index'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('kategori.index');
+
+Route::get('/kategori/tambah', [KategoriController::class, 'create'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('kategori.create');
+
+Route::post('/kategori', [KategoriController::class, 'store'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('kategori.store');
+
+Route::get('/kategori/{kategori}/ubah', [KategoriController::class, 'edit'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('kategori.edit');
+
+Route::put('/kategori/{kategori}', [KategoriController::class, 'update'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('kategori.update');
+
+Route::delete('/kategori/{kategori}', [KategoriController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('kategori.destroy');
 
 Route::get('/pengguna', [PenggunaController::class, 'index'])
     ->middleware(['auth', 'verified', 'role:admin'])
