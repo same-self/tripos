@@ -90,6 +90,11 @@ Route::put('/pengguna/{user}', [PenggunaController::class, 'update'])
     ->withTrashed()
     ->name('pengguna.update');
 
+Route::delete('/pengguna/{user}', [PenggunaController::class, 'destroy'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->withTrashed()
+    ->name('pengguna.destroy');
+
 Route::get('/supplier', [SupplierController::class, 'index'])
     ->middleware(['auth', 'verified', 'role:admin'])
     ->name('supplier.index');
