@@ -1,5 +1,7 @@
 import TriposLayout from '@/Layouts/TriposLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
+import { Wrench } from 'lucide-react';
+import PageTitle from '@/Components/PageTitle';
 
 const inputClass = 'h-11 rounded-xl border border-[#6B7280] bg-white px-3.5 text-sm';
 
@@ -36,7 +38,7 @@ export default function Bahan({ service, materials, items }) {
             <Head title="Ubah Bahan" />
 
             <div className="max-w-3xl">
-                <h1 className="text-[22px] font-bold">Ubah Bahan</h1>
+                <PageTitle icon={Wrench}>Ubah Bahan</PageTitle>
                 <p className="mt-1 text-[13px] text-[#4B5563]">{service.name}</p>
 
                 <form

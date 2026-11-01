@@ -23,10 +23,30 @@ const STYLES = {
     Semua: { icon: Package, bg: 'bg-[#F3F4F6]', fg: 'text-[#111827]' },
 };
 
-const DEFAULT = { icon: Tag, bg: 'bg-[#F3F4F6]', fg: 'text-[#4B5563]' };
+// Categories the owner adds later are not in the list above. Instead of all turning grey,
+// each one gets a stable color picked from its name (the same name always gives the same color).
+const PALETTE = [
+    { bg: 'bg-[#FEE2E2]', fg: 'text-[#B91C1C]' },
+    { bg: 'bg-[#FEF3C7]', fg: 'text-[#B45309]' },
+    { bg: 'bg-[#DCFCE7]', fg: 'text-[#15803D]' },
+    { bg: 'bg-[#CCFBF1]', fg: 'text-[#0F766E]' },
+    { bg: 'bg-[#E0F2FE]', fg: 'text-[#0369A1]' },
+    { bg: 'bg-[#EDE9FE]', fg: 'text-[#6D28D9]' },
+    { bg: 'bg-[#FCE7F3]', fg: 'text-[#BE185D]' },
+    { bg: 'bg-[#FFEDD5]', fg: 'text-[#C2410C]' },
+];
+
+function styleFor(name) {
+    if (STYLES[name]) return STYLES[name];
+
+    let hash = 0;
+    for (const char of String(name)) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+
+    return { icon: Tag, ...PALETTE[hash % PALETTE.length] };
+}
 
 export default function CategoryBadge({ name, size = 'md' }) {
-    const style = STYLES[name] ?? DEFAULT;
+    const style = styleFor(name);
     const Icon = style.icon;
     const box = size === 'sm' ? 'h-6 w-6' : 'h-8 w-8';
     const iconSize = size === 'sm' ? 14 : 16;

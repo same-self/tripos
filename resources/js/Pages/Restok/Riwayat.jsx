@@ -1,6 +1,8 @@
 import TriposLayout from '@/Layouts/TriposLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
+import { Receipt } from 'lucide-react';
+import PageTitle from '@/Components/PageTitle';
 
 const rupiah = (n) => 'Rp ' + Number(n).toLocaleString('id-ID');
 
@@ -21,7 +23,7 @@ export default function Riwayat({ purchases, filters }) {
             <div className="flex flex-col gap-5">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-[22px] font-bold">Riwayat Restok</h1>
+                        <PageTitle icon={Receipt}>Riwayat Restok</PageTitle>
                         <p className="mt-1 text-[13px] text-[#4B5563]">Daftar semua pembelian barang dari supplier.</p>
                     </div>
                     <Link

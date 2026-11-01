@@ -1,7 +1,9 @@
 import TriposLayout from '@/Layouts/TriposLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import EditButton from '@/Components/EditButton';
-import { Plus, Trash2 } from 'lucide-react';
+import ItemThumb from '@/Components/ItemThumb';
+import PageTitle from '@/Components/PageTitle';
+import { Plus, Trash2, Wrench } from 'lucide-react';
 
 const rupiah = (n) => 'Rp ' + Number(n).toLocaleString('id-ID');
 const fmt = (n) => Number(n).toLocaleString('id-ID', { maximumFractionDigits: 4 });
@@ -39,7 +41,7 @@ export default function Index({ services, categories, total, detail, autoDeduct,
             <div className="flex flex-col gap-5">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-[22px] font-bold">Layanan</h1>
+                        <PageTitle icon={Wrench}>Layanan</PageTitle>
                         <p className="mt-1 text-[13px] text-[#4B5563]">
                             Kelola jasa fotokopi, print, dan banner, beserta bahan yang dipakai.
                         </p>
@@ -84,13 +86,16 @@ export default function Index({ services, categories, total, detail, autoDeduct,
                                     return (
                                         <tr key={s.id} className={`border-b border-[#E5E7EB] last:border-b-0 ${selected ? 'bg-[#DBEAFE]' : ''}`}>
                                             <td className="px-2 py-3.5">
-                                                <Link
-                                                    href={route('layanan.index', { kategori: filters.kategori, pilih: s.id })}
-                                                    preserveScroll
-                                                    className={`font-medium ${selected ? 'text-[#1D4ED8]' : 'text-[#111827]'}`}
-                                                >
-                                                    {s.name}
-                                                </Link>
+                                                <div className="flex items-center gap-3">
+                                                    <ItemThumb src={s.image_url} name={s.name} icon={Wrench} />
+                                                    <Link
+                                                        href={route('layanan.index', { kategori: filters.kategori, pilih: s.id })}
+                                                        preserveScroll
+                                                        className={`font-medium ${selected ? 'text-[#1D4ED8]' : 'text-[#111827]'}`}
+                                                    >
+                                                        {s.name}
+                                                    </Link>
+                                                </div>
                                             </td>
                                             <td className="px-2 py-3.5 text-[#4B5563]">{s.category}</td>
                                             <td className="px-2 py-3.5 text-[#4B5563]">{s.unit}</td>
@@ -126,6 +131,7 @@ export default function Index({ services, categories, total, detail, autoDeduct,
                     <aside className="flex w-full shrink-0 flex-col gap-4 rounded-2xl border border-[#E5E7EB] bg-white p-5 lg:w-[320px]">
                         {detail ? (
                             <>
+                                <ItemThumb src={detail.image_url} name={detail.name} size="lg" icon={Wrench} />
                                 <h2 className="text-base font-semibold">{detail.name}</h2>
                                 <p className="text-xs text-[#4B5563]">
                                     {detail.category} · {rupiah(detail.unit_price)} per {detail.unit}
@@ -144,7 +150,6 @@ export default function Index({ services, categories, total, detail, autoDeduct,
                                     </div>
                                 ))}
 
-                                {/* Connected to the material form in the next step */}
                                 <Link
                                     href={route('layanan.edit', detail.id)}
                                     className="rounded-[10px] border border-[#6B7280] py-2.5 text-center text-sm font-medium"

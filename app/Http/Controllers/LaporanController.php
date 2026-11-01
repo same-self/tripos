@@ -6,6 +6,7 @@ use App\Models\Item;
 use App\Models\Purchase;
 use App\Models\Sale;
 use App\Models\Setting;
+use App\Services\ProfitabilityService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -211,39 +212,8 @@ class LaporanController extends Controller
 
     private function keuntungan(): array
     {
-        $window = max(1, Setting::int('report_window_days', 30));
-        $start = now()->startOfDay()->subDays($window - 1);
-
-        // Only items sold directly to customers; paper used by services is already in the service price
-        $rows = DB::table('item_details as d')
-            ->join('sales_transactions as s', 's.id', '=', 'd.sales_id')
-            ->join('items as i', 'i.id', '=', 'd.item_id')
-            ->whereNull('d.deleted_at')
-            ->whereNull('s.deleted_at')
-            ->whereBetween('s.transacted_at', [$start, now()->endOfDay()])
-            ->groupBy('d.item_id', 'i.name', 'i.cost_price', 'i.sell_price')
-            ->selectRaw('d.item_id, i.name, i.cost_price, i.sell_price, SUM(d.amount) as qty, SUM(d.subtotal) as revenue')
-            ->get()
-            ->map(function ($row) {
-                $cost = (int) $row->cost_price;
-                $qty = (int) $row->qty;
-
-                return [
-                    'name' => $row->name,
-                    'sold' => $qty,
-                    'per_unit' => (int) $row->sell_price - $cost,
-                    'total' => (int) $row->revenue - ($qty * $cost),
-                ];
-            })
-            ->sortByDesc('total')
-            ->values();
-
-        return [
-            'rows' => $rows,
-            'total' => (int) $rows->sum('total'),
-            'untung' => $rows->where('per_unit', '>', 0)->count(),
-            'rugi' => $rows->where('per_unit', '<', 0)->count(),
-        ];
+        // Items and services together, using the prices saved with each sale
+        return app(ProfitabilityService::class)->ranking(max(1, Setting::int('report_window_days', 30)));
     }
 
     private function terlaris(): array

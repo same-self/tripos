@@ -1,6 +1,9 @@
 import CashierLayout from '@/Layouts/CashierLayout';
 import { Head } from '@inertiajs/react';
+import { Search, Tag, Wrench } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import ItemThumb from '@/Components/ItemThumb';
+import PageTitle from '@/Components/PageTitle';
 
 const rupiah = (n) => 'Rp ' + Number(n).toLocaleString('id-ID');
 
@@ -39,7 +42,7 @@ export default function PriceList({ rows }) {
 
             <div className="flex flex-col gap-4">
                 <div>
-                    <h1 className="text-[22px] font-bold">Price List</h1>
+                    <PageTitle icon={Tag}>Price List</PageTitle>
                     <p className="mt-1 text-[13px] text-[#4B5563]">
                         Cari harga jual barang dan jasa dengan cepat saat melayani pelanggan.
                     </p>
@@ -47,6 +50,7 @@ export default function PriceList({ rows }) {
 
                 <label className="flex items-center justify-between gap-3 rounded-[14px] border-2 border-[#1D4ED8] bg-white px-[18px] py-4">
                     <span className="sr-only">Cari nama barang atau jasa</span>
+                    <Search size={20} className="shrink-0 text-[#1D4ED8]" aria-hidden="true" />
                     <input
                         ref={searchRef}
                         type="search"
@@ -89,7 +93,16 @@ export default function PriceList({ rows }) {
                         <tbody>
                             {shown.map((row) => (
                                 <tr key={row.kind + row.name} className="border-b border-[#E5E7EB] last:border-b-0">
-                                    <td className="px-2 py-3.5 font-medium text-[#111827]">{row.name}</td>
+                                    <td className="px-2 py-3.5 font-medium text-[#111827]">
+                                        <div className="flex items-center gap-3">
+                                            <ItemThumb
+                                                src={row.image_url}
+                                                name={row.name}
+                                                icon={row.kind === 'jasa' ? Wrench : undefined}
+                                            />
+                                            {row.name}
+                                        </div>
+                                    </td>
                                     <td className="px-2 py-3.5 text-[#4B5563]">{row.category}</td>
                                     <td className="px-2 py-3.5 text-[#4B5563]">{row.unit}</td>
                                     <td className="px-2 py-3.5 text-right font-bold text-[#1D4ED8]">{rupiah(row.price)}</td>

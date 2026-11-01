@@ -1,7 +1,8 @@
 import TriposLayout from '@/Layouts/TriposLayout';
 import EditButton from '@/Components/EditButton';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Users } from 'lucide-react';
+import PageTitle from '@/Components/PageTitle';
 
 const inputClass = 'h-11 rounded-xl border border-[#6B7280] bg-white px-3.5 text-sm';
 
@@ -51,7 +52,7 @@ export default function Index({ users }) {
             <div className="flex flex-col gap-5">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-[22px] font-bold">Pengguna</h1>
+                        <PageTitle icon={Users}>Pengguna</PageTitle>
                         <p className="mt-1 text-[13px] text-[#4B5563]">
                             Kelola akun Admin dan Kasir yang bisa masuk ke TRIPOS.
                         </p>

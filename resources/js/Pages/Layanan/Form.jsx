@@ -1,5 +1,8 @@
 import TriposLayout from '@/Layouts/TriposLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
+import ImageField from '@/Components/ImageField';
+import PageTitle from '@/Components/PageTitle';
+import { Wrench } from 'lucide-react';
 
 const inputClass = 'h-11 rounded-xl border border-[#6B7280] bg-white px-3.5 text-sm';
 
@@ -16,20 +19,25 @@ function Field({ label, error, children }) {
 export default function Form({ service, categories }) {
     const isEdit = service !== null;
 
-    const { data, setData, post, put, processing, errors } = useForm({
+    const { data, setData, post, transform, processing, errors } = useForm({
         service_category_id: service?.service_category_id ?? categories[0]?.id ?? '',
         name: service?.name ?? '',
         unit: service?.unit ?? '',
         unit_price: service?.unit_price ?? '',
+        gambar: null,
+        hapus_gambar: false,
     });
 
     function submit(e) {
         e.preventDefault();
 
         if (isEdit) {
-            put(route('layanan.update', service.id));
+            // A picture is sent as a form, and PHP does not read forms sent with PUT,
+            // so the update goes out as POST with the PUT method written inside it
+            transform((d) => ({ ...d, _method: 'put' }));
+            post(route('layanan.update', service.id), { forceFormData: true });
         } else {
-            post(route('layanan.store'));
+            post(route('layanan.store'), { forceFormData: true });
         }
     }
 
@@ -38,12 +46,23 @@ export default function Form({ service, categories }) {
             <Head title={isEdit ? 'Ubah Layanan' : 'Tambah Layanan'} />
 
             <div className="max-w-2xl">
-                <h1 className="text-[22px] font-bold">{isEdit ? 'Ubah Layanan' : 'Tambah Layanan'}</h1>
+                <PageTitle icon={Wrench}>{isEdit ? 'Ubah Layanan' : 'Tambah Layanan'}</PageTitle>
                 <p className="mt-1 text-[13px] text-[#4B5563]">
                     Nama, kategori, satuan, dan tarif layanan. Bahan yang dipakai diatur terpisah.
                 </p>
 
                 <form onSubmit={submit} className="mt-6 grid gap-5 rounded-2xl border border-[#E5E7EB] bg-white p-6">
+                    <ImageField
+                        label="Gambar layanan (opsional)"
+                        initialUrl={service?.image_url ?? null}
+                        placeholder={Wrench}
+                        error={errors.gambar}
+                        onChange={({ file, remove }) => {
+                            setData('gambar', file);
+                            setData('hapus_gambar', remove);
+                        }}
+                    />
+
                     <Field label="Kategori" error={errors.service_category_id}>
                         <select
                             value={data.service_category_id}

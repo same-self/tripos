@@ -2,7 +2,8 @@ import TriposLayout from '@/Layouts/TriposLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import EditButton from '@/Components/EditButton';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Truck } from 'lucide-react';
+import PageTitle from '@/Components/PageTitle';
 
 const rupiah = (n) => 'Rp ' + Number(n).toLocaleString('id-ID');
 
@@ -30,7 +31,7 @@ export default function Index({ suppliers, detail, filters }) {
             <div className="flex flex-col gap-5">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-[22px] font-bold">Supplier</h1>
+                        <PageTitle icon={Truck}>Supplier</PageTitle>
                         <p className="mt-1 text-[13px] text-[#4B5563]">
                             Kelola data pemasok barang ATK, termasuk kontak dan riwayat pembelian.
                         </p>

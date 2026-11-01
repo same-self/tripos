@@ -1,5 +1,7 @@
 import TriposLayout from '@/Layouts/TriposLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
+import { Truck } from 'lucide-react';
+import PageTitle from '@/Components/PageTitle';
 
 const inputClass = 'h-11 rounded-xl border border-[#6B7280] bg-white px-3.5 text-sm';
 
@@ -37,7 +39,7 @@ export default function Form({ supplier }) {
             <Head title={isEdit ? 'Ubah Supplier' : 'Tambah Supplier'} />
 
             <div className="max-w-2xl">
-                <h1 className="text-[22px] font-bold">{isEdit ? 'Ubah Supplier' : 'Tambah Supplier'}</h1>
+                <PageTitle icon={Truck}>{isEdit ? 'Ubah Supplier' : 'Tambah Supplier'}</PageTitle>
                 <p className="mt-1 text-[13px] text-[#4B5563]">
                     Nama, telepon, dan alamat supplier. Riwayat pembelian diisi lewat menu Restok.
                 </p>

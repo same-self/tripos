@@ -71,7 +71,8 @@ class KategoriController extends Controller
 
     private function rules(?int $ignoreId = null): array
     {
-        $unique = Rule::unique('item_categories', 'name');
+        // A deleted category (soft delete) must not block its name from being used again
+        $unique = Rule::unique('item_categories', 'name')->whereNull('deleted_at');
 
         if ($ignoreId !== null) {
             $unique->ignore($ignoreId);

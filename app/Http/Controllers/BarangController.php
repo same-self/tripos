@@ -7,7 +7,6 @@ use App\Models\ItemCategory;
 use App\Models\ServiceMaterial;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -17,6 +16,8 @@ class BarangController extends Controller
     {
         $categoryId = $request->query('kategori') ?: null;
         $search = trim((string) $request->query('cari', ''));
+        // Stock-status filter: "menipis" (still in stock, at or below the minimum) or "habis" (0 or less)
+        $stockStatus = in_array($request->query('stok'), ['menipis', 'habis'], true) ? $request->query('stok') : null;
 
         $categories = ItemCategory::withCount('items')
             ->orderBy('name')
@@ -30,6 +31,8 @@ class BarangController extends Controller
         $items = Item::with('category')
             ->when($categoryId, fn ($q) => $q->where('item_category_id', $categoryId))
             ->when($search !== '', fn ($q) => $q->where('name', 'like', '%'.$search.'%'))
+            ->when($stockStatus === 'menipis', fn ($q) => $q->runningLow())
+            ->when($stockStatus === 'habis', fn ($q) => $q->outOfStock())
             ->orderBy('name')
             ->get()
             ->map(fn (Item $item) => [
@@ -41,7 +44,8 @@ class BarangController extends Controller
                 'sell_price' => $item->sell_price,
                 'stock' => $item->stock,
                 'low_stock' => $item->isLowStock(),
-                'image_url' => $this->imageUrl($item),
+                'out_of_stock' => $item->isOutOfStock(),
+                'image_url' => $item->imageUrl(),
             ]);
 
         $all = Item::all(['stock', 'min_stock', 'cost_price']);
@@ -52,13 +56,15 @@ class BarangController extends Controller
             'total' => Item::count(),
             'summary' => [
                 'total' => $all->count(),
-                'low_stock' => $all->filter(fn (Item $item) => $item->isLowStock())->count(),
+                'low_stock' => $all->filter(fn (Item $item) => ! $item->isOutOfStock() && $item->isLowStock())->count(),
+                'out_of_stock' => $all->filter(fn (Item $item) => $item->isOutOfStock())->count(),
                 'stock_value' => (int) $all->sum(fn (Item $item) => $item->stock * $item->cost_price),
                 'categories' => $categories->count(),
             ],
             'filters' => [
                 'kategori' => $categoryId ? (int) $categoryId : null,
                 'cari' => $search,
+                'stok' => $stockStatus,
             ],
         ]);
     }
@@ -79,7 +85,7 @@ class BarangController extends Controller
         $item = Item::create(collect($data)->except(['gambar', 'hapus_gambar'])->all());
 
         if ($request->hasFile('gambar')) {
-            $item->forceFill(['image_path' => $request->file('gambar')->store('barang', 'public')])->save();
+            $item->replaceImage($request->file('gambar'));
         }
 
         return redirect()->route('barang.index')->with('success', 'Barang berhasil ditambahkan.');
@@ -97,7 +103,7 @@ class BarangController extends Controller
                 'sell_price' => $item->sell_price,
                 'min_stock' => $item->min_stock,
                 'stock' => $item->stock,
-                'image_url' => $this->imageUrl($item),
+                'image_url' => $item->imageUrl(),
             ],
             'categories' => $this->categoryOptions(),
         ]);
@@ -110,11 +116,9 @@ class BarangController extends Controller
         $item->update(collect($data)->except(['gambar', 'hapus_gambar'])->all());
 
         if ($request->hasFile('gambar')) {
-            $this->deleteImage($item);
-            $item->forceFill(['image_path' => $request->file('gambar')->store('barang', 'public')])->save();
+            $item->replaceImage($request->file('gambar'));
         } elseif ($request->boolean('hapus_gambar')) {
-            $this->deleteImage($item);
-            $item->forceFill(['image_path' => null])->save();
+            $item->removeImage();
         }
 
         return redirect()->route('barang.index')->with('success', 'Barang berhasil diubah.');
@@ -133,18 +137,6 @@ class BarangController extends Controller
         $item->delete();
 
         return redirect()->route('barang.index')->with('success', 'Barang berhasil dihapus.');
-    }
-
-    private function imageUrl(Item $item): ?string
-    {
-        return $item->image_path ? Storage::disk('public')->url($item->image_path) : null;
-    }
-
-    private function deleteImage(Item $item): void
-    {
-        if ($item->image_path) {
-            Storage::disk('public')->delete($item->image_path);
-        }
     }
 
     private function categoryOptions()

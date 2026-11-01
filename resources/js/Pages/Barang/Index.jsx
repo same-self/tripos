@@ -1,10 +1,12 @@
 import TriposLayout from '@/Layouts/TriposLayout';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Package, Plus, Search, Tag, Trash2, Wallet, Warehouse } from 'lucide-react';
 import { useState } from 'react';
 import CategoryBadge from '@/Components/CategoryBadge';
 import EditButton from '@/Components/EditButton';
 import ItemThumb from '@/Components/ItemThumb';
+import PageTitle from '@/Components/PageTitle';
+import SummaryCard from '@/Components/SummaryCard';
 
 const rupiah = (n) => 'Rp ' + Number(n).toLocaleString('id-ID');
 
@@ -27,13 +29,32 @@ function CategoryButton({ active, label, count, onClick }) {
     );
 }
 
-function SummaryCard({ label, value, tone }) {
-    return (
-        <div className="flex flex-col gap-1 rounded-2xl border border-[#E5E7EB] bg-white p-4">
-            <p className="text-xs font-medium text-[#4B5563]">{label}</p>
-            <p className={`text-[22px] font-bold ${tone === 'danger' ? 'text-[#B91C1C]' : 'text-[#111827]'}`}>{value}</p>
-        </div>
-    );
+const STOCK_FILTERS = [
+    { key: null, label: 'Semua stok' },
+    { key: 'menipis', label: 'Menipis' },
+    { key: 'habis', label: 'Habis' },
+];
+
+function StockCell({ item }) {
+    if (item.out_of_stock) {
+        return (
+            <span className="inline-flex items-center gap-2">
+                <span className="font-semibold text-[#B91C1C]">{item.stock}</span>
+                <span className="rounded-full bg-[#FEE2E2] px-2 py-0.5 text-xs font-semibold text-[#B91C1C]">Habis</span>
+            </span>
+        );
+    }
+
+    if (item.low_stock) {
+        return (
+            <span className="inline-flex items-center gap-2">
+                <span className="font-semibold text-[#B45309]">{item.stock}</span>
+                <span className="rounded-full bg-[#FEF3C7] px-2 py-0.5 text-xs font-semibold text-[#B45309]">Menipis</span>
+            </span>
+        );
+    }
+
+    return <span>{item.stock}</span>;
 }
 
 export default function Index({ items, categories, total, filters, summary }) {
@@ -43,7 +64,7 @@ export default function Index({ items, categories, total, filters, summary }) {
     function go(changes) {
         router.get(
             route('barang.index'),
-            { kategori: filters.kategori, cari: filters.cari, ...changes },
+            { kategori: filters.kategori, cari: filters.cari, stok: filters.stok, ...changes },
             { preserveState: true, preserveScroll: true, replace: true },
         );
     }
@@ -63,10 +84,9 @@ export default function Index({ items, categories, total, filters, summary }) {
             <div className="flex flex-col gap-5">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-[22px] font-bold">Barang</h1>
+                        <PageTitle icon={Package}>Barang</PageTitle>
                         <p className="mt-1 text-[13px] text-[#4B5563]">Kelola data barang ATK, harga jual, dan kategorinya.</p>
                     </div>
-                    {/* Connected to the add form in the next step */}
                     <Link
                         href={route('barang.create')}
                         className="inline-flex items-center gap-2 rounded-[10px] bg-[#1D4ED8] px-4 py-2.5 text-sm font-semibold text-white"
@@ -76,11 +96,24 @@ export default function Index({ items, categories, total, filters, summary }) {
                     </Link>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                    <SummaryCard label="Total barang" value={summary.total} />
-                    <SummaryCard label="Stok menipis" value={summary.low_stock} tone="danger" />
-                    <SummaryCard label="Nilai stok (modal)" value={rupiah(summary.stock_value)} />
-                    <SummaryCard label="Kategori" value={summary.categories} />
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+                    <SummaryCard icon={Package} tone="blue" label="Total barang" value={summary.total} />
+                    <SummaryCard
+                        icon={Warehouse}
+                        tone="amber"
+                        label="Stok menipis"
+                        value={summary.low_stock}
+                        valueClassName={summary.low_stock > 0 ? 'text-[#B45309]' : ''}
+                    />
+                    <SummaryCard
+                        icon={Warehouse}
+                        tone="red"
+                        label="Stok habis"
+                        value={summary.out_of_stock}
+                        valueClassName={summary.out_of_stock > 0 ? 'text-[#B91C1C]' : ''}
+                    />
+                    <SummaryCard icon={Wallet} tone="green" label="Nilai stok (modal)" value={rupiah(summary.stock_value)} />
+                    <SummaryCard icon={Tag} tone="violet" label="Kategori" value={summary.categories} />
                 </div>
 
                 <div className="flex flex-col gap-5 lg:flex-row">
@@ -121,15 +154,37 @@ export default function Index({ items, categories, total, filters, summary }) {
                             <label htmlFor="cari" className="sr-only">
                                 Cari nama barang
                             </label>
-                            <input
-                                id="cari"
-                                type="search"
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                placeholder="Cari nama barang..."
-                                className="w-full rounded-[10px] border border-[#6B7280] px-3.5 py-2.5 text-sm"
-                            />
+                            <div className="flex items-center gap-2.5 rounded-[10px] border border-[#6B7280] px-3.5">
+                                <Search size={16} className="shrink-0 text-[#6B7280]" aria-hidden="true" />
+                                <input
+                                    id="cari"
+                                    type="search"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    placeholder="Cari nama barang..."
+                                    className="min-w-0 flex-1 border-0 py-2.5 text-sm focus:ring-0"
+                                />
+                            </div>
                         </form>
+
+                        <div className="mt-3 flex flex-wrap items-center gap-2" role="group" aria-label="Filter stok">
+                            <span className="text-xs font-medium text-[#4B5563]">Status stok:</span>
+                            {STOCK_FILTERS.map((f) => (
+                                <button
+                                    key={f.label}
+                                    type="button"
+                                    onClick={() => go({ stok: f.key })}
+                                    aria-pressed={filters.stok === f.key}
+                                    className={`rounded-full px-3.5 py-1.5 text-[13px] ${
+                                        filters.stok === f.key
+                                            ? 'bg-[#1D4ED8] font-semibold text-white'
+                                            : 'border border-[#E5E7EB] bg-white font-medium text-[#4B5563] hover:bg-[#F3F4F6]'
+                                    }`}
+                                >
+                                    {f.label}
+                                </button>
+                            ))}
+                        </div>
 
                         <div className="mt-4 overflow-x-auto">
                             <table className="w-full text-left text-sm">
@@ -157,11 +212,10 @@ export default function Index({ items, categories, total, filters, summary }) {
                                             <td className="px-2 py-3.5 text-[#4B5563]">{item.unit}</td>
                                             <td className="px-2 py-3.5">{rupiah(item.cost_price)}</td>
                                             <td className="px-2 py-3.5 font-semibold">{rupiah(item.sell_price)}</td>
-                                            <td className={`px-2 py-3.5 ${item.low_stock ? 'font-semibold text-[#B91C1C]' : ''}`}>
-                                                {item.stock}
+                                            <td className="px-2 py-3.5">
+                                                <StockCell item={item} />
                                             </td>
                                             <td className="px-2 py-3.5">
-                                                {/* Connected to the edit form in the next step */}
                                                 <div className="flex items-center gap-2">
                                                     <EditButton href={route('barang.edit', item.id)} />
                                                     <button

@@ -1,7 +1,8 @@
 import TriposLayout from '@/Layouts/TriposLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { ImagePlus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import ImageField from '@/Components/ImageField';
+import PageTitle from '@/Components/PageTitle';
+import { Package } from 'lucide-react';
 
 const inputClass = 'h-11 rounded-xl border border-[#6B7280] bg-white px-3.5 text-sm';
 
@@ -17,7 +18,6 @@ function Field({ label, error, children }) {
 
 export default function Form({ item, categories }) {
     const isEdit = item !== null;
-    const [preview, setPreview] = useState(item?.image_url ?? null);
 
     const { data, setData, post, transform, processing, errors } = useForm({
         item_category_id: item?.item_category_id ?? categories[0]?.id ?? '',
@@ -29,19 +29,6 @@ export default function Form({ item, categories }) {
         gambar: null,
         hapus_gambar: false,
     });
-
-    function chooseFile(e) {
-        const file = e.target.files?.[0] ?? null;
-        setData('gambar', file);
-        setData('hapus_gambar', false);
-        setPreview(file ? URL.createObjectURL(file) : (item?.image_url ?? null));
-    }
-
-    function removeImage() {
-        setData('gambar', null);
-        setData('hapus_gambar', true);
-        setPreview(null);
-    }
 
     function submit(e) {
         e.preventDefault();
@@ -60,7 +47,7 @@ export default function Form({ item, categories }) {
             <Head title={isEdit ? 'Ubah Barang' : 'Tambah Barang'} />
 
             <div className="max-w-2xl">
-                <h1 className="text-[22px] font-bold">{isEdit ? 'Ubah Barang' : 'Tambah Barang'}</h1>
+                <PageTitle icon={Package}>{isEdit ? 'Ubah Barang' : 'Tambah Barang'}</PageTitle>
                 <p className="mt-1 text-[13px] text-[#4B5563]">
                     {isEdit
                         ? 'Perbarui nama, satuan, harga, gambar, atau stok minimum.'
@@ -68,39 +55,15 @@ export default function Form({ item, categories }) {
                 </p>
 
                 <form onSubmit={submit} className="mt-6 grid gap-5 rounded-2xl border border-[#E5E7EB] bg-white p-6">
-                    <Field label="Gambar barang (opsional)" error={errors.gambar}>
-                        <div className="flex items-center gap-4">
-                            <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl border border-[#E5E7EB] bg-[#F3F4F6]">
-                                {preview ? (
-                                    <img src={preview} alt="Pratinjau gambar" className="h-full w-full object-cover" />
-                                ) : (
-                                    <div className="flex h-full w-full items-center justify-center text-[#9CA3AF]">
-                                        <ImagePlus size={28} aria-hidden="true" />
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="flex flex-col gap-2">
-                                <input
-                                    type="file"
-                                    accept="image/jpeg,image/png,image/webp"
-                                    onChange={chooseFile}
-                                    className="text-sm"
-                                />
-                                {preview && (
-                                    <button
-                                        type="button"
-                                        onClick={removeImage}
-                                        className="inline-flex w-fit items-center gap-1.5 text-[13px] font-medium text-[#B91C1C]"
-                                    >
-                                        <Trash2 size={14} aria-hidden="true" />
-                                        Hapus gambar
-                                    </button>
-                                )}
-                                <p className="text-xs text-[#4B5563]">JPG, PNG, atau WEBP, maksimal 2 MB.</p>
-                            </div>
-                        </div>
-                    </Field>
+                    <ImageField
+                        label="Gambar barang (opsional)"
+                        initialUrl={item?.image_url ?? null}
+                        error={errors.gambar}
+                        onChange={({ file, remove }) => {
+                            setData('gambar', file);
+                            setData('hapus_gambar', remove);
+                        }}
+                    />
 
                     <Field label="Kategori" error={errors.item_category_id}>
                         <select

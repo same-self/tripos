@@ -1,5 +1,8 @@
 import TriposLayout from '@/Layouts/TriposLayout';
 import { Head, Link } from '@inertiajs/react';
+import { FileText } from 'lucide-react';
+import { useState } from 'react';
+import PageTitle from '@/Components/PageTitle';
 
 const rupiah = (n) => 'Rp ' + Number(n).toLocaleString('id-ID');
 
@@ -278,63 +281,149 @@ function TerlarisLambat({ data }) {
     );
 }
 
+// Verdict -> label and colors. The rules live on the server (ProfitabilityService); this is only how they look.
+const VERDICT = {
+    unggulan: { label: 'Paling menguntungkan', badge: 'bg-[#DCFCE7] text-[#15803D]' },
+    sehat: { label: 'Menguntungkan', badge: 'bg-[#DBEAFE] text-[#1D4ED8]' },
+    tipis: { label: 'Margin tipis', badge: 'bg-[#FEF3C7] text-[#B45309]' },
+    rugi: { label: 'Rugi', badge: 'bg-[#FEE2E2] text-[#B91C1C]' },
+};
+
+const KIND_FILTERS = [
+    { key: 'semua', label: 'Semua' },
+    { key: 'barang', label: 'Barang' },
+    { key: 'jasa', label: 'Jasa' },
+];
+
+const percent = (n) => (n === null || n === undefined ? '-' : `${Number(n).toLocaleString('id-ID')}%`);
+
 function Keuntungan({ data, window }) {
+    const [kind, setKind] = useState('semua');
+
+    const rows = data.rows.filter((row) => kind === 'semua' || row.kind === kind);
+    const hasService = data.rows.some((row) => row.kind === 'jasa');
+
     return (
         <div className="flex flex-col gap-5 lg:flex-row">
             <section className="min-w-0 flex-1 overflow-x-auto rounded-2xl border border-[#E5E7EB] bg-white p-5">
-                <h2 className="text-[15px] font-semibold">Ranking keuntungan</h2>
-                <p className="mt-1 text-xs text-[#4B5563]">Untung per barang dalam {window} hari terakhir</p>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <h2 className="text-[15px] font-semibold">Ranking keuntungan barang dan jasa</h2>
+                        <p className="mt-1 text-xs text-[#4B5563]">Dari penjualan {window} hari terakhir, diurutkan dari untung terbesar.</p>
+                    </div>
+
+                    <div className="flex gap-1.5" role="group" aria-label="Jenis">
+                        {KIND_FILTERS.map((f) => (
+                            <button
+                                key={f.key}
+                                type="button"
+                                onClick={() => setKind(f.key)}
+                                aria-pressed={kind === f.key}
+                                className={`rounded-full px-3.5 py-1.5 text-[13px] ${
+                                    kind === f.key
+                                        ? 'bg-[#1D4ED8] font-semibold text-white'
+                                        : 'border border-[#E5E7EB] bg-white font-medium text-[#4B5563]'
+                                }`}
+                            >
+                                {f.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
                 <table className="mt-4 w-full text-left text-sm">
                     <thead className="border-b border-[#E5E7EB] text-xs font-medium text-[#4B5563]">
                         <tr>
                             <th scope="col" className="px-2 py-3">No</th>
-                            <th scope="col" className="px-2 py-3">Barang</th>
+                            <th scope="col" className="px-2 py-3">Nama</th>
                             <th scope="col" className="px-2 py-3">Terjual</th>
-                            <th scope="col" className="px-2 py-3">Untung / unit</th>
-                            <th scope="col" className="px-2 py-3">Total untung</th>
+                            <th scope="col" className="px-2 py-3">Pendapatan</th>
+                            <th scope="col" className="px-2 py-3">Untung</th>
+                            <th scope="col" className="px-2 py-3">Margin</th>
+                            <th scope="col" className="px-2 py-3">Penilaian</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {data.rows.map((row, i) => (
-                            <tr key={i} className="border-b border-[#E5E7EB]">
-                                <td className="px-2 py-3 text-[#4B5563]">{i + 1}</td>
-                                <td className="px-2 py-3 font-medium">{row.name}</td>
-                                <td className="px-2 py-3">{row.sold}</td>
-                                <td className={`px-2 py-3 ${row.per_unit < 0 ? 'text-[#B91C1C]' : ''}`}>
-                                    {rupiah(row.per_unit)}
+                        {rows.map((row) => (
+                            <tr key={row.key} className="border-b border-[#E5E7EB] align-top">
+                                <td className="px-2 py-3 text-[#4B5563]">{row.rank}</td>
+                                <td className="px-2 py-3 font-medium">
+                                    {row.name}
+                                    {row.kind === 'jasa' && (
+                                        <span className="ml-2 rounded-full bg-[#EDE9FE] px-2 py-0.5 text-[11px] font-semibold text-[#6D28D9]">
+                                            Jasa
+                                        </span>
+                                    )}
                                 </td>
-                                <td className={`px-2 py-3 font-semibold ${row.total < 0 ? 'text-[#B91C1C]' : ''}`}>
-                                    {rupiah(row.total)}
+                                <td className="px-2 py-3">
+                                    {Number(row.sold).toLocaleString('id-ID')} {row.unit}
+                                </td>
+                                <td className="px-2 py-3">{rupiah(row.revenue)}</td>
+                                <td className={`px-2 py-3 font-semibold ${row.profit < 0 ? 'text-[#B91C1C]' : ''}`}>
+                                    {rupiah(row.profit)}
+                                    {row.estimated && <span className="ml-1 text-xs font-normal text-[#4B5563]">(perkiraan)</span>}
+                                </td>
+                                <td className="px-2 py-3">{percent(row.margin)}</td>
+                                <td className="px-2 py-3">
+                                    <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${VERDICT[row.verdict].badge}`}>
+                                        {VERDICT[row.verdict].label}
+                                    </span>
+                                    <p className="mt-1 max-w-[220px] text-xs text-[#4B5563]">{row.reason}</p>
                                 </td>
                             </tr>
                         ))}
-                        <tr className="font-bold">
-                            <td className="px-2 py-3"></td>
-                            <td className="px-2 py-3">Total keuntungan</td>
-                            <td className="px-2 py-3"></td>
-                            <td className="px-2 py-3"></td>
-                            <td className="px-2 py-3">{rupiah(data.total)}</td>
-                        </tr>
+                        {rows.length > 0 && (
+                            <tr className="font-bold">
+                                <td className="px-2 py-3"></td>
+                                <td className="px-2 py-3">Total keuntungan</td>
+                                <td className="px-2 py-3"></td>
+                                <td className="px-2 py-3">{rupiah(rows.reduce((sum, row) => sum + row.revenue, 0))}</td>
+                                <td className="px-2 py-3">{rupiah(rows.reduce((sum, row) => sum + row.profit, 0))}</td>
+                                <td className="px-2 py-3"></td>
+                                <td className="px-2 py-3"></td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
-                {data.rows.length === 0 && (
-                    <p className="py-6 text-center text-sm text-[#4B5563]">Belum ada penjualan barang di periode ini.</p>
+                {rows.length === 0 && (
+                    <p className="py-6 text-center text-sm text-[#4B5563]">Belum ada penjualan di periode ini.</p>
                 )}
             </section>
 
             <aside className="flex w-full shrink-0 flex-col gap-4 rounded-2xl border border-[#E5E7EB] bg-white p-5 lg:w-[320px]">
-                <h2 className="text-[15px] font-semibold">Untung dan rugi</h2>
-                <p className="text-xs text-[#4B5563]">Jumlah barang berdasarkan hasil penjualan {window} hari</p>
+                <h2 className="text-[15px] font-semibold">Ringkasan penilaian</h2>
 
-                <div className="flex flex-col gap-1">
-                    <p className="text-lg font-bold text-[#15803D]">{data.untung} barang</p>
-                    <p className="text-xs text-[#4B5563]">Dijual di atas harga modal</p>
+                {Object.entries(VERDICT).map(([key, v]) => (
+                    <div key={key} className="flex items-center justify-between gap-3">
+                        <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${v.badge}`}>{v.label}</span>
+                        <span className="text-lg font-bold">{data.summary.counts[key]}</span>
+                    </div>
+                ))}
+
+                <div className="h-px bg-[#E5E7EB]" />
+
+                <div>
+                    <p className="text-[13px] font-semibold">Cara menilai</p>
+                    <ul className="mt-1.5 list-disc space-y-1 pl-4 text-xs text-[#4B5563]">
+                        <li>
+                            <strong>Rugi</strong>: dijual di bawah modal.
+                        </li>
+                        <li>
+                            <strong>Margin tipis</strong>: untung kurang dari {data.thin_margin}% dari penjualan.
+                        </li>
+                        <li>
+                            <strong>Paling menguntungkan</strong>: 3 untung terbesar.
+                        </li>
+                    </ul>
+                    <p className="mt-2 text-xs text-[#4B5563]">Perhitungan memakai aturan tetap, bukan tebakan, jadi alasannya selalu terlihat.</p>
                 </div>
 
-                <div className="flex flex-col gap-1">
-                    <p className="text-lg font-bold text-[#B91C1C]">{data.rugi} barang</p>
-                    <p className="text-xs text-[#4B5563]">Dijual di bawah harga modal</p>
-                </div>
+                {hasService && (
+                    <p className="rounded-xl bg-[#FEF3C7] p-3 text-xs text-[#92400E]">
+                        Untung jasa adalah perkiraan: hanya menghitung bahan (misalnya kertas). Tinta, listrik, dan tenaga belum
+                        dihitung.
+                    </p>
+                )}
             </aside>
         </div>
     );
@@ -350,7 +439,7 @@ export default function Index({ tab, periode, window, penjualan, pembelian, arus
             <div className="flex flex-col gap-5">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-[22px] font-bold">Laporan</h1>
+                        <PageTitle icon={FileText}>Laporan</PageTitle>
                         <p className="mt-1 text-[13px] text-[#4B5563]">
                             Rekap penjualan, pembelian, dan arus kas untuk pengambilan keputusan.
                         </p>

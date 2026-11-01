@@ -1,5 +1,7 @@
 import TriposLayout from '@/Layouts/TriposLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
+import { RefreshCw } from 'lucide-react';
+import PageTitle from '@/Components/PageTitle';
 
 const rupiah = (n) => 'Rp ' + Number(n).toLocaleString('id-ID');
 const inputClass = 'h-10 rounded-[10px] border border-[#6B7280] bg-white px-3 text-sm';
@@ -59,7 +61,7 @@ export default function Index({ suppliers, items, today }) {
             <div className="flex flex-col gap-5">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-[22px] font-bold">Restok Barang</h1>
+                        <PageTitle icon={RefreshCw}>Restok Barang</PageTitle>
                         <p className="mt-1 text-[13px] text-[#4B5563]">
                             Catat pembelian dari supplier. Stok akan bertambah otomatis setelah disimpan.
                         </p>

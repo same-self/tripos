@@ -1,5 +1,7 @@
 import TriposLayout from '@/Layouts/TriposLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
+import { Users } from 'lucide-react';
+import PageTitle from '@/Components/PageTitle';
 
 const inputClass = 'h-11 rounded-xl border border-[#6B7280] bg-white px-3.5 text-sm';
 
@@ -37,7 +39,7 @@ export default function Edit({ user }) {
             <Head title="Ubah Pengguna" />
 
             <div className="max-w-xl">
-                <h1 className="text-[22px] font-bold">Ubah Pengguna</h1>
+                <PageTitle icon={Users}>Ubah Pengguna</PageTitle>
                 <p className="mt-1 text-[13px] text-[#4B5563]">
                     Perbarui data, peran, atau status akun. Isi password baru hanya jika ingin mengatur ulang.
                 </p>

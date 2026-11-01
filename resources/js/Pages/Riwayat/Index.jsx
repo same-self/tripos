@@ -2,7 +2,8 @@ import TriposLayout from '@/Layouts/TriposLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import EditButton from '@/Components/EditButton';
-import { Eye } from 'lucide-react';
+import { Eye, Receipt } from 'lucide-react';
+import PageTitle from '@/Components/PageTitle';
 
 const rupiah = (n) => 'Rp ' + Number(n).toLocaleString('id-ID');
 
@@ -28,7 +29,7 @@ export default function Index({ sales, filters, totals }) {
         <TriposLayout active="Transaksi (POS)">
             <Head title="Riwayat Transaksi" />
 
-            <h1 className="text-[22px] font-bold">Riwayat Transaksi</h1>
+            <PageTitle icon={Receipt}>Riwayat Transaksi</PageTitle>
             <p className="mt-1 text-sm text-[#4B5563]">
                 Daftar transaksi penjualan. Pilih transaksi untuk melihat strukny.
             </p>

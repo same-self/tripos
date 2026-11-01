@@ -30,10 +30,10 @@ Berbeda dengan sistem POS retail biasa, TRIPOS menghubungkan **penjualan jasa fo
 ## ✨ Fitur Unggulan
 
 ### 1. 🛒 Layar Kasir / POS (`/kasir/pos`)
-* **Visual Aid & Thumbnail Produk**: Setiap kartu produk dilengkapi foto produk asli dengan fallback icon kategori.
+* **Visual Aid & Thumbnail**: Kartu barang, kartu jasa, dan baris keranjang menampilkan foto asli, atau ikon bawaan (kotak untuk barang, kunci inggris untuk jasa) bila belum ada foto.
 * **Kategori & Pencarian Instan**: Navigasi cepat antara tab *Barang ATK* dan *Jasa Fotokopi*, lengkap dengan kolom pencarian real-time.
 * **Keranjang Interaktif**:
-  * Pengubahan kuantitas langsung secara numerik (*direct inline typing*) maupun tombol stepper `−` / `+`.
+  * Pengubahan kuantitas langsung secara numerik (*direct inline typing*) maupun tombol stepper `−` / `+`. Kotak jumlah boleh dikosongkan saat mengetik; bila ditinggalkan kosong, nilainya kembali ke 1. Berlaku untuk barang dan jasa, juga kotak jumlah di panel jasa.
   * Tombol hapus item keranjang dengan visual yang jelas (`Trash2`).
 * **Metode Pembayaran**: Mendukung pembayaran Tunai (dengan hitung kembalian dan tombol nominal pas) serta QRIS.
 * **Cetak Struk Thermal**: Format struk standar 58mm/80mm yang kompatibel dengan browser print (`window.print()`).
@@ -41,22 +41,24 @@ Berbeda dengan sistem POS retail biasa, TRIPOS menghubungkan **penjualan jasa fo
 
 ### 2. 📦 Manajemen Barang & Gambar (`/barang`)
 * **Upload Foto Produk**: Mendukung unggah gambar (JPG, PNG, WEBP maks. 2 MB) dengan preview interaktif langsung di form.
-* **Summary Info Cards**: 4 kartu ringkasan di bagian atas katalog:
+* **Summary Info Cards**: 5 kartu ringkasan berikon di bagian atas katalog:
   * Total jenis barang
-  * Jumlah stok menipis (*low stock warning*)
+  * Stok menipis (masih ada, tetapi di bawah atau sama dengan stok minimum)
+  * Stok habis (0 atau kurang)
   * Total nilai kapitalisasi stok (harga modal)
   * Total kategori aktif
-* **Filter & Pencarian**: Filter produk berdasarkan kategori dan pencarian nama produk secara real-time.
+* **Filter & Pencarian**: Filter berdasarkan kategori, status stok (*Semua / Menipis / Habis*), dan pencarian nama. Ketiganya bisa dipakai bersamaan.
 * **Guarded Soft Delete**: Mencegah penghapusan barang yang masih terdaftar sebagai bahan baku aktif pada layanan/jasa untuk mencegah rusaknya data transaksi.
 
 ### 3. 🛠️ Layanan & Manajemen Bahan Baku (`/layanan`)
-* **Katalog Jasa**: Pengelolaan jasa fotokopi, print laser, jilid spiral/hardcover, dan banner.
+* **Katalog Jasa**: Pengelolaan jasa fotokopi, print laser, jilid spiral/hardcover, dan banner, lengkap dengan foto opsional (tampil di daftar layanan, layar kasir, dan Price List).
 * **Komposisi Bahan ("Resep Layanan")**: Pengaturan proporsi bahan baku yang dikonsumsi per satuan layanan.
 * **Auto-Deduct Setting**: Switch otomatis untuk memotong stok bahan baku saat transaksi kasir tersimpan.
 * **Soft Delete**: Data penjualan masa lalu tetap utuh dan menampilkan nama layanan meskipun layanan dinonaktifkan.
 
 ### 4. 🏷️ Kategori Berwarna & Terproteksi (`/kategori`)
-* **Identitas Visual**: Badge kategori dilengkapi palet warna dan ikon khusus Lucide (Alat Tulis, Kertas, Buku, Aksesoris, Jilid, Banner, dll.).
+* **Identitas Visual**: Badge kategori dilengkapi palet warna dan ikon khusus Lucide (Alat Tulis, Kertas, Buku, Aksesoris, Jilid, Banner, dll.). Kategori baru yang ditambahkan pemilik otomatis mendapat warna sendiri yang tetap (dipilih dari namanya), jadi tidak semuanya abu-abu.
+* **Nama Bisa Dipakai Ulang**: Nama kategori yang sudah dihapus boleh dipakai lagi.
 * **Proteksi Integritas**: Kategori yang masih menaungi produk tidak dapat dihapus sembarangan sebelum produknya dipindahkan.
 
 ### 5. 🚚 Supplier & Riwayat Restok (`/supplier` & `/restok`)
@@ -77,7 +79,10 @@ Berbeda dengan sistem POS retail biasa, TRIPOS menghubungkan **penjualan jasa fo
   * Pembelian / Restok
   * Arus Kas Bersih (*Net Cash Flow*)
   * Barang Terlaris & Paling Lambat
-  * Estimasi Keuntungan Kotor
+  * Ranking Keuntungan **barang dan jasa** dalam satu daftar, lengkap dengan margin dan penilaian
+* **Penilaian Keuntungan (berbasis aturan, bukan machine learning)**: setiap barang/jasa yang terjual dinilai *Rugi* (dijual di bawah modal), *Margin tipis* (untung di bawah `thin_margin_percent`, bawaan 15% dari penjualan), *Paling menguntungkan* (3 untung terbesar), atau *Menguntungkan*. Alasannya ditulis di samping tiap baris. Angka yang sama dipakai kartu *Untung terbesar* dan *Perlu dicek* di Dashboard.
+  * Modal barang memakai harga modal yang tersimpan **saat transaksi**, jadi restok dengan harga baru tidak mengubah untung penjualan lama.
+  * Untung jasa adalah **perkiraan**: modalnya hanya dari bahan yang diatur di *Ubah Bahan* (misalnya kertas). Tinta, listrik, dan tenaga belum dihitung.
 * **Ekspor Laporan**: Fitur cetak/simpan PDF bersih khusus laporan dengan format ramah cetak.
 
 ### 8. 👥 Pengguna & Keamanan (`/pengguna`)
@@ -159,6 +164,9 @@ Berbeda dengan sistem POS retail biasa, TRIPOS menghubungkan **penjualan jasa fo
    ```bash
    php artisan storage:link
    ```
+   Alamat gambar dibuat relatif (`/storage/...`), jadi tetap tampil baik dibuka lewat `localhost:8000`, `tripos.test`, maupun domain asli. Di Windows, jika muncul error izin saat membuat link, jalankan terminal sebagai Administrator atau aktifkan *Developer Mode* di Windows.
+
+   Gambar **tidak** dicetak di struk: struk thermal hanya berisi teks agar cepat dan hemat kertas.
 
 8. **Build Aset Frontend**:
    ```bash

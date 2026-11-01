@@ -1,6 +1,7 @@
 import TriposLayout from '@/Layouts/TriposLayout';
 import { Head, Link } from '@inertiajs/react';
-import { Plus } from 'lucide-react';
+import { Plus, Warehouse } from 'lucide-react';
+import PageTitle from '@/Components/PageTitle';
 
 const rupiah = (n) => 'Rp ' + Number(n).toLocaleString('id-ID');
 
@@ -36,7 +37,7 @@ export default function Index({ items, restokSegera, restokNanti, window, segera
             <div className="flex flex-col gap-5">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-[22px] font-bold">Stok Barang</h1>
+                        <PageTitle icon={Warehouse}>Stok Barang</PageTitle>
                         <p className="mt-1 text-[13px] text-[#4B5563]">
                             Stok, penjualan, dan rekomendasi {window} hari terakhir.
                         </p>

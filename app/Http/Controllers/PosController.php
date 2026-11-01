@@ -30,7 +30,8 @@ class PosController extends Controller
                 'sell_price' => $item->sell_price,
                 'stock' => $item->stock,
                 'low_stock' => $item->isLowStock(),
-                'image_url' => $item->image_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($item->image_path) : null,
+                'out_of_stock' => $item->isOutOfStock(),
+                'image_url' => $item->imageUrl(),
             ]);
 
         $services = Service::with(['category', 'materials.item'])
@@ -42,6 +43,7 @@ class PosController extends Controller
                 'category' => $service->category->name,
                 'unit' => $service->unit,
                 'unit_price' => $service->unit_price,
+                'image_url' => $service->imageUrl(),
                 // Paper or other materials used per unit, for the "terpakai" line
                 'materials' => $service->materials
                     ->filter(fn ($material) => $material->item !== null)
@@ -100,6 +102,7 @@ class PosController extends Controller
             ->map(fn (Item $item) => [
                 'kind' => 'barang',
                 'name' => $item->name,
+                'image_url' => $item->imageUrl(),
                 'category' => $item->category->name,
                 'unit' => $item->unit,
                 'price' => $item->sell_price,
@@ -111,6 +114,7 @@ class PosController extends Controller
             ->map(fn (Service $service) => [
                 'kind' => 'jasa',
                 'name' => $service->name,
+                'image_url' => $service->imageUrl(),
                 'category' => $service->category->name,
                 'unit' => $service->unit,
                 'price' => $service->unit_price,

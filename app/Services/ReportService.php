@@ -155,22 +155,22 @@ class ReportService
         $windowStart = $now->copy()->startOfDay()->subDays($window - 1);
         $windowEnd = $now->copy()->endOfDay();
 
+        // Quantity sold per item, used to find stock that is not moving
         $sold = DB::table('item_details as d')
             ->join('sales_transactions as s', 's.id', '=', 'd.sales_id')
             ->whereNull('d.deleted_at')
             ->whereNull('s.deleted_at')
             ->whereBetween('s.transacted_at', [$windowStart, $windowEnd])
-            ->get(['d.item_id', 'd.amount', 'd.sell_price', 'd.cost_price'])
+            ->get(['d.item_id', 'd.amount'])
             ->groupBy('item_id')
-            ->map(fn (Collection $rows) => [
-                'quantity' => (int) $rows->sum('amount'),
-                // PHP integers, so a sale below cost price gives a negative profit instead of a database error.
-                'profit' => (int) $rows->sum(fn ($row) => ((int) $row->sell_price - (int) $row->cost_price) * (int) $row->amount),
-            ]);
+            ->map(fn (Collection $rows) => ['quantity' => (int) $rows->sum('amount')]);
+
+        // The same ranking the Laporan > Keuntungan tab shows, so both screens always agree
+        $ranking = app(ProfitabilityService::class)->ranking($window, $now);
 
         $cards = [];
 
-        if ($top = $this->topProfitCard($sold, $window)) {
+        if ($top = $this->topProfitCard($ranking['rows'], $window)) {
             $cards[] = $top;
         }
 
@@ -178,34 +178,57 @@ class ReportService
             $cards[] = $idle;
         }
 
+        if ($weak = $this->weakCard($ranking['rows'])) {
+            $cards[] = $weak;
+        }
+
         return $cards;
     }
 
-    /** @param  Collection<int|string, array{quantity: int, profit: int}>  $sold */
-    private function topProfitCard(Collection $sold, int $window): ?array
+    /** @param  list<array<string, mixed>>  $rows  already sorted by profit, biggest first */
+    private function topProfitCard(array $rows, int $window): ?array
     {
-        $best = $sold->sortByDesc('profit')->first();
+        $best = $rows[0] ?? null;
 
         if (! $best || $best['profit'] <= 0) {
-            return null;
-        }
-
-        $itemId = $sold->sortByDesc('profit')->keys()->first();
-        $item = Item::withTrashed()->find($itemId);
-
-        if (! $item) {
             return null;
         }
 
         return [
             'tag' => 'Untung terbesar',
             'tone' => 'primary',
-            'title' => $item->name,
-            'text' => 'Sekitar '.$this->rupiah((int) round($best['profit'], -3))." keuntungan dalam {$window} hari.",
+            'title' => $best['kind'] === 'jasa' ? $best['name'].' (jasa)' : $best['name'],
+            'text' => 'Sekitar '.$this->rupiah((int) round($best['profit'], -3)).($best['estimated'] ? ' perkiraan keuntungan' : ' keuntungan')." dalam {$window} hari.",
         ];
     }
 
-    /** @param  Collection<int|string, array{quantity: int, profit: int}>  $sold */
+    /** Items or services that lose money or earn very little. */
+    private function weakCard(array $rows): ?array
+    {
+        // Worst first, so the names shown are the ones that lose the most
+        $weak = collect($rows)->whereIn('verdict', ['rugi', 'tipis'])->sortBy('profit')->values();
+
+        if ($weak->isEmpty()) {
+            return null;
+        }
+
+        $names = $this->joinNames($weak->take(3)->pluck('name')->all());
+
+        if ($weak->count() > 3) {
+            $names .= ' dan lainnya';
+        }
+
+        $losses = $weak->where('verdict', 'rugi')->count();
+
+        return [
+            'tag' => 'Perlu dicek',
+            'tone' => 'danger',
+            'title' => $weak->count().' barang/jasa untungnya tipis atau rugi',
+            'text' => $names.($losses > 0 ? ". {$losses} di antaranya dijual di bawah modal." : '.'),
+        ];
+    }
+
+    /** @param  Collection<int|string, array{quantity: int}>  $sold */
     private function idleCapitalCard(Collection $sold): ?array
     {
         $slowBelow = Setting::int('slow_moving_threshold', 10);

@@ -1,5 +1,7 @@
 import TriposLayout from '@/Layouts/TriposLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
+import { Tag } from 'lucide-react';
+import PageTitle from '@/Components/PageTitle';
 
 const inputClass = 'h-11 rounded-xl border border-[#6B7280] bg-white px-3.5 text-sm';
 
@@ -25,7 +27,7 @@ export default function Form({ category }) {
             <Head title={isEdit ? 'Ubah Kategori' : 'Tambah Kategori'} />
 
             <div className="max-w-xl">
-                <h1 className="text-[22px] font-bold">{isEdit ? 'Ubah Kategori' : 'Tambah Kategori'}</h1>
+                <PageTitle icon={Tag}>{isEdit ? 'Ubah Kategori' : 'Tambah Kategori'}</PageTitle>
 
                 <form onSubmit={submit} className="mt-6 grid gap-5 rounded-2xl border border-[#E5E7EB] bg-white p-6">
                     <div className="flex flex-col gap-1.5">

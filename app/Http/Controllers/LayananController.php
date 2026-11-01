@@ -38,6 +38,7 @@ class LayananController extends Controller
                 'category' => $service->category->name,
                 'unit' => $service->unit,
                 'unit_price' => $service->unit_price,
+                'image_url' => $service->imageUrl(),
                 'materials_summary' => $this->materialsSummary($service),
             ]);
 
@@ -51,6 +52,7 @@ class LayananController extends Controller
                 'category' => $selected->category->name,
                 'unit' => $selected->unit,
                 'unit_price' => $selected->unit_price,
+                'image_url' => $selected->imageUrl(),
                 'materials' => $selected->materials
                     ->filter(fn ($material) => $material->item !== null)
                     ->map(fn ($material) => [
@@ -85,9 +87,13 @@ class LayananController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $data = $request->validate($this->rules(), $this->messages());
+        $data = $request->validate($this->rules() + $this->imageRules(), $this->messages());
 
-        Service::create($data);
+        $service = Service::create(collect($data)->except(['gambar', 'hapus_gambar'])->all());
+
+        if ($request->hasFile('gambar')) {
+            $service->replaceImage($request->file('gambar'));
+        }
 
         return redirect()->route('layanan.index')->with('success', 'Layanan berhasil ditambahkan.');
     }
@@ -101,6 +107,7 @@ class LayananController extends Controller
                 'name' => $service->name,
                 'unit' => $service->unit,
                 'unit_price' => $service->unit_price,
+                'image_url' => $service->imageUrl(),
             ],
             'categories' => $this->categoryOptions(),
         ]);
@@ -108,7 +115,15 @@ class LayananController extends Controller
 
     public function update(Request $request, Service $service): RedirectResponse
     {
-        $service->update($request->validate($this->rules(), $this->messages()));
+        $data = $request->validate($this->rules() + $this->imageRules(), $this->messages());
+
+        $service->update(collect($data)->except(['gambar', 'hapus_gambar'])->all());
+
+        if ($request->hasFile('gambar')) {
+            $service->replaceImage($request->file('gambar'));
+        } elseif ($request->boolean('hapus_gambar')) {
+            $service->removeImage();
+        }
 
         return redirect()
             ->route('layanan.index', ['pilih' => $service->id])
@@ -223,9 +238,20 @@ class LayananController extends Controller
         ];
     }
 
+    private function imageRules(): array
+    {
+        return [
+            'gambar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'hapus_gambar' => ['nullable', 'boolean'],
+        ];
+    }
+
     private function messages(): array
     {
         return [
+            'gambar.image' => 'File harus berupa gambar.',
+            'gambar.mimes' => 'Gambar harus berformat JPG, PNG, atau WEBP.',
+            'gambar.max' => 'Ukuran gambar maksimal 2 MB.',
             'service_category_id.required' => 'Pilih kategori layanan.',
             'service_category_id.exists' => 'Kategori yang dipilih tidak ada.',
             'name.required' => 'Nama layanan wajib diisi.',
