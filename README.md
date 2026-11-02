@@ -87,6 +87,7 @@ Berbeda dengan sistem POS retail biasa, TRIPOS menghubungkan **penjualan jasa fo
 
 ### 8. 👥 Pengguna & Keamanan (`/pengguna`)
 * **Peran (Roles)**: `admin` (akses penuh ke backoffice & POS) dan `cashier` (akses khusus layar kasir).
+* **Halaman Tambah Pengguna Terpisah (`/pengguna/tambah`)**: sama seperti Supplier, Barang, dan Layanan, tombol *Tambah Pengguna* membuka halaman form sendiri; daftar pengguna tampil penuh tanpa panel form di samping.
 * **Guarded User Deletion**: Akun yang sudah memiliki riwayat penjualan atau pembelian dilindungi dari penghapusan permanen (hanya dapat dinonaktifkan) untuk menjaga validitas pembukuan.
 * **Paksa Ganti Password**: Kasir baru diwajibkan mengganti password sementara saat pertama kali login.
 
@@ -159,12 +160,8 @@ Berbeda dengan sistem POS retail biasa, TRIPOS menghubungkan **penjualan jasa fo
    php artisan migrate --seed
    ```
 
-7. **Hubungkan Storage Link**:
-   Perintah ini wajib dijalankan agar gambar produk yang diunggah dapat diakses oleh browser:
-   ```bash
-   php artisan storage:link
-   ```
-   Alamat gambar dibuat relatif (`/storage/...`), jadi tetap tampil baik dibuka lewat `localhost:8000`, `tripos.test`, maupun domain asli. Di Windows, jika muncul error izin saat membuat link, jalankan terminal sebagai Administrator atau aktifkan *Developer Mode* di Windows.
+7. **Gambar produk (tidak perlu langkah khusus)**:
+   Gambar yang diunggah disimpan di `storage/app/public` dan ditampilkan oleh aplikasi lewat alamat `/media/...`, jadi **tidak perlu** `php artisan storage:link`. Alamatnya relatif, sehingga tetap tampil baik dibuka lewat `localhost:8000`, `127.0.0.1:8000`, `tripos.test`, maupun domain asli. Hanya folder `barang` dan `layanan` yang bisa dibuka.
 
    Gambar **tidak** dicetak di struk: struk thermal hanya berisi teks agar cepat dan hemat kertas.
 
@@ -241,7 +238,7 @@ tripos/
 │   ├── migrations/       # Skema database & penambahan kolom image_path
 │   └── seeders/          # Data awal pengguna, setting, dan katalog sampel
 ├── public/
-│   └── storage/          # Symlink ke storage/app/public untuk file gambar
+│   └── storage/          # (opsional) symlink dari `storage:link`; gambar kini dilayani lewat route /media
 ├── resources/
 │   ├── js/
 │   │   ├── Components/   # Reusable UI (ItemThumb, CategoryBadge, EditButton, dll.)

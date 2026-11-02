@@ -8,17 +8,21 @@ use Illuminate\Support\Facades\Storage;
 /**
  * An optional picture for a model that has an `image_path` column (items and services).
  *
- * Files live in storage/app/public/<folder> and are reached through the /storage link
- * (run `php artisan storage:link` once on each machine).
+ * Files live in storage/app/public/<folder> and are served by the app through the "media" route,
+ * so no `php artisan storage:link` is needed.
  */
 trait HasImage
 {
     /** Folder inside storage/app/public, for example "barang". */
     abstract protected function imageFolder(): string;
 
+    /**
+     * Relative address such as /media/barang/abc.jpg (see the "media" route in routes/web.php).
+     * Relative, so it works on localhost:8000, 127.0.0.1, tripos.test or a real domain alike.
+     */
     public function imageUrl(): ?string
     {
-        return $this->image_path ? Storage::disk('public')->url($this->image_path) : null;
+        return $this->image_path ? route('media', ['path' => $this->image_path], absolute: false) : null;
     }
 
     /** Saves the new file first, then removes the old one, so a failed upload never loses the old picture. */

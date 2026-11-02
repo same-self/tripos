@@ -65,13 +65,10 @@ class ImageUploadTest extends TestCase
         $item = $this->makeItem();
         $item->forceFill(['image_path' => 'barang/a.jpg'])->save();
 
-        $this->assertSame('/storage/barang/a.jpg', $item->imageUrl());
+        // No http://host in front: an address like that breaks every picture when the site is
+        // opened on another host (127.0.0.1 instead of localhost, tripos.test, a real domain).
+        $this->assertSame('/media/barang/a.jpg', $item->imageUrl());
         $this->assertNull($this->makeItem()->imageUrl());
-
-        // Storage::fake() replaces the disk settings, so also check the real ones from config/filesystems.php:
-        // an address starting with http:// would break every picture when the site is opened on another host.
-        $real = Storage::build(config('filesystems.disks.public'));
-        $this->assertSame('/storage/barang/a.jpg', $real->url('barang/a.jpg'));
     }
 
     public function test_replacing_a_picture_deletes_the_old_file(): void
@@ -174,13 +171,13 @@ class ImageUploadTest extends TestCase
 
         $this->actingAs($cashier)->get('/kasir/pos')
             ->assertInertia(fn (Assert $page) => $page
-                ->where('items.0.image_url', '/storage/barang/p.jpg')
-                ->where('services.0.image_url', '/storage/layanan/f.jpg'));
+                ->where('items.0.image_url', '/media/barang/p.jpg')
+                ->where('services.0.image_url', '/media/layanan/f.jpg'));
 
         $this->actingAs($cashier)->get('/kasir/harga')
             ->assertInertia(fn (Assert $page) => $page
-                ->where('rows.0.image_url', '/storage/barang/p.jpg')
-                ->where('rows.1.image_url', '/storage/layanan/f.jpg'));
+                ->where('rows.0.image_url', '/media/barang/p.jpg')
+                ->where('rows.1.image_url', '/media/layanan/f.jpg'));
     }
 
     public function test_a_cashier_cannot_upload_pictures(): void

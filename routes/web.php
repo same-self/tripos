@@ -3,6 +3,7 @@
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\SalesHistoryController;
 use App\Http\Controllers\BarangController;
@@ -17,6 +18,19 @@ use App\Http\Controllers\KategoriController;
 
 
 Route::get('/', fn () => redirect()->route('login'));
+
+// Product and service pictures, served by the app itself from storage/app/public.
+// This is why `php artisan storage:link` is NOT needed: that link is the usual reason pictures
+// break after unzipping the project or moving it to another PC. (Laravel keeps its own /storage
+// route for private files, so pictures use /media instead.)
+// Only the two picture folders can be read, and a name cannot start with a dot, so ".." is refused.
+Route::get('/media/{path}', function (string $path) {
+    $disk = Storage::disk('public');
+
+    abort_unless($disk->exists($path), 404);
+
+    return $disk->response($path, null, ['Cache-Control' => 'public, max-age=86400']);
+})->where('path', '(barang|layanan)/[A-Za-z0-9][A-Za-z0-9._-]*')->name('media');
 
 Route::get('/dashboard', DashboardController::class)->middleware(['auth', 'verified', 'role:admin'])->name('dashboard');
 
@@ -79,6 +93,10 @@ Route::delete('/kategori/{kategori}', [KategoriController::class, 'destroy'])
 Route::get('/pengguna', [PenggunaController::class, 'index'])
     ->middleware(['auth', 'verified', 'role:admin'])
     ->name('pengguna.index');
+
+Route::get('/pengguna/tambah', [PenggunaController::class, 'create'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('pengguna.create');
 
 Route::post('/pengguna', [PenggunaController::class, 'store'])
     ->middleware(['auth', 'verified', 'role:admin'])

@@ -42,6 +42,11 @@ class PenggunaController extends Controller
         ]);
     }
 
+    public function create(): Response
+    {
+        return Inertia::render('Pengguna/Create');
+    }
+
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
