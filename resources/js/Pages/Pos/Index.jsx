@@ -1,7 +1,7 @@
 import CashierLayout from '@/Layouts/CashierLayout';
 import { Head, router, usePage } from '@inertiajs/react';
-import { useState } from 'react';
-import { Trash2 } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Trash2, Search, ArrowUpDown, X, ShoppingCart } from 'lucide-react';
 import ItemThumb from '@/Components/ItemThumb';
 
 const QUICK_AMOUNTS = [20000, 50000, 100000];
@@ -22,10 +22,10 @@ const ICON_PATHS = {
 function CategoryIcon({ category }) {
     const paths = ICON_PATHS[category] ?? ['M4 4h16v16H4z'];
     return (
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#DBEAFE] text-[#1D4ED8]">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#DBEAFE] text-[#1D4ED8]">
             <svg
-                width="18"
-                height="18"
+                width="16"
+                height="16"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -48,8 +48,8 @@ function TabButton({ active, onClick, children }) {
             type="button"
             onClick={onClick}
             aria-pressed={active}
-            className={`rounded-full px-4 py-2 text-[13px] ${
-                active ? 'bg-[#1D4ED8] font-semibold text-white' : 'border border-[#E5E7EB] bg-white font-medium text-[#4B5563]'
+            className={`rounded-full px-4 py-2 text-[13px] transition-colors ${
+                active ? 'bg-[#1D4ED8] font-semibold text-white shadow-sm' : 'border border-[#E5E7EB] bg-white font-medium text-[#4B5563] hover:bg-gray-50'
             }`}
         >
             {children}
@@ -62,7 +62,10 @@ export default function Index({ items, services, paymentMethods }) {
 
     const [tab, setTab] = useState('barang');
     const [search, setSearch] = useState('');
+    const [category, setCategory] = useState('Semua');
+    const [sortBy, setSortBy] = useState('nama-asc');
     const [cart, setCart] = useState([]);
+    const [selectedCartKeys, setSelectedCartKeys] = useState([]);
     const [method, setMethod] = useState('cash');
     const [paid, setPaid] = useState(0);
     const [printReceipt, setPrintReceipt] = useState(false);
@@ -74,14 +77,67 @@ export default function Index({ items, services, paymentMethods }) {
     const change = Math.max(0, paid - total);
     const isCash = method === 'cash';
 
+    const itemCategories = useMemo(() => {
+        const cats = Array.from(new Set(items.map((i) => i.category).filter(Boolean)));
+        return ['Semua', ...cats];
+    }, [items]);
+
+    const serviceCategories = useMemo(() => {
+        const cats = Array.from(new Set(services.map((s) => s.category).filter(Boolean)));
+        return ['Semua', ...cats];
+    }, [services]);
+
+    const currentCategories = tab === 'barang' ? itemCategories : serviceCategories;
+
     const keyword = search.trim().toLowerCase();
-    const shownItems = items.filter((item) => item.name.toLowerCase().includes(keyword));
-    const shownServices = services.filter((service) => service.name.toLowerCase().includes(keyword));
+
+    const filteredItems = useMemo(() => {
+        return items.filter((item) => {
+            const matchesKeyword = item.name.toLowerCase().includes(keyword);
+            const matchesCategory = category === 'Semua' || item.category === category;
+            return matchesKeyword && matchesCategory;
+        });
+    }, [items, keyword, category]);
+
+    const sortedItems = useMemo(() => {
+        return [...filteredItems].sort((a, b) => {
+            switch (sortBy) {
+                case 'nama-desc':
+                    return b.name.localeCompare(a.name);
+                case 'harga-asc':
+                    return a.sell_price - b.sell_price;
+                case 'harga-desc':
+                    return b.sell_price - a.sell_price;
+                case 'stok-desc':
+                    return b.stock - a.stock;
+                case 'stok-asc':
+                    return a.stock - b.stock;
+                case 'nama-asc':
+                default:
+                    return a.name.localeCompare(b.name);
+            }
+        });
+    }, [filteredItems, sortBy]);
+
+    const shownServices = useMemo(() => {
+        return services.filter((service) => {
+            const matchesKeyword = service.name.toLowerCase().includes(keyword);
+            const matchesCategory = category === 'Semua' || service.category === category;
+            return matchesKeyword && matchesCategory;
+        });
+    }, [services, keyword, category]);
 
     const selectedService = services.find((service) => service.id === serviceId) ?? null;
     const paper = selectedService?.materials?.[0] ?? null;
 
     function addToCart(key, name, price, unit, amount = 1) {
+        if (key.startsWith('barang-')) {
+            const itemId = Number(key.split('-')[1]);
+            const item = items.find((i) => i.id === itemId);
+            if (item && item.stock <= 0) {
+                return;
+            }
+        }
         setCart((prev) => {
             const found = prev.find((line) => line.key === key);
             if (found) {
@@ -108,6 +164,27 @@ export default function Index({ items, services, paymentMethods }) {
 
     function removeLine(key) {
         setCart((prev) => prev.filter((line) => line.key !== key));
+        setSelectedCartKeys((prev) => prev.filter((k) => k !== key));
+    }
+
+    function toggleSelectKey(key) {
+        setSelectedCartKeys((prev) =>
+            prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
+        );
+    }
+
+    function toggleSelectAll() {
+        if (cart.length > 0 && selectedCartKeys.length === cart.length) {
+            setSelectedCartKeys([]);
+        } else {
+            setSelectedCartKeys(cart.map((line) => line.key));
+        }
+    }
+
+    function deleteSelected() {
+        if (selectedCartKeys.length === 0) return;
+        setCart((prev) => prev.filter((line) => !selectedCartKeys.includes(line.key)));
+        setSelectedCartKeys([]);
     }
 
     function submitSale() {
@@ -133,6 +210,7 @@ export default function Index({ items, services, paymentMethods }) {
                 onFinish: () => setProcessing(false),
                 onSuccess: () => {
                     setCart([]);
+                    setSelectedCartKeys([]);
                     setPaid(0);
                     setPrintReceipt(false);
                 },
@@ -149,80 +227,202 @@ export default function Index({ items, services, paymentMethods }) {
             )}
 
             <div className="flex flex-col gap-6 lg:flex-row">
-                {/* Left: search, tabs, product cards, and the service panel */}
+                {/* Left: search, tabs, category filter, sorting, product cards, and the service panel */}
                 <section className="flex min-w-0 flex-1 flex-col gap-4">
-                    <label className="flex items-center gap-3 rounded-xl border-2 border-[#1D4ED8] bg-white px-4 py-3.5">
+                    {/* Search bar */}
+                    <label className="relative flex items-center gap-3 rounded-xl border-2 border-[#1D4ED8] bg-white px-4 py-3">
+                        <Search size={18} className="text-[#1D4ED8] shrink-0" aria-hidden="true" />
                         <span className="sr-only">Cari barang atau jasa</span>
                         <input
                             type="search"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Cari barang atau jasa (nama / kode)"
-                            className="min-w-0 flex-1 border-0 p-0 text-sm focus:ring-0"
+                            placeholder="Cari barang atau jasa..."
+                            className="min-w-0 flex-1 border-0 p-0 text-sm focus:ring-0 placeholder:text-gray-400"
                             autoFocus
                         />
+                        {search && (
+                            <button
+                                type="button"
+                                onClick={() => setSearch('')}
+                                className="text-gray-400 hover:text-gray-600 p-0.5"
+                                aria-label="Hapus pencarian"
+                            >
+                                <X size={16} />
+                            </button>
+                        )}
                     </label>
 
+                    {/* Tabs */}
                     <div className="flex gap-2">
-                        <TabButton active={tab === 'barang'} onClick={() => setTab('barang')}>
+                        <TabButton
+                            active={tab === 'barang'}
+                            onClick={() => {
+                                setTab('barang');
+                                setCategory('Semua');
+                            }}
+                        >
                             Barang ATK
                         </TabButton>
-                        <TabButton active={tab === 'jasa'} onClick={() => setTab('jasa')}>
+                        <TabButton
+                            active={tab === 'jasa'}
+                            onClick={() => {
+                                setTab('jasa');
+                                setCategory('Semua');
+                            }}
+                        >
                             Jasa Fotokopi
                         </TabButton>
                     </div>
 
-                    {tab === 'barang' ? (
-                        <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
-                            {shownItems.map((item) => (
-                                <li key={item.id} className="flex flex-col gap-1.5 rounded-xl border border-[#E5E7EB] bg-white p-3.5">
-                                    <ItemThumb src={item.image_url} name={item.name} size="lg" />
-                                    <div className="flex items-center gap-2">
-                                        <CategoryIcon category={item.category} />
-                                        <span className="text-xs font-medium text-[#4B5563]">{item.category}</span>
-                                    </div>
-                                    <p className="text-sm font-semibold">{item.name}</p>
-                                    <p className="text-base font-bold text-[#1D4ED8]">{rupiah(item.sell_price)}</p>
-                                    <p className={`text-xs ${item.low_stock ? 'text-[#B91C1C]' : 'text-[#4B5563]'}`}>
-                                        Stok: {item.stock}
-                                        {item.low_stock ? ' · menipis' : ''}
-                                    </p>
-                                    <button
-                                        type="button"
-                                        onClick={() => addToCart(`barang-${item.id}`, item.name, item.sell_price, item.unit)}
-                                        className="mt-1 rounded-lg bg-[#1D4ED8] py-1.5 text-xs font-semibold text-white"
-                                    >
-                                        Tambah
-                                    </button>
-                                </li>
+                    {/* Category Filter Chips & Sort Controls */}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                            {currentCategories.map((cat) => (
+                                <button
+                                    key={cat}
+                                    type="button"
+                                    onClick={() => setCategory(cat)}
+                                    className={`rounded-full px-3 py-1 text-xs transition-colors ${
+                                        category === cat
+                                            ? 'bg-[#1D4ED8] font-semibold text-white shadow-sm'
+                                            : 'bg-white border border-[#E5E7EB] text-[#4B5563] hover:bg-[#F9FAFB] hover:border-[#D1D5DB]'
+                                    }`}
+                                >
+                                    {cat}
+                                </button>
                             ))}
-                        </ul>
-                    ) : (
-                        <>
+                        </div>
+
+                        {tab === 'barang' && (
+                            <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
+                                <label htmlFor="pos-sort" className="flex items-center gap-1 text-xs text-[#6B7280]">
+                                    <ArrowUpDown size={13} className="text-[#6B7280]" aria-hidden="true" />
+                                    <span className="hidden sm:inline">Urutkan:</span>
+                                </label>
+                                <select
+                                    id="pos-sort"
+                                    value={sortBy}
+                                    onChange={(e) => setSortBy(e.target.value)}
+                                    className="rounded-lg border border-[#D1D5DB] bg-white px-2.5 py-1 text-xs font-medium text-[#374151] focus:border-[#1D4ED8] focus:ring-1 focus:ring-[#1D4ED8]"
+                                >
+                                    <option value="nama-asc">Nama (A – Z)</option>
+                                    <option value="nama-desc">Nama (Z – A)</option>
+                                    <option value="harga-asc">Harga (Termurah)</option>
+                                    <option value="harga-desc">Harga (Termahal)</option>
+                                    <option value="stok-desc">Stok (Terbanyak)</option>
+                                    <option value="stok-asc">Stok (Paling Sedikit)</option>
+                                </select>
+                            </div>
+                        )}
+                    </div>
+
+                    {tab === 'barang' ? (
+                        sortedItems.length === 0 ? (
+                            <div className="rounded-2xl border border-dashed border-gray-300 bg-white py-12 text-center">
+                                <p className="text-sm font-medium text-gray-500">Tidak ada barang yang ditemukan.</p>
+                                <p className="text-xs text-gray-400 mt-1">Coba ubah kata kunci atau filter kategori.</p>
+                            </div>
+                        ) : (
                             <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
-                                {shownServices.map((service) => {
-                                    const selected = service.id === serviceId;
+                                {sortedItems.map((item) => {
+                                    const isOutOfStock = item.stock <= 0;
                                     return (
-                                        <li key={service.id}>
+                                        <li
+                                            key={item.id}
+                                            className={`group relative flex flex-col justify-between rounded-xl border p-3.5 transition-all duration-150 ${
+                                                isOutOfStock
+                                                    ? 'border-gray-200 bg-gray-50/80 opacity-60'
+                                                    : 'border-[#E5E7EB] bg-white hover:border-blue-300 hover:shadow-md'
+                                            }`}
+                                        >
+                                            <div className="flex flex-col gap-1.5">
+                                                <div className="relative">
+                                                    <ItemThumb src={item.image_url} name={item.name} size="lg" />
+                                                    {isOutOfStock ? (
+                                                        <span className="absolute top-2 right-2 rounded-md bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
+                                                            Stok Habis
+                                                        </span>
+                                                    ) : item.low_stock ? (
+                                                        <span className="absolute top-2 right-2 rounded-md bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
+                                                            Menipis
+                                                        </span>
+                                                    ) : null}
+                                                </div>
+
+                                                <div className="flex items-center gap-1.5 mt-1">
+                                                    <CategoryIcon category={item.category} />
+                                                    <span className="truncate text-xs font-medium text-[#4B5563]">{item.category}</span>
+                                                </div>
+
+                                                <p className="line-clamp-2 text-sm font-semibold text-gray-900 group-hover:text-blue-700 min-h-[2.5rem]">
+                                                    {item.name}
+                                                </p>
+
+                                                <p className="text-base font-bold text-[#1D4ED8]">{rupiah(item.sell_price)}</p>
+
+                                                <p className={`text-xs ${isOutOfStock ? 'font-semibold text-red-600' : item.low_stock ? 'font-medium text-[#B91C1C]' : 'text-[#4B5563]'}`}>
+                                                    {isOutOfStock ? (
+                                                        'Stok Habis'
+                                                    ) : (
+                                                        <>
+                                                            Stok: {item.stock} {item.unit}
+                                                            {item.low_stock ? ' · menipis' : ''}
+                                                        </>
+                                                    )}
+                                                </p>
+                                            </div>
+
                                             <button
                                                 type="button"
-                                                onClick={() => setServiceId(service.id)}
-                                                aria-pressed={selected}
-                                                className={`flex w-full flex-col gap-1.5 rounded-xl border p-3.5 text-left ${
-                                                    selected ? 'border-[#1D4ED8] bg-[#DBEAFE]' : 'border-[#E5E7EB] bg-white'
+                                                disabled={isOutOfStock}
+                                                onClick={() => addToCart(`barang-${item.id}`, item.name, item.sell_price, item.unit)}
+                                                className={`mt-2.5 rounded-lg py-2 text-xs font-semibold transition-colors ${
+                                                    isOutOfStock
+                                                        ? 'cursor-not-allowed bg-gray-200 text-gray-400'
+                                                        : 'bg-[#1D4ED8] text-white hover:bg-blue-700 active:bg-blue-800'
                                                 }`}
                                             >
-                                                <span className="text-xs font-medium text-[#4B5563]">{service.category}</span>
-                                                <span className="text-sm font-semibold">{service.name}</span>
-                                                <span className="text-base font-bold text-[#1D4ED8]">
-                                                    {rupiah(service.unit_price)}{' '}
-                                                    <span className="text-xs font-normal text-[#4B5563]">per {service.unit}</span>
-                                                </span>
+                                                {isOutOfStock ? 'Stok Habis' : 'Tambah'}
                                             </button>
                                         </li>
                                     );
                                 })}
                             </ul>
+                        )
+                    ) : (
+                        <>
+                            {shownServices.length === 0 ? (
+                                <div className="rounded-2xl border border-dashed border-gray-300 bg-white py-12 text-center">
+                                    <p className="text-sm font-medium text-gray-500">Tidak ada layanan jasa yang ditemukan.</p>
+                                    <p className="text-xs text-gray-400 mt-1">Coba ubah kata kunci atau filter kategori.</p>
+                                </div>
+                            ) : (
+                                <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+                                    {shownServices.map((service) => {
+                                        const selected = service.id === serviceId;
+                                        return (
+                                            <li key={service.id}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setServiceId(service.id)}
+                                                    aria-pressed={selected}
+                                                    className={`flex w-full flex-col gap-1.5 rounded-xl border p-3.5 text-left transition-all ${
+                                                        selected ? 'border-[#1D4ED8] bg-[#DBEAFE]' : 'border-[#E5E7EB] bg-white hover:border-blue-300'
+                                                    }`}
+                                                >
+                                                    <span className="text-xs font-medium text-[#4B5563]">{service.category}</span>
+                                                    <span className="text-sm font-semibold">{service.name}</span>
+                                                    <span className="text-base font-bold text-[#1D4ED8]">
+                                                        {rupiah(service.unit_price)}{' '}
+                                                        <span className="text-xs font-normal text-[#4B5563]">per {service.unit}</span>
+                                                    </span>
+                                                </button>
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                            )}
 
                             {selectedService && (
                                 <div className="flex flex-col gap-4 rounded-2xl border border-[#6B7280] bg-white p-5">
@@ -257,7 +457,7 @@ export default function Index({ items, services, paymentMethods }) {
                                                 key={n}
                                                 type="button"
                                                 onClick={() => setPages(n)}
-                                                className="rounded-lg bg-[#F3F4F6] px-3 py-1.5 text-xs font-medium"
+                                                className="rounded-lg bg-[#F3F4F6] px-3 py-1.5 text-xs font-medium hover:bg-gray-200 transition-colors"
                                             >
                                                 {n}
                                             </button>
@@ -288,7 +488,7 @@ export default function Index({ items, services, paymentMethods }) {
                                                 pages,
                                             )
                                         }
-                                        className="rounded-xl bg-[#1D4ED8] py-3.5 font-semibold text-white disabled:opacity-50"
+                                        className="rounded-xl bg-[#1D4ED8] py-3.5 font-semibold text-white disabled:opacity-50 hover:bg-blue-700 transition-colors"
                                     >
                                         Tambah ke keranjang
                                     </button>
@@ -301,62 +501,140 @@ export default function Index({ items, services, paymentMethods }) {
                 {/* Right: cart and payment */}
                 <aside className="flex w-full shrink-0 flex-col gap-3.5 rounded-2xl border border-[#E5E7EB] bg-white p-5 lg:w-[460px]">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-base font-semibold">Keranjang</h2>
-                        <span className="text-sm text-[#4B5563]">{cart.length} item</span>
+                        <div className="flex items-center gap-2">
+                            <h2 className="text-base font-semibold text-gray-900">Keranjang</h2>
+                            <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-[#1D4ED8]">
+                                {cart.length}
+                            </span>
+                        </div>
+                        {cart.length > 0 && (
+                            <div className="flex items-center gap-2">
+                                {selectedCartKeys.length > 0 ? (
+                                    <button
+                                        type="button"
+                                        onClick={deleteSelected}
+                                        className="inline-flex items-center gap-1 rounded-lg bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-600 transition-colors hover:bg-red-100"
+                                    >
+                                        <Trash2 size={13} aria-hidden="true" />
+                                        Hapus ({selectedCartKeys.length})
+                                    </button>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setCart([]);
+                                            setSelectedCartKeys([]);
+                                        }}
+                                        className="text-xs text-gray-400 hover:text-red-600"
+                                    >
+                                        Kosongkan
+                                    </button>
+                                )}
+                            </div>
+                        )}
                     </div>
 
-                    {cart.length === 0 && (
-                        <p className="py-4 text-center text-sm text-[#4B5563]">Belum ada barang di keranjang.</p>
+                    {cart.length > 0 && (
+                        <div className="flex items-center justify-between border-b border-[#E5E7EB] pb-2 text-xs text-[#6B7280]">
+                            <label className="flex items-center gap-2 cursor-pointer select-none font-medium hover:text-gray-900">
+                                <input
+                                    type="checkbox"
+                                    checked={cart.length > 0 && selectedCartKeys.length === cart.length}
+                                    onChange={toggleSelectAll}
+                                    className="h-4 w-4 rounded border-gray-300 text-[#1D4ED8] focus:ring-[#1D4ED8]"
+                                />
+                                <span>Pilih Semua</span>
+                            </label>
+                            {selectedCartKeys.length > 0 && (
+                                <span className="text-xs font-medium text-[#1D4ED8]">
+                                    {selectedCartKeys.length} terpilih
+                                </span>
+                            )}
+                        </div>
                     )}
 
-                    {cart.map((line) => (
-                        <div key={line.key} className="flex items-center justify-between gap-3">
-                            <div className="min-w-0">
-                                <p className="truncate text-sm font-medium">{line.name}</p>
-                                <p className="text-xs text-[#4B5563]">
-                                    {line.qty} × {rupiah(line.price)}
-                                </p>
+                    {cart.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-8 text-center">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-400 mb-2">
+                                <ShoppingCart size={22} />
                             </div>
-                            <div className="flex shrink-0 items-center gap-2">
-                                <div className="flex items-center gap-1">
-                                    <button
-                                        type="button"
-                                        aria-label={`Kurangi ${line.name}`}
-                                        onClick={() => changeQty(line.key, -1)}
-                                        className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#F3F4F6] font-semibold"
-                                    >
-                                        −
-                                    </button>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        inputMode="numeric"
-                                        aria-label={`Jumlah ${line.name}`}
-                                        value={line.qty}
-                                        onChange={(e) => setQty(line.key, e.target.value)}
-                                        className="h-7 w-14 rounded-lg border border-[#6B7280] text-center text-[13px] font-semibold"
-                                    />
-                                    <button
-                                        type="button"
-                                        aria-label={`Tambah ${line.name}`}
-                                        onClick={() => changeQty(line.key, 1)}
-                                        className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#1D4ED8] font-semibold text-white"
-                                    >
-                                        +
-                                    </button>
-                                </div>
-                                <p className="w-24 text-right text-sm font-semibold">{rupiah(line.qty * line.price)}</p>
-                                <button
-                                    type="button"
-                                    aria-label={`Hapus ${line.name}`}
-                                    onClick={() => removeLine(line.key)}
-                                    className="flex h-7 w-7 items-center justify-center rounded-lg text-[#B91C1C] hover:bg-[#FEE2E2]"
-                                >
-                                    <Trash2 size={16} aria-hidden="true" />
-                                </button>
-                            </div>
+                            <p className="text-sm font-medium text-gray-500">Belum ada barang di keranjang</p>
+                            <p className="text-xs text-gray-400 mt-0.5">Pilih item dari katalog di sebelah kiri</p>
                         </div>
-                    ))}
+                    ) : (
+                        <div className="flex flex-col gap-2 max-h-[340px] overflow-y-auto pr-1">
+                            {cart.map((line) => {
+                                const isSelected = selectedCartKeys.includes(line.key);
+                                return (
+                                    <div
+                                        key={line.key}
+                                        className={`flex items-center justify-between gap-2 rounded-xl border p-2.5 transition-colors ${
+                                            isSelected
+                                                ? 'border-[#93C5FD] bg-[#EFF6FF]'
+                                                : 'border-[#F3F4F6] bg-white hover:bg-[#F9FAFB]'
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-2.5 min-w-0">
+                                            <input
+                                                type="checkbox"
+                                                checked={isSelected}
+                                                onChange={() => toggleSelectKey(line.key)}
+                                                aria-label={`Pilih ${line.name}`}
+                                                className="h-4 w-4 rounded border-gray-300 text-[#1D4ED8] focus:ring-[#1D4ED8] shrink-0"
+                                            />
+                                            <div className="min-w-0">
+                                                <p className="truncate text-sm font-medium text-gray-900" title={line.name}>
+                                                    {line.name}
+                                                </p>
+                                                <p className="text-xs text-[#4B5563]">
+                                                    {line.qty} × {rupiah(line.price)}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex shrink-0 items-center gap-2">
+                                            <div className="flex items-center gap-1">
+                                                <button
+                                                    type="button"
+                                                    aria-label={`Kurangi ${line.name}`}
+                                                    onClick={() => changeQty(line.key, -1)}
+                                                    className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#F3F4F6] font-semibold text-gray-700 hover:bg-gray-200"
+                                                >
+                                                    −
+                                                </button>
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    inputMode="numeric"
+                                                    aria-label={`Jumlah ${line.name}`}
+                                                    value={line.qty}
+                                                    onChange={(e) => setQty(line.key, e.target.value)}
+                                                    className="h-7 w-12 rounded-lg border border-[#D1D5DB] text-center text-xs font-semibold focus:border-[#1D4ED8] focus:ring-1 focus:ring-[#1D4ED8]"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    aria-label={`Tambah ${line.name}`}
+                                                    onClick={() => changeQty(line.key, 1)}
+                                                    className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#1D4ED8] font-semibold text-white hover:bg-blue-700"
+                                                >
+                                                    +
+                                                </button>
+                                            </div>
+                                            <p className="w-20 text-right text-xs font-bold text-gray-900">{rupiah(line.qty * line.price)}</p>
+                                            <button
+                                                type="button"
+                                                aria-label={`Hapus ${line.name}`}
+                                                onClick={() => removeLine(line.key)}
+                                                className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 hover:bg-[#FEE2E2] hover:text-[#B91C1C]"
+                                            >
+                                                <Trash2 size={15} aria-hidden="true" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
 
                     <div className="flex items-center justify-between border-t border-[#E5E7EB] pt-3.5">
                         <span className="text-sm text-[#4B5563]">Total Tagihan</span>
@@ -398,7 +676,7 @@ export default function Index({ items, services, paymentMethods }) {
                                 <button
                                     type="button"
                                     onClick={() => setPaid(total)}
-                                    className="rounded-lg bg-[#F3F4F6] px-2.5 py-1.5 text-xs font-medium"
+                                    className="rounded-lg bg-[#F3F4F6] px-2.5 py-1.5 text-xs font-medium hover:bg-gray-200"
                                 >
                                     Uang Pas
                                 </button>
@@ -407,7 +685,7 @@ export default function Index({ items, services, paymentMethods }) {
                                         key={amount}
                                         type="button"
                                         onClick={() => setPaid(amount)}
-                                        className="rounded-lg bg-[#F3F4F6] px-2.5 py-1.5 text-xs font-medium"
+                                        className="rounded-lg bg-[#F3F4F6] px-2.5 py-1.5 text-xs font-medium hover:bg-gray-200"
                                     >
                                         {rupiah(amount)}
                                     </button>
@@ -422,12 +700,12 @@ export default function Index({ items, services, paymentMethods }) {
                         <p className="text-sm text-[#4B5563]">Pelanggan membayar sebesar total tagihan melalui QRIS.</p>
                     )}
 
-                    <label className="flex items-center gap-2 py-1 text-[13px]">
+                    <label className="flex items-center gap-2 py-1 text-[13px] cursor-pointer">
                         <input
                             type="checkbox"
                             checked={printReceipt}
                             onChange={(e) => setPrintReceipt(e.target.checked)}
-                            className="h-4 w-4 rounded border-[#4B5563]"
+                            className="h-4 w-4 rounded border-[#4B5563] text-[#1D4ED8] focus:ring-[#1D4ED8]"
                         />
                         Cetak struk thermal
                     </label>
@@ -440,7 +718,7 @@ export default function Index({ items, services, paymentMethods }) {
                         type="button"
                         onClick={submitSale}
                         disabled={cart.length === 0 || processing}
-                        className="rounded-xl bg-[#1D4ED8] py-4 font-semibold text-white disabled:opacity-50"
+                        className="rounded-xl bg-[#1D4ED8] py-4 font-semibold text-white disabled:opacity-50 hover:bg-blue-700 transition-colors"
                     >
                         {processing ? 'Menyimpan...' : 'Selesaikan Transaksi'}
                     </button>
