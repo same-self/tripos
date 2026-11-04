@@ -1,5 +1,6 @@
 import TriposLayout from '@/Layouts/TriposLayout';
 import EditButton from '@/Components/EditButton';
+import PasswordInput from '@/Components/PasswordInput';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { Plus, Trash2 } from 'lucide-react';
 
@@ -157,8 +158,7 @@ export default function Index({ users }) {
                         </Field>
 
                         <Field label="Password sementara" error={errors.password}>
-                            <input
-                                type="password"
+                            <PasswordInput
                                 value={data.password}
                                 onChange={(e) => setData('password', e.target.value)}
                                 className={inputClass}

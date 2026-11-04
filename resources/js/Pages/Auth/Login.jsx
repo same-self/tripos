@@ -1,4 +1,5 @@
 import InputError from '@/Components/InputError';
+import PasswordInput from '@/Components/PasswordInput';
 import { Head, useForm } from '@inertiajs/react';
 
 const FEATURES = [
@@ -88,9 +89,8 @@ export default function Login({ status }) {
                         <label htmlFor="password" className="mt-4 text-xs font-semibold">
                             Password
                         </label>
-                        <input
+                        <PasswordInput
                             id="password"
-                            type="password"
                             name="password"
                             value={data.password}
                             placeholder="Password"

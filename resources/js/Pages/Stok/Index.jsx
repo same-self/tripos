@@ -73,6 +73,31 @@ export default function Index({ items, restokSegera, restokNanti, window, segera
                             items={restokNanti}
                             emptyText="Tidak ada barang untuk direstok nanti."
                         />
+
+                        <div className="rounded-2xl border border-[#E5E7EB] bg-white p-4">
+                            <h3 className="text-[13px] font-semibold text-[#111827]">Ambang Batas Status ({window} Hari)</h3>
+                            <p className="mt-1 text-xs text-[#4B5563]">Klasifikasi kecepatan perputaran stok barang:</p>
+                            <ul className="mt-3 flex flex-col gap-2 text-xs">
+                                <li className="flex items-center justify-between">
+                                    <span className="rounded-full bg-[#DCFCE7] px-2 py-0.5 text-xs font-semibold text-[#15803D]">
+                                        Cepat laku
+                                    </span>
+                                    <span className="font-medium text-[#4B5563]">&ge; 80 unit</span>
+                                </li>
+                                <li className="flex items-center justify-between">
+                                    <span className="rounded-full bg-[#F3F4F6] px-2 py-0.5 text-xs font-semibold text-[#4B5563]">
+                                        Normal
+                                    </span>
+                                    <span className="font-medium text-[#4B5563]">10 – 79 unit</span>
+                                </li>
+                                <li className="flex items-center justify-between">
+                                    <span className="rounded-full bg-[#FEF3C7] px-2 py-0.5 text-xs font-semibold text-[#92400E]">
+                                        Lambat
+                                    </span>
+                                    <span className="font-medium text-[#4B5563]">&lt; 10 unit</span>
+                                </li>
+                            </ul>
+                        </div>
                     </aside>
 
                     {/* Stock table */}

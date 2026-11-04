@@ -5,6 +5,19 @@ import { useState } from 'react';
 
 const inputClass = 'h-11 rounded-xl border border-[#6B7280] bg-white px-3.5 text-sm';
 
+const STANDARD_UNITS = [
+    'pcs',
+    'buah',
+    'lembar',
+    'rim',
+    'pack',
+    'buku',
+    'box',
+    'meter',
+    'roll',
+    'set',
+];
+
 function Field({ label, error, children }) {
     return (
         <div className="flex flex-col gap-1.5">
@@ -18,6 +31,9 @@ function Field({ label, error, children }) {
 export default function Form({ item, categories }) {
     const isEdit = item !== null;
     const [preview, setPreview] = useState(item?.image_url ?? null);
+    const [isCustomUnit, setIsCustomUnit] = useState(
+        Boolean(item?.unit && !STANDARD_UNITS.includes(item.unit.toLowerCase()))
+    );
 
     const { data, setData, post, transform, processing, errors } = useForm({
         item_category_id: item?.item_category_id ?? categories[0]?.id ?? '',
@@ -126,13 +142,42 @@ export default function Form({ item, categories }) {
                     </Field>
 
                     <Field label="Satuan" error={errors.unit}>
-                        <input
-                            type="text"
-                            value={data.unit}
-                            onChange={(e) => setData('unit', e.target.value)}
-                            placeholder="buah, rim, lembar"
-                            className={inputClass}
-                        />
+                        <div className="flex flex-col gap-2">
+                            <select
+                                value={isCustomUnit ? '__custom__' : data.unit}
+                                onChange={(e) => {
+                                    if (e.target.value === '__custom__') {
+                                        setIsCustomUnit(true);
+                                        setData('unit', '');
+                                    } else {
+                                        setIsCustomUnit(false);
+                                        setData('unit', e.target.value);
+                                    }
+                                }}
+                                className={inputClass}
+                            >
+                                <option value="" disabled>
+                                    -- Pilih satuan barang --
+                                </option>
+                                {STANDARD_UNITS.map((u) => (
+                                    <option key={u} value={u}>
+                                        {u}
+                                    </option>
+                                ))}
+                                <option value="__custom__">+ Lainnya (Ketik sendiri)</option>
+                            </select>
+
+                            {isCustomUnit && (
+                                <input
+                                    type="text"
+                                    value={data.unit}
+                                    onChange={(e) => setData('unit', e.target.value)}
+                                    placeholder="Ketik satuan baru, misal: botol, tabung..."
+                                    autoFocus
+                                    className={inputClass}
+                                />
+                            )}
+                        </div>
                     </Field>
 
                     <div className="grid gap-5 sm:grid-cols-2">

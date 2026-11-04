@@ -1,6 +1,6 @@
 import TriposLayout from '@/Layouts/TriposLayout';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Info, Plus, Tag, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import CategoryBadge from '@/Components/CategoryBadge';
 import EditButton from '@/Components/EditButton';
@@ -14,24 +14,40 @@ function CategoryButton({ active, label, count, onClick }) {
             type="button"
             onClick={onClick}
             aria-pressed={active}
-            className={`flex items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-sm ${
+            className={`flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-sm ${
                 active ? 'bg-[#DBEAFE] font-semibold text-[#1D4ED8]' : 'font-medium text-[#111827] hover:bg-[#F3F4F6]'
             }`}
         >
-            <span className="flex items-center gap-2.5">
+            <span className="flex min-w-0 items-center gap-2.5 text-left">
                 <CategoryBadge name={label} size="sm" />
-                {label}
+                <span className="truncate">{label}</span>
             </span>
-            <span className="rounded-full bg-white px-2 py-0.5 text-xs text-[#4B5563]">{count}</span>
+            <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-xs text-[#4B5563]">{count}</span>
         </button>
     );
 }
 
 function SummaryCard({ label, value, tone }) {
+    // If digits are long (e.g. large currency string), scale text size down smoothly
+    const isLongText = typeof value === 'string' && value.length > 13;
+    const isVeryLongText = typeof value === 'string' && value.length > 17;
+    const textSize = isVeryLongText
+        ? 'text-base sm:text-lg'
+        : isLongText
+          ? 'text-lg sm:text-xl'
+          : 'text-xl sm:text-[22px]';
+
     return (
-        <div className="flex flex-col gap-1 rounded-2xl border border-[#E5E7EB] bg-white p-4">
+        <div className="flex flex-col justify-between gap-1 rounded-2xl border border-[#E5E7EB] bg-white p-4">
             <p className="text-xs font-medium text-[#4B5563]">{label}</p>
-            <p className={`text-[22px] font-bold ${tone === 'danger' ? 'text-[#B91C1C]' : 'text-[#111827]'}`}>{value}</p>
+            <p
+                title={String(value)}
+                className={`truncate font-bold tracking-tight ${textSize} ${
+                    tone === 'danger' ? 'text-[#B91C1C]' : 'text-[#111827]'
+                }`}
+            >
+                {value}
+            </p>
         </div>
     );
 }
@@ -66,14 +82,22 @@ export default function Index({ items, categories, total, filters, summary }) {
                         <h1 className="text-[22px] font-bold">Barang</h1>
                         <p className="mt-1 text-[13px] text-[#4B5563]">Kelola data barang ATK, harga jual, dan kategorinya.</p>
                     </div>
-                    {/* Connected to the add form in the next step */}
-                    <Link
-                        href={route('barang.create')}
-                        className="inline-flex items-center gap-2 rounded-[10px] bg-[#1D4ED8] px-4 py-2.5 text-sm font-semibold text-white"
-                    >
-                        <Plus size={18} strokeWidth={2.5} aria-hidden="true" />
-                        Tambah Barang
-                    </Link>
+                    <div className="flex items-center gap-2.5">
+                        <Link
+                            href={route('kategori.index')}
+                            className="inline-flex items-center gap-2 rounded-[10px] border border-[#D1D5DB] bg-white px-4 py-2.5 text-sm font-semibold text-[#374151] shadow-sm hover:bg-[#F3F4F6]"
+                        >
+                            <Tag size={16} strokeWidth={2.25} aria-hidden="true" />
+                            Kelola Kategori
+                        </Link>
+                        <Link
+                            href={route('barang.create')}
+                            className="inline-flex items-center gap-2 rounded-[10px] bg-[#1D4ED8] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#1E40AF]"
+                        >
+                            <Plus size={18} strokeWidth={2.5} aria-hidden="true" />
+                            Tambah Barang
+                        </Link>
+                    </div>
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -105,6 +129,31 @@ export default function Index({ items, categories, total, filters, summary }) {
                         <Link href={route('kategori.index')} className="mt-3 px-3 text-left text-[13px] font-semibold text-[#1D4ED8]">
                             Kelola kategori
                         </Link>
+
+                        <div className="mt-4 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-3 text-xs">
+                            <div className="flex items-center gap-1.5 font-semibold text-[#374151]">
+                                <Info size={14} className="text-[#1D4ED8]" />
+                                Ambang Status Stok
+                            </div>
+                            <p className="mt-1 text-[11px] text-[#6B7280]">Perputaran 30 hari terakhir:</p>
+                            <ul className="mt-2 flex flex-col gap-1.5 text-[11px]">
+                                <li className="flex items-center gap-1.5">
+                                    <span className="h-2 w-2 shrink-0 rounded-full bg-[#16A34A]" />
+                                    <span><strong>Cepat:</strong> &ge; 80 unit</span>
+                                </li>
+                                <li className="flex items-center gap-1.5">
+                                    <span className="h-2 w-2 shrink-0 rounded-full bg-[#9CA3AF]" />
+                                    <span><strong>Normal:</strong> 10–79 unit</span>
+                                </li>
+                                <li className="flex items-center gap-1.5">
+                                    <span className="h-2 w-2 shrink-0 rounded-full bg-[#D97706]" />
+                                    <span><strong>Lambat:</strong> &lt; 10 unit</span>
+                                </li>
+                            </ul>
+                            <Link href={route('stok.index')} className="mt-2.5 block font-semibold text-[#1D4ED8] hover:underline">
+                                Analisis lengkap di Stok &rarr;
+                            </Link>
+                        </div>
                     </aside>
 
                     {/* Product table */}

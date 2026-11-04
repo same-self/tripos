@@ -16,6 +16,7 @@ const STYLES = {
     Kertas: { icon: FileText, bg: 'bg-[#E0F2FE]', fg: 'text-[#0369A1]' },
     Buku: { icon: BookOpen, bg: 'bg-[#DCFCE7]', fg: 'text-[#15803D]' },
     Aksesoris: { icon: Paperclip, bg: 'bg-[#EDE9FE]', fg: 'text-[#6D28D9]' },
+    'Aksesoris Komputer': { icon: Paperclip, bg: 'bg-[#EDE9FE]', fg: 'text-[#6D28D9]' },
     Fotokopi: { icon: Copy, bg: 'bg-[#DBEAFE]', fg: 'text-[#1D4ED8]' },
     Print: { icon: Printer, bg: 'bg-[#FCE7F3]', fg: 'text-[#BE185D]' },
     Jilid: { icon: BookMarked, bg: 'bg-[#FFEDD5]', fg: 'text-[#C2410C]' },

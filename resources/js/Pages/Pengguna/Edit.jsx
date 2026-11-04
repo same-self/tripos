@@ -1,4 +1,5 @@
 import TriposLayout from '@/Layouts/TriposLayout';
+import PasswordInput from '@/Components/PasswordInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 
 const inputClass = 'h-11 rounded-xl border border-[#6B7280] bg-white px-3.5 text-sm';
@@ -114,8 +115,7 @@ export default function Edit({ user }) {
                     </div>
 
                     <Field label="Password baru (kosongkan jika tidak diubah)" error={errors.password}>
-                        <input
-                            type="password"
+                        <PasswordInput
                             value={data.password}
                             onChange={(e) => setData('password', e.target.value)}
                             className={inputClass}
