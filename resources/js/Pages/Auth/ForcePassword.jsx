@@ -1,3 +1,4 @@
+import PasswordInput from '@/Components/PasswordInput';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 
 const inputClass = 'h-11 rounded-xl border border-[#6B7280] bg-white px-3.5 text-sm';
@@ -31,9 +32,9 @@ export default function ForcePassword() {
                         <label htmlFor="password" className="text-xs font-medium text-[#4B5563]">
                             Password baru
                         </label>
-                        <input
+                        <PasswordInput
                             id="password"
-                            type="password"
+                            name="password"
                             value={data.password}
                             onChange={(e) => setData('password', e.target.value)}
                             autoComplete="new-password"
@@ -47,9 +48,9 @@ export default function ForcePassword() {
                         <label htmlFor="password_confirmation" className="text-xs font-medium text-[#4B5563]">
                             Ulangi password baru
                         </label>
-                        <input
+                        <PasswordInput
                             id="password_confirmation"
-                            type="password"
+                            name="password_confirmation"
                             value={data.password_confirmation}
                             onChange={(e) => setData('password_confirmation', e.target.value)}
                             autoComplete="new-password"
