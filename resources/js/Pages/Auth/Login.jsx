@@ -1,5 +1,6 @@
 import InputError from '@/Components/InputError';
 import PasswordInput from '@/Components/PasswordInput';
+import ThemeToggle from '@/Components/ThemeToggle';
 import { Head, useForm } from '@inertiajs/react';
 
 const FEATURES = [
@@ -26,10 +27,10 @@ export default function Login({ status }) {
         <>
             <Head title="Masuk" />
 
-            <div className="grid min-h-screen grid-cols-1 md:grid-cols-2">
+            <div className="grid min-h-screen grid-cols-1 md:grid-cols-2 bg-white dark:bg-slate-950 transition-colors duration-150">
                 {/* Brand panel, hidden on small screens */}
                 <section
-                    className="relative hidden overflow-hidden bg-[#1D4ED8] p-12 text-white md:flex md:flex-col md:justify-between"
+                    className="relative hidden overflow-hidden bg-[#1D4ED8] p-12 text-white md:flex md:flex-col md:justify-between dark:bg-blue-950 transition-colors duration-150"
                     aria-hidden="true"
                 >
                     <div className="pointer-events-none absolute -right-32 -top-40 h-[420px] w-[420px] rounded-full bg-white/10" />
@@ -63,14 +64,18 @@ export default function Login({ status }) {
                 </section>
 
                 {/* Sign-in form */}
-                <section className="flex items-center justify-center bg-white p-8 md:p-12">
+                <section className="relative flex items-center justify-center bg-white p-8 md:p-12 dark:bg-slate-950 text-gray-900 dark:text-slate-100 transition-colors duration-150">
+                    <div className="absolute top-6 right-6">
+                        <ThemeToggle />
+                    </div>
+
                     <form onSubmit={submit} className="flex w-full max-w-[360px] flex-col">
-                        <h1 className="text-[22px] font-bold">Selamat datang</h1>
-                        <p className="mt-1 text-sm text-[#4B5563]">Masuk dengan username dan password Anda.</p>
+                        <h1 className="text-[22px] font-bold text-gray-900 dark:text-white">Selamat datang</h1>
+                        <p className="mt-1 text-sm text-[#4B5563] dark:text-slate-400">Masuk dengan username dan password Anda.</p>
 
-                        {status && <p className="mt-4 text-sm font-medium text-[#15803D]">{status}</p>}
+                        {status && <p className="mt-4 text-sm font-medium text-[#15803D] dark:text-emerald-400">{status}</p>}
 
-                        <label htmlFor="username" className="mt-5 text-xs font-semibold">
+                        <label htmlFor="username" className="mt-5 text-xs font-semibold text-gray-700 dark:text-slate-300">
                             Username
                         </label>
                         <input
@@ -82,11 +87,11 @@ export default function Login({ status }) {
                             autoComplete="username"
                             autoFocus
                             onChange={(e) => setData('username', e.target.value)}
-                            className="mt-1 h-10 rounded-lg border border-[#6B7280] px-3 text-sm focus:border-[#1D4ED8] focus:outline-2 focus:outline-[#1D4ED8]"
+                            className="mt-1 h-10 rounded-lg border border-[#6B7280] px-3 text-sm focus:border-[#1D4ED8] focus:outline-2 focus:outline-[#1D4ED8] dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:placeholder-slate-500"
                         />
                         <InputError message={errors.username} className="mt-1" />
 
-                        <label htmlFor="password" className="mt-4 text-xs font-semibold">
+                        <label htmlFor="password" className="mt-4 text-xs font-semibold text-gray-700 dark:text-slate-300">
                             Password
                         </label>
                         <PasswordInput
@@ -96,21 +101,21 @@ export default function Login({ status }) {
                             placeholder="Password"
                             autoComplete="current-password"
                             onChange={(e) => setData('password', e.target.value)}
-                            className="mt-1 h-10 rounded-lg border border-[#6B7280] px-3 text-sm focus:border-[#1D4ED8] focus:outline-2 focus:outline-[#1D4ED8]"
+                            className="mt-1 h-10 rounded-lg border border-[#6B7280] px-3 text-sm focus:border-[#1D4ED8] focus:outline-2 focus:outline-[#1D4ED8] dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:placeholder-slate-500"
                         />
                         <InputError message={errors.password} className="mt-1" />
 
-                        <p className="mt-3 text-[13px] text-[#4B5563]">Lupa password? Hubungi pemilik toko.</p>
+                        <p className="mt-3 text-[13px] text-[#4B5563] dark:text-slate-400">Lupa password? Hubungi pemilik toko.</p>
 
                         <button
                             type="submit"
                             disabled={processing}
-                            className="mt-4 h-11 rounded-lg bg-[#1D4ED8] font-semibold text-white transition-all duration-150 hover:bg-blue-700 active:scale-[0.98] disabled:opacity-60"
+                            className="mt-4 h-11 rounded-lg bg-[#1D4ED8] font-semibold text-white transition-all duration-150 hover:bg-blue-700 active:scale-[0.98] disabled:opacity-60 dark:bg-blue-600 dark:hover:bg-blue-500 shadow-sm"
                         >
                             Masuk
                         </button>
 
-                        <p className="mt-4 text-center text-[13px] text-[#4B5563]">
+                        <p className="mt-4 text-center text-[13px] text-[#4B5563] dark:text-slate-400">
                             Akun dibuat dan diatur oleh pemilik toko.
                         </p>
                     </form>

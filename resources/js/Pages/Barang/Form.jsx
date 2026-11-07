@@ -3,7 +3,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { ImagePlus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
-const inputClass = 'h-11 rounded-xl border border-[#6B7280] bg-white px-3.5 text-sm';
+const inputClass = 'h-11 rounded-xl border border-[#6B7280] bg-white px-3.5 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder-slate-500 focus:border-[#1D4ED8] focus:ring-1 focus:ring-[#1D4ED8]';
 
 const STANDARD_UNITS = [
     'pcs',
@@ -21,9 +21,9 @@ const STANDARD_UNITS = [
 function Field({ label, error, children }) {
     return (
         <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-[#4B5563]">{label}</label>
+            <label className="text-xs font-medium text-[#4B5563] dark:text-slate-300">{label}</label>
             {children}
-            {error && <p className="text-xs text-[#B91C1C]">{error}</p>}
+            {error && <p className="text-xs text-[#B91C1C] dark:text-red-400">{error}</p>}
         </div>
     );
 }
@@ -76,21 +76,21 @@ export default function Form({ item, categories }) {
             <Head title={isEdit ? 'Ubah Barang' : 'Tambah Barang'} />
 
             <div className="max-w-2xl">
-                <h1 className="text-[22px] font-bold">{isEdit ? 'Ubah Barang' : 'Tambah Barang'}</h1>
-                <p className="mt-1 text-[13px] text-[#4B5563]">
+                <h1 className="text-[22px] font-bold text-gray-900 dark:text-white">{isEdit ? 'Ubah Barang' : 'Tambah Barang'}</h1>
+                <p className="mt-1 text-[13px] text-[#4B5563] dark:text-slate-400">
                     {isEdit
                         ? 'Perbarui nama, satuan, harga, gambar, atau stok minimum.'
                         : 'Isi data barang baru. Stok awal dimulai dari 0 dan diisi lewat menu Restok.'}
                 </p>
 
-                <form onSubmit={submit} className="mt-6 grid gap-5 rounded-2xl border border-[#E5E7EB] bg-white p-6">
+                <form onSubmit={submit} className="mt-6 grid gap-5 rounded-2xl border border-[#E5E7EB] bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
                     <Field label="Gambar barang (opsional)" error={errors.gambar}>
                         <div className="flex items-center gap-4">
-                            <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl border border-[#E5E7EB] bg-[#F3F4F6]">
+                            <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl border border-[#E5E7EB] bg-[#F3F4F6] dark:border-slate-800 dark:bg-slate-950">
                                 {preview ? (
                                     <img src={preview} alt="Pratinjau gambar" className="h-full w-full object-cover" />
                                 ) : (
-                                    <div className="flex h-full w-full items-center justify-center text-[#9CA3AF]">
+                                    <div className="flex h-full w-full items-center justify-center text-[#9CA3AF] dark:text-slate-600">
                                         <ImagePlus size={28} aria-hidden="true" />
                                     </div>
                                 )}
@@ -101,19 +101,19 @@ export default function Form({ item, categories }) {
                                     type="file"
                                     accept="image/jpeg,image/png,image/webp"
                                     onChange={chooseFile}
-                                    className="text-sm"
+                                    className="text-sm dark:text-slate-300"
                                 />
                                 {preview && (
                                     <button
                                         type="button"
                                         onClick={removeImage}
-                                        className="inline-flex w-fit items-center gap-1.5 text-[13px] font-medium text-[#B91C1C]"
+                                        className="inline-flex w-fit items-center gap-1.5 text-[13px] font-medium text-[#B91C1C] dark:text-red-400"
                                     >
                                         <Trash2 size={14} aria-hidden="true" />
                                         Hapus gambar
                                     </button>
                                 )}
-                                <p className="text-xs text-[#4B5563]">JPG, PNG, atau WEBP, maksimal 2 MB.</p>
+                                <p className="text-xs text-[#4B5563] dark:text-slate-400">JPG, PNG, atau WEBP, maksimal 2 MB.</p>
                             </div>
                         </div>
                     </Field>
@@ -215,8 +215,8 @@ export default function Form({ item, categories }) {
                     </Field>
 
                     {isEdit && (
-                        <p className="rounded-xl bg-[#F3F4F6] px-4 py-3 text-sm text-[#4B5563]">
-                            Stok saat ini: <strong className="text-[#111827]">{item.stock}</strong>. Stok berubah lewat
+                        <p className="rounded-xl bg-[#F3F4F6] px-4 py-3 text-sm text-[#4B5563] dark:bg-slate-950/60 dark:text-slate-300">
+                            Stok saat ini: <strong className="text-[#111827] dark:text-white">{item.stock}</strong>. Stok berubah lewat
                             penjualan dan restok.
                         </p>
                     )}
@@ -224,14 +224,14 @@ export default function Form({ item, categories }) {
                     <div className="flex items-center justify-end gap-3">
                         <Link
                             href={route('barang.index')}
-                            className="rounded-xl border border-[#6B7280] px-4 py-2.5 text-sm font-medium"
+                            className="rounded-xl border border-[#6B7280] px-4 py-2.5 text-sm font-medium dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors"
                         >
                             Batal
                         </Link>
                         <button
                             type="submit"
                             disabled={processing}
-                            className="rounded-xl bg-[#1D4ED8] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+                            className="rounded-xl bg-[#1D4ED8] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60 dark:bg-blue-600 dark:hover:bg-blue-500 transition-colors"
                         >
                             {isEdit ? 'Simpan perubahan' : 'Tambah Barang'}
                         </button>
