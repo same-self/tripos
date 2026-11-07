@@ -17,8 +17,10 @@ function PillLink({ active, href, children }) {
             href={href}
             preserveScroll
             aria-current={active ? 'page' : undefined}
-            className={`rounded-full px-4 py-2 text-[13px] ${
-                active ? 'bg-[#1D4ED8] font-semibold text-white' : 'border border-[#E5E7EB] bg-white font-medium text-[#4B5563]'
+            className={`rounded-full px-4 py-2 text-[13px] transition-colors ${
+                active
+                    ? 'bg-[#1D4ED8] font-semibold text-white dark:bg-blue-600'
+                    : 'border border-[#E5E7EB] bg-white font-medium text-[#4B5563] hover:bg-gray-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800'
             }`}
         >
             {children}
@@ -28,9 +30,9 @@ function PillLink({ active, href, children }) {
 
 function Kpi({ label, value }) {
     return (
-        <div className="flex flex-1 flex-col gap-1.5 rounded-2xl border border-[#E5E7EB] bg-white p-4">
-            <p className="text-xs font-medium text-[#4B5563]">{label}</p>
-            <p className="text-[22px] font-bold">{value}</p>
+        <div className="flex flex-1 flex-col gap-1.5 rounded-2xl border border-[#E5E7EB] bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+            <p className="text-xs font-medium text-[#4B5563] dark:text-slate-400">{label}</p>
+            <p className="text-[22px] font-bold text-gray-900 dark:text-white">{value}</p>
         </div>
     );
 }
@@ -45,10 +47,10 @@ function Penjualan({ data, window }) {
                     <Kpi label="Rata-rata per transaksi" value={rupiah(data.average)} />
                 </div>
 
-                <section className="overflow-x-auto rounded-2xl border border-[#E5E7EB] bg-white p-5">
-                    <h2 className="text-[15px] font-semibold">Rekap penjualan harian</h2>
+                <section className="overflow-x-auto rounded-2xl border border-[#E5E7EB] bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+                    <h2 className="text-[15px] font-semibold text-gray-900 dark:text-white">Rekap penjualan harian</h2>
                     <table className="mt-4 w-full text-left text-sm">
-                        <thead className="border-b border-[#E5E7EB] text-xs font-medium text-[#4B5563]">
+                        <thead className="border-b border-[#E5E7EB] text-xs font-medium text-[#4B5563] dark:border-slate-800 dark:text-slate-400">
                             <tr>
                                 <th scope="col" className="px-2 py-3">Tanggal</th>
                                 <th scope="col" className="px-2 py-3">Transaksi</th>
@@ -59,15 +61,15 @@ function Penjualan({ data, window }) {
                         </thead>
                         <tbody>
                             {data.days.map((day, i) => (
-                                <tr key={i} className="border-b border-[#E5E7EB]">
-                                    <td className="px-2 py-3">{day.label}</td>
-                                    <td className="px-2 py-3">{day.count}</td>
-                                    <td className="px-2 py-3">{rupiah(day.tunai)}</td>
-                                    <td className="px-2 py-3">{rupiah(day.qris)}</td>
-                                    <td className="px-2 py-3 font-semibold">{rupiah(day.total)}</td>
+                                <tr key={i} className="border-b border-[#E5E7EB] dark:border-slate-800/80 hover:bg-gray-50/50 hover:dark:bg-slate-800/40 transition-colors">
+                                    <td className="px-2 py-3 text-gray-900 dark:text-slate-200">{day.label}</td>
+                                    <td className="px-2 py-3 text-gray-900 dark:text-slate-200">{day.count}</td>
+                                    <td className="px-2 py-3 text-gray-900 dark:text-slate-200">{rupiah(day.tunai)}</td>
+                                    <td className="px-2 py-3 text-gray-900 dark:text-slate-200">{rupiah(day.qris)}</td>
+                                    <td className="px-2 py-3 font-semibold text-gray-900 dark:text-slate-100">{rupiah(day.total)}</td>
                                 </tr>
                             ))}
-                            <tr className="font-bold">
+                            <tr className="font-bold text-gray-900 dark:text-white border-t-2 border-slate-300 dark:border-slate-700">
                                 <td className="px-2 py-3">Total periode</td>
                                 <td className="px-2 py-3">{data.daysTotal.count}</td>
                                 <td className="px-2 py-3">{rupiah(data.daysTotal.tunai)}</td>
@@ -80,30 +82,30 @@ function Penjualan({ data, window }) {
             </div>
 
             <aside className="flex w-full shrink-0 flex-col gap-4 lg:w-[320px]">
-                <div className="flex flex-col gap-3 rounded-2xl border border-[#E5E7EB] bg-white p-5">
-                    <h2 className="text-[15px] font-semibold">Barang paling laku</h2>
-                    <p className="text-xs text-[#4B5563]">Terjual dalam {window} hari terakhir (80 atau lebih)</p>
+                <div className="flex flex-col gap-3 rounded-2xl border border-[#E5E7EB] bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+                    <h2 className="text-[15px] font-semibold text-gray-900 dark:text-white">Barang paling laku</h2>
+                    <p className="text-xs text-[#4B5563] dark:text-slate-400">Terjual dalam {window} hari terakhir (80 atau lebih)</p>
                     {data.terlaris.length === 0 && (
-                        <p className="text-sm text-[#4B5563]">Belum ada barang yang laku keras.</p>
+                        <p className="text-sm text-[#4B5563] dark:text-slate-400">Belum ada barang yang laku keras.</p>
                     )}
                     {data.terlaris.map((item, i) => (
                         <div key={i} className="flex items-center justify-between gap-3 text-sm">
-                            <span className="font-medium">{item.name}</span>
-                            <span className="whitespace-nowrap font-semibold text-[#15803D]">{item.sold} terjual</span>
+                            <span className="font-medium text-gray-900 dark:text-slate-100">{item.name}</span>
+                            <span className="whitespace-nowrap font-semibold text-[#15803D] dark:text-emerald-400">{item.sold} terjual</span>
                         </div>
                     ))}
                 </div>
 
-                <div className="flex flex-col gap-3 rounded-2xl border border-[#E5E7EB] bg-white p-5">
-                    <h2 className="text-[15px] font-semibold">Barang paling lambat</h2>
-                    <p className="text-xs text-[#4B5563]">Terjual kurang dari 10 dalam {window} hari terakhir</p>
+                <div className="flex flex-col gap-3 rounded-2xl border border-[#E5E7EB] bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+                    <h2 className="text-[15px] font-semibold text-gray-900 dark:text-white">Barang paling lambat</h2>
+                    <p className="text-xs text-[#4B5563] dark:text-slate-400">Terjual kurang dari 10 dalam {window} hari terakhir</p>
                     {data.lambat.length === 0 && (
-                        <p className="text-sm text-[#4B5563]">Tidak ada barang yang lambat.</p>
+                        <p className="text-sm text-[#4B5563] dark:text-slate-400">Tidak ada barang yang lambat.</p>
                     )}
                     {data.lambat.map((item, i) => (
                         <div key={i} className="flex items-center justify-between gap-3 text-sm">
-                            <span className="font-medium">{item.name}</span>
-                            <span className="whitespace-nowrap font-semibold text-[#92400E]">{item.sold} terjual</span>
+                            <span className="font-medium text-gray-900 dark:text-slate-100">{item.name}</span>
+                            <span className="whitespace-nowrap font-semibold text-[#92400E] dark:text-amber-400">{item.sold} terjual</span>
                         </div>
                     ))}
                 </div>
@@ -121,10 +123,10 @@ function Pembelian({ data }) {
                 <Kpi label="Jumlah supplier" value={data.supplierCount} />
             </div>
 
-            <section className="overflow-x-auto rounded-2xl border border-[#E5E7EB] bg-white p-5">
-                <h2 className="text-[15px] font-semibold">Pembelian per supplier</h2>
+            <section className="overflow-x-auto rounded-2xl border border-[#E5E7EB] bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+                <h2 className="text-[15px] font-semibold text-gray-900 dark:text-white">Pembelian per supplier</h2>
                 <table className="mt-4 w-full text-left text-sm">
-                    <thead className="border-b border-[#E5E7EB] text-xs font-medium text-[#4B5563]">
+                    <thead className="border-b border-[#E5E7EB] text-xs font-medium text-[#4B5563] dark:border-slate-800 dark:text-slate-400">
                         <tr>
                             <th scope="col" className="px-2 py-3">Supplier</th>
                             <th scope="col" className="px-2 py-3">Jumlah restok</th>
@@ -134,14 +136,14 @@ function Pembelian({ data }) {
                     </thead>
                     <tbody>
                         {data.suppliers.map((s, i) => (
-                            <tr key={i} className="border-b border-[#E5E7EB]">
-                                <td className="px-2 py-3 font-medium">{s.name}</td>
-                                <td className="px-2 py-3">{s.count} kali</td>
-                                <td className="px-2 py-3 font-semibold">{rupiah(s.total)}</td>
-                                <td className="px-2 py-3">{s.share}%</td>
+                            <tr key={i} className="border-b border-[#E5E7EB] dark:border-slate-800/80 hover:bg-gray-50/50 hover:dark:bg-slate-800/40 transition-colors">
+                                <td className="px-2 py-3 font-medium text-gray-900 dark:text-slate-100">{s.name}</td>
+                                <td className="px-2 py-3 text-gray-900 dark:text-slate-200">{s.count} kali</td>
+                                <td className="px-2 py-3 font-semibold text-gray-900 dark:text-slate-100">{rupiah(s.total)}</td>
+                                <td className="px-2 py-3 text-[#4B5563] dark:text-slate-400">{s.share}%</td>
                             </tr>
                         ))}
-                        <tr className="font-bold">
+                        <tr className="font-bold text-gray-900 dark:text-white border-t-2 border-slate-300 dark:border-slate-700">
                             <td className="px-2 py-3">Total</td>
                             <td className="px-2 py-3">{data.count} kali</td>
                             <td className="px-2 py-3">{rupiah(data.total)}</td>
@@ -150,7 +152,7 @@ function Pembelian({ data }) {
                     </tbody>
                 </table>
                 {data.suppliers.length === 0 && (
-                    <p className="py-6 text-center text-sm text-[#4B5563]">Belum ada pembelian di periode ini.</p>
+                    <p className="py-6 text-center text-sm text-[#4B5563] dark:text-slate-400">Belum ada pembelian di periode ini.</p>
                 )}
             </section>
         </div>
@@ -166,10 +168,10 @@ function ArusKas({ data }) {
                 <Kpi label="Arus kas bersih" value={rupiah(data.net)} />
             </div>
 
-            <section className="overflow-x-auto rounded-2xl border border-[#E5E7EB] bg-white p-5">
-                <h2 className="text-[15px] font-semibold">Arus kas per minggu</h2>
+            <section className="overflow-x-auto rounded-2xl border border-[#E5E7EB] bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+                <h2 className="text-[15px] font-semibold text-gray-900 dark:text-white">Arus kas per minggu</h2>
                 <table className="mt-4 w-full text-left text-sm">
-                    <thead className="border-b border-[#E5E7EB] text-xs font-medium text-[#4B5563]">
+                    <thead className="border-b border-[#E5E7EB] text-xs font-medium text-[#4B5563] dark:border-slate-800 dark:text-slate-400">
                         <tr>
                             <th scope="col" className="px-2 py-3">Minggu</th>
                             <th scope="col" className="px-2 py-3">Penghasilan</th>
@@ -179,14 +181,14 @@ function ArusKas({ data }) {
                     </thead>
                     <tbody>
                         {data.weeks.map((w, i) => (
-                            <tr key={i} className="border-b border-[#E5E7EB]">
-                                <td className="px-2 py-3">{w.label}</td>
-                                <td className="px-2 py-3">{rupiah(w.income)}</td>
-                                <td className="px-2 py-3">{rupiah(w.spending)}</td>
-                                <td className="px-2 py-3 font-semibold">{rupiah(w.net)}</td>
+                            <tr key={i} className="border-b border-[#E5E7EB] dark:border-slate-800/80 hover:bg-gray-50/50 hover:dark:bg-slate-800/40 transition-colors">
+                                <td className="px-2 py-3 text-gray-900 dark:text-slate-200">{w.label}</td>
+                                <td className="px-2 py-3 text-gray-900 dark:text-slate-200">{rupiah(w.income)}</td>
+                                <td className="px-2 py-3 text-gray-900 dark:text-slate-200">{rupiah(w.spending)}</td>
+                                <td className="px-2 py-3 font-semibold text-gray-900 dark:text-slate-100">{rupiah(w.net)}</td>
                             </tr>
                         ))}
-                        <tr className="font-bold">
+                        <tr className="font-bold text-gray-900 dark:text-white border-t-2 border-slate-300 dark:border-slate-700">
                             <td className="px-2 py-3">Total</td>
                             <td className="px-2 py-3">{rupiah(data.income)}</td>
                             <td className="px-2 py-3">{rupiah(data.spending)}</td>
@@ -194,7 +196,7 @@ function ArusKas({ data }) {
                         </tr>
                     </tbody>
                 </table>
-                <p className="mt-4 text-xs text-[#4B5563]">
+                <p className="mt-4 text-xs text-[#4B5563] dark:text-slate-400">
                     Arus kas bersih = penghasilan dikurangi pembelian stok. Belum termasuk biaya operasional lain.
                 </p>
             </section>
@@ -205,13 +207,13 @@ function ArusKas({ data }) {
 function TerlarisLambat({ data }) {
     return (
         <div className="flex flex-col gap-5 lg:flex-row">
-            <section className="min-w-0 flex-1 overflow-x-auto rounded-2xl border border-[#E5E7EB] bg-white p-5">
-                <h2 className="text-[15px] font-semibold">Barang paling laku</h2>
-                <p className="mt-1 text-xs text-[#4B5563]">
+            <section className="min-w-0 flex-1 overflow-x-auto rounded-2xl border border-[#E5E7EB] bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+                <h2 className="text-[15px] font-semibold text-gray-900 dark:text-white">Barang paling laku</h2>
+                <p className="mt-1 text-xs text-[#4B5563] dark:text-slate-400">
                     Terjual {data.fast} atau lebih dalam {data.window} hari terakhir
                 </p>
                 <table className="mt-4 w-full text-left text-sm">
-                    <thead className="border-b border-[#E5E7EB] text-xs font-medium text-[#4B5563]">
+                    <thead className="border-b border-[#E5E7EB] text-xs font-medium text-[#4B5563] dark:border-slate-800 dark:text-slate-400">
                         <tr>
                             <th scope="col" className="px-2 py-3">Barang</th>
                             <th scope="col" className="px-2 py-3">Terjual</th>
@@ -221,29 +223,29 @@ function TerlarisLambat({ data }) {
                     </thead>
                     <tbody>
                         {data.laku.map((item, i) => (
-                            <tr key={i} className="border-b border-[#E5E7EB]">
-                                <td className="px-2 py-3 font-medium">{item.name}</td>
-                                <td className="px-2 py-3">{item.sold}</td>
-                                <td className="px-2 py-3">
+                            <tr key={i} className="border-b border-[#E5E7EB] dark:border-slate-800/80 hover:bg-gray-50/50 hover:dark:bg-slate-800/40 transition-colors">
+                                <td className="px-2 py-3 font-medium text-gray-900 dark:text-slate-100">{item.name}</td>
+                                <td className="px-2 py-3 text-gray-900 dark:text-slate-200">{item.sold}</td>
+                                <td className="px-2 py-3 text-gray-900 dark:text-slate-200">
                                     {item.stock} {item.unit}
                                 </td>
-                                <td className="px-2 py-3">{item.days_left !== null ? `±${item.days_left} hari` : '-'}</td>
+                                <td className="px-2 py-3 text-[#4B5563] dark:text-slate-400">{item.days_left !== null ? `±${item.days_left} hari` : '-'}</td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
                 {data.laku.length === 0 && (
-                    <p className="py-6 text-center text-sm text-[#4B5563]">Belum ada barang yang laku keras.</p>
+                    <p className="py-6 text-center text-sm text-[#4B5563] dark:text-slate-400">Belum ada barang yang laku keras.</p>
                 )}
             </section>
 
-            <section className="min-w-0 flex-1 overflow-x-auto rounded-2xl border border-[#E5E7EB] bg-white p-5">
-                <h2 className="text-[15px] font-semibold">Barang paling lambat</h2>
-                <p className="mt-1 text-xs text-[#4B5563]">
+            <section className="min-w-0 flex-1 overflow-x-auto rounded-2xl border border-[#E5E7EB] bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+                <h2 className="text-[15px] font-semibold text-gray-900 dark:text-white">Barang paling lambat</h2>
+                <p className="mt-1 text-xs text-[#4B5563] dark:text-slate-400">
                     Terjual kurang dari {data.slow} dalam {data.window} hari terakhir
                 </p>
                 <table className="mt-4 w-full text-left text-sm">
-                    <thead className="border-b border-[#E5E7EB] text-xs font-medium text-[#4B5563]">
+                    <thead className="border-b border-[#E5E7EB] text-xs font-medium text-[#4B5563] dark:border-slate-800 dark:text-slate-400">
                         <tr>
                             <th scope="col" className="px-2 py-3">Barang</th>
                             <th scope="col" className="px-2 py-3">Terjual</th>
@@ -253,16 +255,16 @@ function TerlarisLambat({ data }) {
                     </thead>
                     <tbody>
                         {data.lambat.map((item, i) => (
-                            <tr key={i} className="border-b border-[#E5E7EB]">
-                                <td className="px-2 py-3 font-medium">{item.name}</td>
-                                <td className="px-2 py-3">{item.sold}</td>
-                                <td className="px-2 py-3">
+                            <tr key={i} className="border-b border-[#E5E7EB] dark:border-slate-800/80 hover:bg-gray-50/50 hover:dark:bg-slate-800/40 transition-colors">
+                                <td className="px-2 py-3 font-medium text-gray-900 dark:text-slate-100">{item.name}</td>
+                                <td className="px-2 py-3 text-gray-900 dark:text-slate-200">{item.sold}</td>
+                                <td className="px-2 py-3 text-gray-900 dark:text-slate-200">
                                     {item.stock} {item.unit}
                                 </td>
-                                <td className="px-2 py-3 font-semibold">{rupiah(item.idle_capital)}</td>
+                                <td className="px-2 py-3 font-semibold text-gray-900 dark:text-slate-100">{rupiah(item.idle_capital)}</td>
                             </tr>
                         ))}
-                        <tr className="font-bold">
+                        <tr className="font-bold text-gray-900 dark:text-white border-t-2 border-slate-300 dark:border-slate-700">
                             <td className="px-2 py-3">Total</td>
                             <td className="px-2 py-3"></td>
                             <td className="px-2 py-3"></td>
@@ -271,7 +273,7 @@ function TerlarisLambat({ data }) {
                     </tbody>
                 </table>
                 {data.lambat.length === 0 && (
-                    <p className="py-6 text-center text-sm text-[#4B5563]">Tidak ada barang yang lambat.</p>
+                    <p className="py-6 text-center text-sm text-[#4B5563] dark:text-slate-400">Tidak ada barang yang lambat.</p>
                 )}
             </section>
         </div>
@@ -281,11 +283,11 @@ function TerlarisLambat({ data }) {
 function Keuntungan({ data, window }) {
     return (
         <div className="flex flex-col gap-5 lg:flex-row">
-            <section className="min-w-0 flex-1 overflow-x-auto rounded-2xl border border-[#E5E7EB] bg-white p-5">
-                <h2 className="text-[15px] font-semibold">Ranking keuntungan</h2>
-                <p className="mt-1 text-xs text-[#4B5563]">Untung per barang dalam {window} hari terakhir</p>
+            <section className="min-w-0 flex-1 overflow-x-auto rounded-2xl border border-[#E5E7EB] bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+                <h2 className="text-[15px] font-semibold text-gray-900 dark:text-white">Ranking keuntungan</h2>
+                <p className="mt-1 text-xs text-[#4B5563] dark:text-slate-400">Untung per barang dalam {window} hari terakhir</p>
                 <table className="mt-4 w-full text-left text-sm">
-                    <thead className="border-b border-[#E5E7EB] text-xs font-medium text-[#4B5563]">
+                    <thead className="border-b border-[#E5E7EB] text-xs font-medium text-[#4B5563] dark:border-slate-800 dark:text-slate-400">
                         <tr>
                             <th scope="col" className="px-2 py-3">No</th>
                             <th scope="col" className="px-2 py-3">Barang</th>
@@ -296,19 +298,19 @@ function Keuntungan({ data, window }) {
                     </thead>
                     <tbody>
                         {data.rows.map((row, i) => (
-                            <tr key={i} className="border-b border-[#E5E7EB]">
-                                <td className="px-2 py-3 text-[#4B5563]">{i + 1}</td>
-                                <td className="px-2 py-3 font-medium">{row.name}</td>
-                                <td className="px-2 py-3">{row.sold}</td>
-                                <td className={`px-2 py-3 ${row.per_unit < 0 ? 'text-[#B91C1C]' : ''}`}>
+                            <tr key={i} className="border-b border-[#E5E7EB] dark:border-slate-800/80 hover:bg-gray-50/50 hover:dark:bg-slate-800/40 transition-colors">
+                                <td className="px-2 py-3 text-[#4B5563] dark:text-slate-400">{i + 1}</td>
+                                <td className="px-2 py-3 font-medium text-gray-900 dark:text-slate-100">{row.name}</td>
+                                <td className="px-2 py-3 text-gray-900 dark:text-slate-200">{row.sold}</td>
+                                <td className={`px-2 py-3 ${row.per_unit < 0 ? 'text-[#B91C1C] dark:text-red-400' : 'text-gray-900 dark:text-slate-200'}`}>
                                     {rupiah(row.per_unit)}
                                 </td>
-                                <td className={`px-2 py-3 font-semibold ${row.total < 0 ? 'text-[#B91C1C]' : ''}`}>
+                                <td className={`px-2 py-3 font-semibold ${row.total < 0 ? 'text-[#B91C1C] dark:text-red-400' : 'text-gray-900 dark:text-slate-100'}`}>
                                     {rupiah(row.total)}
                                 </td>
                             </tr>
                         ))}
-                        <tr className="font-bold">
+                        <tr className="font-bold text-gray-900 dark:text-white border-t-2 border-slate-300 dark:border-slate-700">
                             <td className="px-2 py-3"></td>
                             <td className="px-2 py-3">Total keuntungan</td>
                             <td className="px-2 py-3"></td>
@@ -318,22 +320,22 @@ function Keuntungan({ data, window }) {
                     </tbody>
                 </table>
                 {data.rows.length === 0 && (
-                    <p className="py-6 text-center text-sm text-[#4B5563]">Belum ada penjualan barang di periode ini.</p>
+                    <p className="py-6 text-center text-sm text-[#4B5563] dark:text-slate-400">Belum ada penjualan barang di periode ini.</p>
                 )}
             </section>
 
-            <aside className="flex w-full shrink-0 flex-col gap-4 rounded-2xl border border-[#E5E7EB] bg-white p-5 lg:w-[320px]">
-                <h2 className="text-[15px] font-semibold">Untung dan rugi</h2>
-                <p className="text-xs text-[#4B5563]">Jumlah barang berdasarkan hasil penjualan {window} hari</p>
+            <aside className="flex w-full shrink-0 flex-col gap-4 rounded-2xl border border-[#E5E7EB] bg-white p-5 lg:w-[320px] dark:border-slate-800 dark:bg-slate-900">
+                <h2 className="text-[15px] font-semibold text-gray-900 dark:text-white">Untung dan rugi</h2>
+                <p className="text-xs text-[#4B5563] dark:text-slate-400">Jumlah barang berdasarkan hasil penjualan {window} hari</p>
 
                 <div className="flex flex-col gap-1">
-                    <p className="text-lg font-bold text-[#15803D]">{data.untung} barang</p>
-                    <p className="text-xs text-[#4B5563]">Dijual di atas harga modal</p>
+                    <p className="text-lg font-bold text-[#15803D] dark:text-emerald-400">{data.untung} barang</p>
+                    <p className="text-xs text-[#4B5563] dark:text-slate-400">Dijual di atas harga modal</p>
                 </div>
 
                 <div className="flex flex-col gap-1">
-                    <p className="text-lg font-bold text-[#B91C1C]">{data.rugi} barang</p>
-                    <p className="text-xs text-[#4B5563]">Dijual di bawah harga modal</p>
+                    <p className="text-lg font-bold text-[#B91C1C] dark:text-red-400">{data.rugi} barang</p>
+                    <p className="text-xs text-[#4B5563] dark:text-slate-400">Dijual di bawah harga modal</p>
                 </div>
             </aside>
         </div>
@@ -350,8 +352,8 @@ export default function Index({ tab, periode, window, penjualan, pembelian, arus
             <div className="flex flex-col gap-5">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-[22px] font-bold">Laporan</h1>
-                        <p className="mt-1 text-[13px] text-[#4B5563]">
+                        <h1 className="text-[22px] font-bold text-gray-900 dark:text-white">Laporan</h1>
+                        <p className="mt-1 text-[13px] text-[#4B5563] dark:text-slate-400">
                             Rekap penjualan, pembelian, dan arus kas untuk pengambilan keputusan.
                         </p>
                     </div>
@@ -366,7 +368,7 @@ export default function Index({ tab, periode, window, penjualan, pembelian, arus
                         <button
                             type="button"
                             onClick={() => globalThis.print()}
-                            className="rounded-[10px] bg-[#1D4ED8] px-4 py-2.5 text-sm font-semibold text-white"
+                            className="rounded-[10px] bg-[#1D4ED8] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#1E40AF] dark:bg-blue-600 dark:hover:bg-blue-500 transition-colors"
                         >
                             Ekspor PDF
                         </button>

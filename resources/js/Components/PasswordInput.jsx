@@ -32,7 +32,7 @@ export default function PasswordInput({
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
                 aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
-                className="absolute right-3 flex items-center text-[#6B7280] transition-colors hover:text-[#111827] focus:outline-none dark:text-gray-400 dark:hover:text-gray-200"
+                className="absolute right-3 flex items-center text-[#6B7280] transition-colors hover:text-[#111827] focus:outline-none dark:text-slate-400 dark:hover:text-slate-200"
                 tabIndex={-1}
             >
                 {showPassword ? (
