@@ -189,11 +189,6 @@ export default function Index({ services, categories, total, detail, autoDeduct,
                                 />
                             </button>
                         </div>
-
-                        <div className="rounded-xl bg-[#FEF3C7] p-3 text-xs text-[#92400E] dark:bg-amber-950/50 dark:text-amber-300 dark:border dark:border-amber-900/60">
-                            <p className="font-semibold">Keputusan ini belum final.</p>
-                            <p>Menunggu konfirmasi pemilik toko apakah stok kertas dikurangi otomatis.</p>
-                        </div>
                     </aside>
                 </div>
             </div>

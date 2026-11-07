@@ -192,10 +192,6 @@ export default function Index({ users }) {
                             {errors.role && <p className="text-xs text-[#B91C1C] dark:text-red-400">{errors.role}</p>}
                         </div>
 
-                        <p className="rounded-xl bg-[#FEF3C7] p-3 text-xs text-[#92400E] dark:border dark:border-amber-800/50 dark:bg-amber-950/40 dark:text-amber-300">
-                            Pengguna mengganti password sementara saat pertama masuk.
-                        </p>
-
                         <button
                             type="submit"
                             disabled={processing}
