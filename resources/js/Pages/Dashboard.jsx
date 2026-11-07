@@ -2,8 +2,8 @@ import TriposLayout from '@/Layouts/TriposLayout';
 import { Head, Link, router } from '@inertiajs/react';
 
 const TAG = {
-    primary: 'bg-[#DBEAFE] text-[#1D4ED8]',
-    danger: 'bg-[#FEE2E2] text-[#B91C1C]',
+    primary: 'bg-[#DBEAFE] text-[#1D4ED8] dark:bg-blue-950/60 dark:text-blue-400',
+    danger: 'bg-[#FEE2E2] text-[#B91C1C] dark:bg-red-950/60 dark:text-red-400',
 };
 
 const CHART_HEIGHT = 260; // px, the tallest bar
@@ -26,9 +26,9 @@ function changeText(change) {
 }
 
 const DELTA_COLOR = {
-    good: 'text-[#15803D]',
-    bad: 'text-[#B91C1C]',
-    neutral: 'text-[#4B5563]',
+    good: 'text-[#15803D] dark:text-emerald-400',
+    bad: 'text-[#B91C1C] dark:text-red-400',
+    neutral: 'text-[#4B5563] dark:text-gray-400',
 };
 
 export default function Dashboard({ report }) {
@@ -63,19 +63,21 @@ export default function Dashboard({ report }) {
 
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <h1 className="text-[22px] font-bold">Dashboard</h1>
-                    <p className="mt-1 text-sm text-[#4B5563]">Ringkasan {period} hari terakhir</p>
+                    <h1 className="text-[22px] font-bold text-gray-900 dark:text-white">Dashboard</h1>
+                    <p className="mt-1 text-sm text-[#4B5563] dark:text-gray-400">Ringkasan {period} hari terakhir</p>
                 </div>
 
-                <div className="inline-flex rounded-lg bg-[#F3F4F6] p-1" role="group" aria-label="Periode">
+                <div className="inline-flex rounded-lg bg-[#F3F4F6] p-1 dark:bg-gray-800" role="group" aria-label="Periode">
                     {[7, 30].map((days) => (
                         <button
                             key={days}
                             type="button"
                             onClick={() => changePeriod(days)}
                             aria-pressed={period === days}
-                            className={`rounded-md px-3.5 py-1.5 text-sm ${
-                                period === days ? 'bg-white font-semibold text-[#111827] shadow-sm' : 'text-[#4B5563]'
+                            className={`rounded-md px-3.5 py-1.5 text-sm transition-colors ${
+                                period === days
+                                    ? 'bg-white font-semibold text-[#111827] shadow-sm dark:bg-gray-900 dark:text-white'
+                                    : 'text-[#4B5563] dark:text-gray-400 hover:dark:text-gray-200'
                             }`}
                         >
                             {days} hari
@@ -87,9 +89,9 @@ export default function Dashboard({ report }) {
             {/* Summary cards */}
             <section className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">
                 {cards.map((item) => (
-                    <div key={item.label} className="rounded-xl border border-[#E5E7EB] bg-white p-5">
-                        <p className="text-xs text-[#4B5563]">{item.label}</p>
-                        <p className="mt-1.5 text-2xl font-bold">{item.value}</p>
+                    <div key={item.label} className="rounded-xl border border-[#E5E7EB] bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+                        <p className="text-xs text-[#4B5563] dark:text-gray-400">{item.label}</p>
+                        <p className="mt-1.5 text-2xl font-bold text-gray-900 dark:text-white">{item.value}</p>
                         <p className={`mt-1.5 text-xs ${DELTA_COLOR[item.tone]}`}>{item.delta}</p>
                     </div>
                 ))}
@@ -97,12 +99,12 @@ export default function Dashboard({ report }) {
 
             {/* Chart and recent transactions */}
             <section className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
-                <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 lg:col-span-2">
-                    <h2 className="text-[15px] font-semibold">Penghasilan harian (Rp ribu)</h2>
+                <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 lg:col-span-2 dark:border-gray-800 dark:bg-gray-900">
+                    <h2 className="text-[15px] font-semibold text-gray-900 dark:text-white">Penghasilan harian (Rp ribu)</h2>
 
                     {/* Bars */}
                     <div
-                        className={`mt-4 grid h-[260px] items-end border-b border-[#E5E7EB] ${daily.length > 14 ? 'gap-1' : 'gap-3'}`}
+                        className={`mt-4 grid h-[260px] items-end border-b border-[#E5E7EB] dark:border-gray-800 ${daily.length > 14 ? 'gap-1' : 'gap-3'}`}
                         style={{ gridTemplateColumns: `repeat(${daily.length}, minmax(0, 1fr))` }}
                     >
                         {daily.map((d) => {
@@ -111,7 +113,7 @@ export default function Dashboard({ report }) {
                             return (
                                 <div key={d.date} className="flex h-full items-end justify-center">
                                     <div
-                                        className="w-full max-w-[44px] rounded-t bg-[#1D4ED8]"
+                                        className="w-full max-w-[44px] rounded-t bg-[#1D4ED8] dark:bg-blue-500"
                                         style={{ height: `${height}px` }}
                                         title={`${d.date}: ${rupiah(d.income)}`}
                                     />
@@ -126,38 +128,38 @@ export default function Dashboard({ report }) {
                         style={{ gridTemplateColumns: `repeat(${daily.length}, minmax(0, 1fr))` }}
                     >
                         {daily.map((d, i) => (
-                            <span key={d.date} className="h-5 whitespace-nowrap text-center text-xs text-[#4B5563]">
+                            <span key={d.date} className="h-5 whitespace-nowrap text-center text-xs text-[#4B5563] dark:text-gray-400">
                                 {i % labelEvery === 0 ? d.label : ''}
                             </span>
                         ))}
                     </div>
                 </div>
                 
-                <div className="rounded-xl border border-[#E5E7EB] bg-white p-5">
+                <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
                     <div className="mb-2 flex items-center justify-between">
-                        <h2 className="text-[15px] font-semibold">Transaksi terbaru</h2>
-                        <Link href={route('riwayat.index')} className="text-sm font-semibold text-[#1D4ED8]">
+                        <h2 className="text-[15px] font-semibold text-gray-900 dark:text-white">Transaksi terbaru</h2>
+                        <Link href={route('riwayat.index')} className="text-sm font-semibold text-[#1D4ED8] dark:text-blue-400">
                             Lihat semua
                         </Link>
                     </div>
 
                     {recent.length === 0 ? (
-                        <p className="py-6 text-sm text-[#4B5563]">Belum ada transaksi.</p>
+                        <p className="py-6 text-sm text-[#4B5563] dark:text-gray-400">Belum ada transaksi.</p>
                     ) : (
                         <ul>
                             {recent.map((t) => (
-                                <li key={t.id} className="border-b border-[#E5E7EB] last:border-b-0">
+                                <li key={t.id} className="border-b border-[#E5E7EB] last:border-b-0 dark:border-gray-800">
                                     <Link
                                         href={route('riwayat.show', t.id)}
-                                        className="flex items-center justify-between py-3 hover:bg-[#F3F4F6]"
+                                        className="flex items-center justify-between py-3 hover:bg-[#F3F4F6] hover:dark:bg-gray-800/50"
                                     >
                                         <div>
-                                            <p className="text-sm font-semibold">Penjualan · {t.cashier}</p>
-                                            <p className="mt-0.5 text-xs text-[#4B5563]">
+                                            <p className="text-sm font-semibold text-gray-900 dark:text-white">Penjualan · {t.cashier}</p>
+                                            <p className="mt-0.5 text-xs text-[#4B5563] dark:text-gray-400">
                                                 {t.time} · {t.method}
                                             </p>
                                         </div>
-                                        <p className="text-sm font-semibold">{rupiah(t.amount)}</p>
+                                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{rupiah(t.amount)}</p>
                                     </Link>
                                 </li>
                             ))}
@@ -170,25 +172,25 @@ export default function Dashboard({ report }) {
             <section className="mt-6">
                 <div className="mb-2 flex items-end justify-between">
                     <div>
-                        <h2 className="text-[15px] font-semibold">Rekomendasi AI</h2>
-                        <p className="text-xs text-[#4B5563]">Dihitung dari transaksi {windowDays} hari terakhir</p>
+                        <h2 className="text-[15px] font-semibold text-gray-900 dark:text-white">Rekomendasi AI</h2>
+                        <p className="text-xs text-[#4B5563] dark:text-gray-400">Dihitung dari transaksi {windowDays} hari terakhir</p>
                     </div>
-                    <a href="#" className="text-sm font-semibold text-[#1D4ED8]">Lihat semua</a>
+                    <a href="#" className="text-sm font-semibold text-[#1D4ED8] dark:text-blue-400">Lihat semua</a>
                 </div>
 
                 {recommendations.length === 0 ? (
-                    <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 text-sm text-[#4B5563]">
+                    <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 text-sm text-[#4B5563] dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
                         Belum cukup data untuk membuat rekomendasi.
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         {recommendations.map((item) => (
-                            <div key={item.tag} className="rounded-xl border border-[#E5E7EB] bg-white p-5">
+                            <div key={item.tag} className="rounded-xl border border-[#E5E7EB] bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
                                 <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${TAG[item.tone]}`}>
                                     {item.tag}
                                 </span>
-                                <h3 className="mt-2 text-sm font-semibold">{item.title}</h3>
-                                <p className="mt-1 text-xs text-[#4B5563]">{item.text}</p>
+                                <h3 className="mt-2 text-sm font-semibold text-gray-900 dark:text-white">{item.title}</h3>
+                                <p className="mt-1 text-xs text-[#4B5563] dark:text-gray-400">{item.text}</p>
                             </div>
                         ))}
                     </div>
