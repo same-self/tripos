@@ -75,7 +75,7 @@ export default function Index({ items, services, paymentMethods }) {
     const [serviceId, setServiceId] = useState(services[0]?.id ?? null);
     const [pages, setPages] = useState(10);
 
-    const total = cart.reduce((sum, line) => sum + line.qty * line.price, 0);
+    const total = cart.reduce((sum, line) => sum + (Number(line.qty) || 0) * line.price, 0);
     const change = Math.max(0, paid - total);
     const isCash = method === 'cash';
 
@@ -133,34 +133,73 @@ export default function Index({ items, services, paymentMethods }) {
     const paper = selectedService?.materials?.[0] ?? null;
 
     function addToCart(key, name, price, unit, amount = 1) {
+        let maxStock = null;
         if (key.startsWith('barang-')) {
             const itemId = Number(key.split('-')[1]);
             const item = items.find((i) => i.id === itemId);
-            if (item && item.stock <= 0) {
+            if (!item || item.stock <= 0) {
                 return;
             }
+            maxStock = item.stock;
         }
         setCart((prev) => {
             const found = prev.find((line) => line.key === key);
             if (found) {
-                return prev.map((line) => (line.key === key ? { ...line, qty: line.qty + amount } : line));
+                const curQty = Number(found.qty) || 0;
+                const nextQty = maxStock !== null ? Math.min(curQty + amount, maxStock) : curQty + amount;
+                return prev.map((line) => (line.key === key ? { ...line, qty: nextQty, maxStock } : line));
             }
-            return [...prev, { key, name, price, unit, qty: amount }];
+            const initialQty = maxStock !== null ? Math.min(amount, maxStock) : amount;
+            return [...prev, { key, name, price, unit, qty: initialQty, maxStock }];
         });
     }
 
     function changeQty(key, delta) {
         setCart((prev) =>
             prev
-                .map((line) => (line.key === key ? { ...line, qty: line.qty + delta } : line))
-                .filter((line) => line.qty > 0),
+                .map((line) => {
+                    if (line.key !== key) return line;
+                    let nextQty = (Number(line.qty) || 1) + delta;
+                    if (line.maxStock !== null && line.maxStock !== undefined) {
+                        nextQty = Math.min(nextQty, line.maxStock);
+                    }
+                    return { ...line, qty: nextQty };
+                })
+                .filter((line) => (Number(line.qty) || 0) > 0),
         );
     }
 
     function setQty(key, value) {
+        if (value === '') {
+            setCart((prev) => prev.map((line) => (line.key === key ? { ...line, qty: '' } : line)));
+            return;
+        }
         const n = Math.floor(Number(value));
+        if (!Number.isFinite(n)) return;
+
         setCart((prev) =>
-            prev.map((line) => (line.key === key ? { ...line, qty: Number.isFinite(n) && n >= 1 ? n : 1 } : line)),
+            prev.map((line) => {
+                if (line.key !== key) return line;
+                let nextQty = Math.max(1, n);
+                if (line.maxStock !== null && line.maxStock !== undefined) {
+                    nextQty = Math.min(nextQty, line.maxStock);
+                }
+                return { ...line, qty: nextQty };
+            }),
+        );
+    }
+
+    function handleQtyBlur(key) {
+        setCart((prev) =>
+            prev.map((line) => {
+                if (line.key !== key) return line;
+                const n = Math.floor(Number(line.qty));
+                let nextQty = Number.isFinite(n) && n >= 1 ? n : 1;
+                if (line.maxStock !== null && line.maxStock !== undefined) {
+                    nextQty = Math.min(nextQty, line.maxStock);
+                }
+                return { ...line, qty: nextQty };
+            }),
         );
     }
 
@@ -193,10 +232,10 @@ export default function Index({ items, services, paymentMethods }) {
         // Keys look like "barang-3" or "jasa-5": the number after the dash is the database id
         const itemLines = cart
             .filter((line) => line.key.startsWith('barang-'))
-            .map((line) => ({ item_id: Number(line.key.split('-')[1]), qty: line.qty }));
+            .map((line) => ({ item_id: Number(line.key.split('-')[1]), qty: Number(line.qty) || 1 }));
         const serviceLines = cart
             .filter((line) => line.key.startsWith('jasa-'))
-            .map((line) => ({ service_id: Number(line.key.split('-')[1]), qty: line.qty }));
+            .map((line) => ({ service_id: Number(line.key.split('-')[1]), qty: Number(line.qty) || 1 }));
 
         router.post(
             route('kasir.pos.store'),
@@ -329,6 +368,10 @@ export default function Index({ items, services, paymentMethods }) {
                             <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
                                 {sortedItems.map((item) => {
                                     const isOutOfStock = item.stock <= 0;
+                                    const inCart = cart.find((c) => c.key === `barang-${item.id}`);
+                                    const isCartMax = inCart && inCart.maxStock !== null && Number(inCart.qty) >= inCart.maxStock;
+                                    const isAtStockLimit = isOutOfStock || isCartMax;
+
                                     return (
                                         <li
                                             key={item.id}
@@ -377,15 +420,15 @@ export default function Index({ items, services, paymentMethods }) {
 
                                             <button
                                                 type="button"
-                                                disabled={isOutOfStock}
+                                                disabled={isAtStockLimit}
                                                 onClick={() => addToCart(`barang-${item.id}`, item.name, item.sell_price, item.unit)}
                                                 className={`mt-2.5 rounded-lg py-2 text-xs font-semibold transition-colors ${
-                                                    isOutOfStock
+                                                    isAtStockLimit
                                                         ? 'cursor-not-allowed bg-gray-200 text-gray-400 dark:bg-slate-800 dark:text-slate-600'
                                                         : 'bg-[#1D4ED8] text-white hover:bg-blue-700 active:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-500'
                                                 }`}
                                             >
-                                                {isOutOfStock ? 'Stok Habis' : 'Tambah'}
+                                                {isOutOfStock ? 'Stok Habis' : isCartMax ? 'Maks. di Keranjang' : 'Tambah'}
                                             </button>
                                         </li>
                                     );
@@ -569,6 +612,8 @@ export default function Index({ items, services, paymentMethods }) {
                         <div className="flex flex-col gap-2 max-h-[340px] overflow-y-auto pr-1">
                             {cart.map((line) => {
                                 const isSelected = selectedCartKeys.includes(line.key);
+                                const isAtMaxStock = line.maxStock !== null && line.maxStock !== undefined && Number(line.qty) >= line.maxStock;
+
                                 return (
                                     <div
                                         key={line.key}
@@ -590,9 +635,16 @@ export default function Index({ items, services, paymentMethods }) {
                                                 <p className="truncate text-sm font-medium text-gray-900 dark:text-slate-100" title={line.name}>
                                                     {line.name}
                                                 </p>
-                                                <p className="text-xs text-[#4B5563] dark:text-slate-400">
-                                                    {line.qty} × {rupiah(line.price)}
-                                                </p>
+                                                <div className="flex items-center gap-1.5 flex-wrap">
+                                                    <p className="text-xs text-[#4B5563] dark:text-slate-400">
+                                                        {line.qty || 0} × {rupiah(line.price)}
+                                                    </p>
+                                                    {isAtMaxStock && (
+                                                        <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800 dark:bg-amber-950/80 dark:text-amber-300">
+                                                            Maks. stok ({line.maxStock})
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
 
@@ -609,22 +661,25 @@ export default function Index({ items, services, paymentMethods }) {
                                                 <input
                                                     type="number"
                                                     min="1"
+                                                    max={line.maxStock ?? undefined}
                                                     inputMode="numeric"
                                                     aria-label={`Jumlah ${line.name}`}
                                                     value={line.qty}
                                                     onChange={(e) => setQty(line.key, e.target.value)}
+                                                    onBlur={() => handleQtyBlur(line.key)}
                                                     className="h-7 w-12 rounded-lg border border-[#D1D5DB] text-center text-xs font-semibold focus:border-[#1D4ED8] focus:ring-1 focus:ring-[#1D4ED8] dark:border-slate-700 dark:bg-slate-950 dark:text-white"
                                                 />
                                                 <button
                                                     type="button"
                                                     aria-label={`Tambah ${line.name}`}
+                                                    disabled={isAtMaxStock}
                                                     onClick={() => changeQty(line.key, 1)}
-                                                    className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#1D4ED8] font-semibold text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500"
+                                                    className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#1D4ED8] font-semibold text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed dark:bg-blue-600 dark:hover:bg-blue-500"
                                                 >
                                                     +
                                                 </button>
                                             </div>
-                                            <p className="w-20 text-right text-xs font-bold text-gray-900 dark:text-slate-100">{rupiah(line.qty * line.price)}</p>
+                                            <p className="w-20 text-right text-xs font-bold text-gray-900 dark:text-slate-100">{rupiah((Number(line.qty) || 0) * line.price)}</p>
                                             <button
                                                 type="button"
                                                 aria-label={`Hapus ${line.name}`}
