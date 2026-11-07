@@ -74,7 +74,7 @@ export default function TriposLayout({ active = 'Dashboard', children }) {
                             onClick={() => setMenuOpen(!menuOpen)}
                             aria-haspopup="true"
                             aria-expanded={menuOpen}
-                            className="flex items-center gap-2.5 rounded-xl px-2 py-1 hover:bg-[#F3F4F6]"
+                            className="flex items-center gap-2.5 rounded-xl px-2 py-1 transition-all duration-150 hover:bg-[#F3F4F6] active:scale-[0.98]"
                         >
                             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#DBEAFE] font-bold text-[#1D4ED8]">
                                 {initial}
@@ -86,12 +86,12 @@ export default function TriposLayout({ active = 'Dashboard', children }) {
                         </button>
 
                         {menuOpen && (
-                            <div className="absolute right-0 top-[calc(100%+8px)] z-20 min-w-[200px] rounded-xl border border-[#E5E7EB] bg-white p-2 shadow-lg">
+                            <div className="animate-popover absolute right-0 top-[calc(100%+8px)] z-20 min-w-[200px] origin-top-right rounded-xl border border-[#E5E7EB] bg-white p-2 shadow-lg">
                                 <Link
                                     href={route('logout')}
                                     method="post"
                                     as="button"
-                                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-[#B91C1C] hover:bg-[#F3F4F6]"
+                                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-[#B91C1C] transition-colors duration-150 hover:bg-[#FEE2E2] active:scale-[0.99]"
                                 >
                                     <LogOut size={16} aria-hidden="true" />
                                     Keluar
@@ -115,10 +115,10 @@ export default function TriposLayout({ active = 'Dashboard', children }) {
                                     key={item.label}
                                     href={item.href}
                                     aria-current={isActive ? 'page' : undefined}
-                                    className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm ${
+                                    className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-150 active:scale-[0.98] ${
                                         isActive
                                             ? 'bg-[#DBEAFE] font-semibold text-[#1D4ED8]'
-                                            : 'text-[#111827] hover:bg-[#F3F4F6]'
+                                            : 'text-[#111827] hover:bg-[#F3F4F6] hover:translate-x-1'
                                     }`}
                                 >
                                     <Icon size={18} strokeWidth={2} aria-hidden="true" />

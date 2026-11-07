@@ -105,7 +105,7 @@ export default function Login({ status }) {
                         <button
                             type="submit"
                             disabled={processing}
-                            className="mt-4 h-11 rounded-lg bg-[#1D4ED8] font-semibold text-white hover:brightness-95 disabled:opacity-60"
+                            className="mt-4 h-11 rounded-lg bg-[#1D4ED8] font-semibold text-white transition-all duration-150 hover:bg-blue-700 active:scale-[0.98] disabled:opacity-60"
                         >
                             Masuk
                         </button>

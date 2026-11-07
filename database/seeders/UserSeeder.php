@@ -31,7 +31,7 @@ class UserSeeder extends Seeder
             'email' => $email,
             'password' => $password,
             'role' => $role,
-            'must_change_password' => true,
+            'must_change_password' => false,
             'email_verified_at' => now(),
             'deleted_at' => null,
         ])->save();
