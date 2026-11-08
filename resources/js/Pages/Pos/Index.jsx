@@ -1,11 +1,29 @@
 import CashierLayout from '@/Layouts/CashierLayout';
 import { Head, router, usePage } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Trash2, Search, ArrowUpDown, X, ShoppingCart } from 'lucide-react';
 import ItemThumb from '@/Components/ItemThumb';
 
-const QUICK_AMOUNTS = [20000, 50000, 100000];
-const QUICK_PAGES = [10, 50, 100, 200];
+function getQuickCashOptions(total) {
+    if (total <= 0) return [20000, 50000, 100000];
+    const options = new Set();
+    const steps = [10000, 20000, 50000, 100000];
+    steps.forEach((step) => {
+        if (total < step) {
+            options.add(step);
+        } else {
+            const nextRound = Math.ceil(total / step) * step;
+            if (nextRound > total) options.add(nextRound);
+        }
+    });
+    [50000, 100000, 200000, 500000].forEach((bill) => {
+        if (bill > total) options.add(bill);
+    });
+    return Array.from(options)
+        .filter((val) => val > total)
+        .sort((a, b) => a - b)
+        .slice(0, 3);
+}
 
 const rupiah = (n) => 'Rp ' + Number(n).toLocaleString('id-ID');
 const fmt = (n) => Number(n).toLocaleString('id-ID', { maximumFractionDigits: 4 });
@@ -62,6 +80,9 @@ function TabButton({ active, onClick, children }) {
 export default function Index({ items, services, paymentMethods }) {
     const { flash, errors } = usePage().props;
 
+    const initialService = services[0] ?? null;
+    const initialIsSheet = ['lembar', 'lbr', 'halaman'].includes((initialService?.unit || '').toLowerCase());
+
     const [tab, setTab] = useState('barang');
     const [search, setSearch] = useState('');
     const [category, setCategory] = useState('Semua');
@@ -70,14 +91,56 @@ export default function Index({ items, services, paymentMethods }) {
     const [selectedCartKeys, setSelectedCartKeys] = useState([]);
     const [method, setMethod] = useState('cash');
     const [paid, setPaid] = useState(0);
-    const [printReceipt, setPrintReceipt] = useState(false);
+    const [printReceipt, setPrintReceipt] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('tripos_print_receipt') === 'true';
+        }
+        return false;
+    });
     const [processing, setProcessing] = useState(false);
-    const [serviceId, setServiceId] = useState(services[0]?.id ?? null);
-    const [pages, setPages] = useState(10);
+    const [serviceId, setServiceId] = useState(initialService?.id ?? null);
+    const [pages, setPages] = useState(initialIsSheet ? 10 : 1);
 
     const total = cart.reduce((sum, line) => sum + (Number(line.qty) || 0) * line.price, 0);
     const change = Math.max(0, paid - total);
     const isCash = method === 'cash';
+    const underpaid = isCash && cart.length > 0 && paid < total ? total - paid : 0;
+    const isUnderpaid = isCash && cart.length > 0 && paid < total;
+
+    const quickAmounts = useMemo(() => getQuickCashOptions(total), [total]);
+
+    useEffect(() => {
+        function handleKeyDown(e) {
+            const activeTag = document.activeElement?.tagName;
+            const isEditingInput = activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT';
+
+            if (e.key === 'F2') {
+                e.preventDefault();
+                setTab((prev) => (prev === 'barang' ? 'jasa' : 'barang'));
+                setCategory('Semua');
+            } else if (e.key === 'F4') {
+                e.preventDefault();
+                setMethod('cash');
+                const paidEl = document.getElementById('paid');
+                if (paidEl) {
+                    paidEl.focus();
+                    paidEl.select();
+                }
+            } else if (e.key === '/' && !isEditingInput) {
+                e.preventDefault();
+                document.getElementById('pos-search-input')?.focus();
+            } else if (e.key === 'Escape') {
+                if (search) {
+                    setSearch('');
+                } else if (document.activeElement?.blur) {
+                    document.activeElement.blur();
+                }
+            }
+        }
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [search]);
 
     const itemCategories = useMemo(() => {
         const cats = Array.from(new Set(items.map((i) => i.category).filter(Boolean)));
@@ -130,7 +193,15 @@ export default function Index({ items, services, paymentMethods }) {
     }, [services, keyword, category]);
 
     const selectedService = services.find((service) => service.id === serviceId) ?? null;
+    const isSheetUnit = ['lembar', 'lbr', 'halaman'].includes((selectedService?.unit || '').toLowerCase());
+    const quickPages = isSheetUnit ? [5, 10, 20, 50, 100] : [1, 2, 3, 5, 10];
     const paper = selectedService?.materials?.[0] ?? null;
+
+    function handleSelectService(service) {
+        setServiceId(service.id);
+        const isSheet = ['lembar', 'lbr', 'halaman'].includes((service.unit || '').toLowerCase());
+        setPages(isSheet ? 10 : 1);
+    }
 
     function addToCart(key, name, price, unit, amount = 1) {
         let maxStock = null;
@@ -275,13 +346,17 @@ export default function Index({ items, services, paymentMethods }) {
                         <Search size={18} className="text-[#1D4ED8] shrink-0 dark:text-blue-400" aria-hidden="true" />
                         <span className="sr-only">Cari barang atau jasa</span>
                         <input
+                            id="pos-search-input"
                             type="search"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Cari barang atau jasa..."
+                            placeholder="Cari barang atau jasa... (Tekan / untuk cari)"
                             className="min-w-0 flex-1 border-0 p-0 text-sm focus:ring-0 placeholder:text-gray-400 dark:bg-transparent dark:text-white dark:placeholder-slate-500"
                             autoFocus
                         />
+                        <kbd className="hidden sm:inline-block rounded border border-gray-200 bg-gray-100 px-1.5 py-0.5 text-[11px] font-mono text-gray-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+                            /
+                        </kbd>
                         {search && (
                             <button
                                 type="button"
@@ -375,10 +450,15 @@ export default function Index({ items, services, paymentMethods }) {
                                     return (
                                         <li
                                             key={item.id}
+                                            onClick={() => {
+                                                if (!isAtStockLimit) {
+                                                    addToCart(`barang-${item.id}`, item.name, item.sell_price, item.unit);
+                                                }
+                                            }}
                                             className={`group relative flex flex-col justify-between rounded-xl border p-3.5 transition-all duration-150 ${
-                                                isOutOfStock
-                                                    ? 'border-gray-200 bg-gray-50/80 opacity-60 dark:border-slate-800 dark:bg-slate-900/50'
-                                                    : 'border-[#E5E7EB] bg-white hover:border-blue-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-500/50'
+                                                isAtStockLimit
+                                                    ? 'cursor-not-allowed border-gray-200 bg-gray-50/80 opacity-60 dark:border-slate-800 dark:bg-slate-900/50'
+                                                    : 'cursor-pointer border-[#E5E7EB] bg-white hover:border-blue-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-500/50'
                                             }`}
                                         >
                                             <div className="flex flex-col gap-1.5">
@@ -421,7 +501,10 @@ export default function Index({ items, services, paymentMethods }) {
                                             <button
                                                 type="button"
                                                 disabled={isAtStockLimit}
-                                                onClick={() => addToCart(`barang-${item.id}`, item.name, item.sell_price, item.unit)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    addToCart(`barang-${item.id}`, item.name, item.sell_price, item.unit);
+                                                }}
                                                 className={`mt-2.5 rounded-lg py-2 text-xs font-semibold transition-colors ${
                                                     isAtStockLimit
                                                         ? 'cursor-not-allowed bg-gray-200 text-gray-400 dark:bg-slate-800 dark:text-slate-600'
@@ -450,7 +533,7 @@ export default function Index({ items, services, paymentMethods }) {
                                             <li key={service.id}>
                                                 <button
                                                     type="button"
-                                                    onClick={() => setServiceId(service.id)}
+                                                    onClick={() => handleSelectService(service)}
                                                     aria-pressed={selected}
                                                     className={`flex w-full flex-col gap-1.5 rounded-xl border p-3.5 text-left transition-all ${
                                                         selected
@@ -499,7 +582,7 @@ export default function Index({ items, services, paymentMethods }) {
                                     </div>
 
                                     <div className="flex flex-wrap gap-2">
-                                        {QUICK_PAGES.map((n) => (
+                                        {quickPages.map((n) => (
                                             <button
                                                 key={n}
                                                 type="button"
@@ -741,7 +824,7 @@ export default function Index({ items, services, paymentMethods }) {
                                 >
                                     Uang Pas
                                 </button>
-                                {QUICK_AMOUNTS.map((amount) => (
+                                {quickAmounts.map((amount) => (
                                     <button
                                         key={amount}
                                         type="button"
@@ -752,10 +835,17 @@ export default function Index({ items, services, paymentMethods }) {
                                     </button>
                                 ))}
                             </div>
-                            <div className="flex items-center justify-between rounded-xl bg-[#DCFCE7] px-4 py-3 dark:border dark:border-emerald-800/60 dark:bg-emerald-950/40">
-                                <span className="text-sm font-medium text-emerald-900 dark:text-emerald-200">Kembalian</span>
-                                <span className="text-lg font-bold text-[#16A34A] dark:text-emerald-400">{rupiah(change)}</span>
-                            </div>
+                            {isUnderpaid ? (
+                                <div className="flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800/60 dark:bg-amber-950/40">
+                                    <span className="text-sm font-medium text-amber-900 dark:text-amber-200">Kurang Bayar</span>
+                                    <span className="text-lg font-bold text-amber-700 dark:text-amber-400">{rupiah(underpaid)}</span>
+                                </div>
+                            ) : (
+                                <div className="flex items-center justify-between rounded-xl bg-[#DCFCE7] px-4 py-3 dark:border dark:border-emerald-800/60 dark:bg-emerald-950/40">
+                                    <span className="text-sm font-medium text-emerald-900 dark:text-emerald-200">Kembalian</span>
+                                    <span className="text-lg font-bold text-[#16A34A] dark:text-emerald-400">{rupiah(change)}</span>
+                                </div>
+                            )}
                         </>
                     ) : (
                         <p className="text-sm text-[#4B5563] dark:text-slate-400">Pelanggan membayar sebesar total tagihan melalui QRIS.</p>
@@ -765,7 +855,12 @@ export default function Index({ items, services, paymentMethods }) {
                         <input
                             type="checkbox"
                             checked={printReceipt}
-                            onChange={(e) => setPrintReceipt(e.target.checked)}
+                            onChange={(e) => {
+                                setPrintReceipt(e.target.checked);
+                                if (typeof window !== 'undefined') {
+                                    localStorage.setItem('tripos_print_receipt', e.target.checked ? 'true' : 'false');
+                                }
+                            }}
                             className="h-4 w-4 rounded border-[#4B5563] text-[#1D4ED8] focus:ring-[#1D4ED8] dark:border-slate-700 dark:bg-slate-800"
                         />
                         Cetak struk thermal
@@ -778,10 +873,14 @@ export default function Index({ items, services, paymentMethods }) {
                     <button
                         type="button"
                         onClick={submitSale}
-                        disabled={cart.length === 0 || processing}
-                        className="rounded-xl bg-[#1D4ED8] py-4 font-semibold text-white disabled:opacity-50 hover:bg-blue-700 transition-colors dark:bg-blue-600 dark:hover:bg-blue-500"
+                        disabled={cart.length === 0 || processing || isUnderpaid}
+                        className="rounded-xl bg-[#1D4ED8] py-4 font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors dark:bg-blue-600 dark:hover:bg-blue-500"
                     >
-                        {processing ? 'Menyimpan...' : 'Selesaikan Transaksi'}
+                        {processing
+                            ? 'Menyimpan...'
+                            : isUnderpaid
+                              ? `Uang Kurang ${rupiah(underpaid)}`
+                              : 'Selesaikan Transaksi'}
                     </button>
                 </aside>
             </div>
