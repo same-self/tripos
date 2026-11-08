@@ -347,21 +347,26 @@ export default function Index({ items, services, paymentMethods }) {
                         <span className="sr-only">Cari barang atau jasa</span>
                         <input
                             id="pos-search-input"
-                            type="search"
+                            type="text"
+                            autoComplete="off"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="Cari barang atau jasa... (Tekan / untuk cari)"
                             className="min-w-0 flex-1 border-0 p-0 text-sm focus:ring-0 placeholder:text-gray-400 dark:bg-transparent dark:text-white dark:placeholder-slate-500"
                             autoFocus
                         />
-                        <kbd className="hidden sm:inline-block rounded border border-gray-200 bg-gray-100 px-1.5 py-0.5 text-[11px] font-mono text-gray-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
-                            /
-                        </kbd>
-                        {search && (
+                        {!search ? (
+                            <kbd className="hidden sm:inline-block rounded border border-gray-200 bg-gray-100 px-1.5 py-0.5 text-[11px] font-mono text-gray-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+                                /
+                            </kbd>
+                        ) : (
                             <button
                                 type="button"
-                                onClick={() => setSearch('')}
-                                className="text-gray-400 hover:text-gray-600 p-0.5 dark:text-slate-500 dark:hover:text-slate-300"
+                                onClick={() => {
+                                    setSearch('');
+                                    document.getElementById('pos-search-input')?.focus();
+                                }}
+                                className="text-gray-400 hover:text-gray-600 p-0.5 dark:text-slate-500 dark:hover:text-slate-300 transition-colors"
                                 aria-label="Hapus pencarian"
                             >
                                 <X size={16} />
