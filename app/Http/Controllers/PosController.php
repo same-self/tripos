@@ -103,6 +103,8 @@ class PosController extends Controller
                 'category' => $item->category->name,
                 'unit' => $item->unit,
                 'price' => $item->sell_price,
+                'stock' => $item->stock,
+                'low_stock' => $item->stock <= 5,
             ]);
 
         $services = Service::with('category')
@@ -114,6 +116,8 @@ class PosController extends Controller
                 'category' => $service->category->name,
                 'unit' => $service->unit,
                 'price' => $service->unit_price,
+                'stock' => null,
+                'low_stock' => false,
             ]);
 
         return Inertia::render('Pos/PriceList', [
