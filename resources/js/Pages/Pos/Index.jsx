@@ -1,7 +1,7 @@
 import CashierLayout from '@/Layouts/CashierLayout';
 import { Head, router, usePage } from '@inertiajs/react';
 import { useMemo, useState, useEffect } from 'react';
-import { Trash2, Search, ArrowUpDown, X, ShoppingCart } from 'lucide-react';
+import { Trash2, Search, ArrowUpDown, X, ShoppingCart, Printer, CheckCircle2 } from 'lucide-react';
 import ItemThumb from '@/Components/ItemThumb';
 
 function getQuickCashOptions(total) {
@@ -100,6 +100,42 @@ export default function Index({ items, services, paymentMethods }) {
     const [processing, setProcessing] = useState(false);
     const [serviceId, setServiceId] = useState(initialService?.id ?? null);
     const [pages, setPages] = useState(initialIsSheet ? 10 : 1);
+    const [activeReceipt, setActiveReceipt] = useState(flash?.recent_receipt ?? null);
+
+    useEffect(() => {
+        if (flash?.recent_receipt) {
+            setActiveReceipt(flash.recent_receipt);
+        }
+    }, [flash?.recent_receipt]);
+
+    useEffect(() => {
+        if (!activeReceipt) return;
+
+        if (typeof window !== 'undefined' && localStorage.getItem('tripos_print_receipt') === 'true') {
+            const timer = setTimeout(() => {
+                window.print();
+            }, 300);
+            return () => clearTimeout(timer);
+        }
+    }, [activeReceipt]);
+
+    useEffect(() => {
+        if (!activeReceipt) return;
+
+        function handleModalKeyDown(e) {
+            if (e.key === 'Escape' || e.key === 'Enter') {
+                e.preventDefault();
+                setActiveReceipt(null);
+                document.getElementById('pos-search-input')?.focus();
+            } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p') {
+                e.preventDefault();
+                window.print();
+            }
+        }
+
+        window.addEventListener('keydown', handleModalKeyDown);
+        return () => window.removeEventListener('keydown', handleModalKeyDown);
+    }, [activeReceipt]);
 
     const total = cart.reduce((sum, line) => sum + (Number(line.qty) || 0) * line.price, 0);
     const change = Math.max(0, paid - total);
@@ -111,6 +147,8 @@ export default function Index({ items, services, paymentMethods }) {
 
     useEffect(() => {
         function handleKeyDown(e) {
+            if (activeReceipt) return;
+
             const activeTag = document.activeElement?.tagName;
             const isEditingInput = activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT';
 
@@ -140,7 +178,7 @@ export default function Index({ items, services, paymentMethods }) {
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [search]);
+    }, [search, activeReceipt]);
 
     const itemCategories = useMemo(() => {
         const cats = Array.from(new Set(items.map((i) => i.category).filter(Boolean)));
@@ -320,11 +358,13 @@ export default function Index({ items, services, paymentMethods }) {
                 preserveScroll: true,
                 onStart: () => setProcessing(true),
                 onFinish: () => setProcessing(false),
-                onSuccess: () => {
+                onSuccess: (page) => {
                     setCart([]);
                     setSelectedCartKeys([]);
                     setPaid(0);
-                    setPrintReceipt(false);
+                    if (page.props?.flash?.recent_receipt) {
+                        setActiveReceipt(page.props.flash.recent_receipt);
+                    }
                 },
             },
         );
@@ -889,6 +929,136 @@ export default function Index({ items, services, paymentMethods }) {
                     </button>
                 </aside>
             </div>
+
+            {/* Modal Pop-up Struk Transaksi */}
+            {activeReceipt && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-popover">
+                    <div className="relative flex max-h-[92vh] w-full max-w-[400px] flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
+                        {/* Header Modal */}
+                        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3.5 dark:border-slate-800">
+                            <div className="flex items-center gap-2">
+                                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400">
+                                    <CheckCircle2 size={16} />
+                                </span>
+                                <div>
+                                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">Transaksi Berhasil</h3>
+                                    <p className="text-[11px] text-gray-500 dark:text-slate-400">{activeReceipt.number}</p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setActiveReceipt(null);
+                                    document.getElementById('pos-search-input')?.focus();
+                                }}
+                                className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-colors"
+                                aria-label="Tutup struk"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        {/* Struk Content */}
+                        <div className="overflow-y-auto p-4 bg-gray-50/50 dark:bg-slate-950/40">
+                            <article
+                                id="printable-receipt"
+                                className="mx-auto w-full max-w-[320px] rounded-lg border border-gray-200 bg-white p-4 text-xs shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+                            >
+                                <header className="flex flex-col items-center gap-0.5 text-center">
+                                    <p className="text-base font-bold text-gray-900 dark:text-white">TRIPOS</p>
+                                    <p className="text-[13px] font-medium text-gray-800 dark:text-slate-200">UMKM Fotocopy Trisanet</p>
+                                    <p className="text-[11px] text-gray-500 dark:text-slate-400">Cipeucang, Cileungsi, Kab. Bogor</p>
+                                </header>
+
+                                <div className="my-2.5 h-px bg-gray-200 dark:bg-slate-800" />
+
+                                <dl className="flex flex-col gap-1 text-[11px]">
+                                    <div className="flex justify-between">
+                                        <dt className="text-gray-500 dark:text-slate-400">No. transaksi</dt>
+                                        <dd className="font-mono font-medium text-gray-900 dark:text-white">{activeReceipt.number}</dd>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <dt className="text-gray-500 dark:text-slate-400">Tanggal</dt>
+                                        <dd className="font-medium text-gray-900 dark:text-white">{activeReceipt.date}</dd>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <dt className="text-gray-500 dark:text-slate-400">Kasir</dt>
+                                        <dd className="font-medium text-gray-900 dark:text-white">{activeReceipt.cashier}</dd>
+                                    </div>
+                                </dl>
+
+                                <div className="my-2.5 h-px bg-gray-200 dark:bg-slate-800" />
+
+                                <ul className="flex flex-col gap-2">
+                                    {activeReceipt.lines.map((line, i) => (
+                                        <li key={i} className="flex justify-between gap-2 text-xs">
+                                            <div className="min-w-0 pr-2">
+                                                <p className="font-medium text-gray-900 dark:text-white">{line.name}</p>
+                                                <p className="text-[11px] text-gray-500 dark:text-slate-400">{line.detail}</p>
+                                            </div>
+                                            <p className="whitespace-nowrap font-medium text-gray-900 dark:text-white">{rupiah(line.subtotal)}</p>
+                                        </li>
+                                    ))}
+                                </ul>
+
+                                <div className="my-2.5 h-px bg-gray-200 dark:bg-slate-800" />
+
+                                <dl className="flex flex-col gap-1 text-xs">
+                                    <div className="flex justify-between text-sm font-bold text-gray-900 dark:text-white">
+                                        <dt>Total</dt>
+                                        <dd>{rupiah(activeReceipt.total)}</dd>
+                                    </div>
+                                    <div className="flex justify-between text-[11px]">
+                                        <dt className="text-gray-500 dark:text-slate-400">Metode</dt>
+                                        <dd className="font-medium text-gray-900 dark:text-white">{activeReceipt.method}</dd>
+                                    </div>
+                                    {activeReceipt.is_cash && (
+                                        <>
+                                            <div className="flex justify-between text-[11px]">
+                                                <dt className="text-gray-500 dark:text-slate-400">Tunai diterima</dt>
+                                                <dd className="font-medium text-gray-900 dark:text-white">{rupiah(activeReceipt.amount_paid)}</dd>
+                                            </div>
+                                            <div className="flex justify-between text-[11px]">
+                                                <dt className="text-gray-500 dark:text-slate-400">Kembalian</dt>
+                                                <dd className="font-semibold text-emerald-600 dark:text-emerald-400">{rupiah(activeReceipt.change)}</dd>
+                                            </div>
+                                        </>
+                                    )}
+                                </dl>
+
+                                <div className="my-2.5 h-px bg-gray-200 dark:bg-slate-800" />
+
+                                <p className="text-center text-[10px] text-gray-500 dark:text-slate-400">
+                                    Terima kasih atas kunjungan Anda.<br />
+                                    Barang yang dibeli tidak dapat ditukar/dikembalikan.
+                                </p>
+                            </article>
+                        </div>
+
+                        {/* Tombol Aksi */}
+                        <div className="flex flex-col gap-2 border-t border-gray-100 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+                            <button
+                                type="button"
+                                onClick={() => window.print()}
+                                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#1D4ED8] py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 active:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-500 transition-colors"
+                            >
+                                <Printer size={16} />
+                                Cetak Struk (P)
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setActiveReceipt(null);
+                                    document.getElementById('pos-search-input')?.focus();
+                                }}
+                                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 active:bg-gray-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition-colors"
+                            >
+                                Transaksi Baru (Enter / Esc)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </CashierLayout>
     );
 }

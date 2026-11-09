@@ -29,6 +29,16 @@ class LandingPathTest extends TestCase
             ->assertRedirect(route('kasir.pos', absolute: false));
     }
 
+    public function test_cashier_logging_in_after_visiting_admin_url_is_safely_sent_to_pos(): void
+    {
+        $cashier = User::factory()->cashier()->create();
+
+        // Simulate guest trying to visit admin dashboard, setting url.intended
+        $this->withSession(['url.intended' => route('dashboard')])
+            ->post('/login', ['username' => $cashier->username, 'password' => 'password'])
+            ->assertRedirect(route('kasir.pos', absolute: false));
+    }
+
     public function test_a_signed_in_admin_who_opens_login_is_sent_to_the_dashboard(): void
     {
         $this->actingAs(User::factory()->admin()->create())

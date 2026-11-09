@@ -34,7 +34,22 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(LandingPath::for($request->user()));
+        $user = $request->user();
+
+        // Cashiers must ALWAYS land on their POS screen (kasir.pos) and never be sent to
+        // admin-only intended URLs stored in session (which triggers a 403 Forbidden error).
+        if (! $user->isAdmin()) {
+            $request->session()->forget('url.intended');
+            return redirect(LandingPath::for($user));
+        }
+
+        // For admin, clear stale intended URLs like login or the removed password.force route
+        $intended = $request->session()->get('url.intended');
+        if ($intended && (str_contains($intended, '/login') || str_contains($intended, '/password/ganti'))) {
+            $request->session()->forget('url.intended');
+        }
+
+        return redirect()->intended(LandingPath::for($user));
     }
 
     /**

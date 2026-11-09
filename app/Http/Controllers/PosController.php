@@ -82,7 +82,7 @@ class PosController extends Controller
             return back()->withErrors(['sale' => $e->getMessage()]);
         }
 
-        return redirect()->route('kasir.struk', $sale);
+        return redirect()->route('kasir.pos')->with('recent_receipt', Receipt::for($sale));
     }
 
     public function struk(Sale $sale): Response
