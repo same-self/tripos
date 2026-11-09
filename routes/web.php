@@ -195,10 +195,6 @@ Route::get('/kasir/riwayat', [PosController::class, 'history'])
     ->middleware(['auth', 'verified', 'role:cashier,admin'])
     ->name('kasir.riwayat');
 
-Route::get('/kasir/struk/{sale}', [PosController::class, 'struk'])
-    ->middleware(['auth', 'verified', 'role:cashier,admin'])
-    ->name('kasir.struk');
-
 Route::middleware('auth')->group(function () {
     Route::get('/password/ganti', [ForcePasswordController::class, 'edit'])->name('password.force');
     Route::put('/password/ganti', [ForcePasswordController::class, 'update'])->name('password.force.update');

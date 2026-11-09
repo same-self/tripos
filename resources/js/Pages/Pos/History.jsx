@@ -14,6 +14,7 @@ import {
     CheckCircle2,
     Clock,
 } from 'lucide-react';
+import ThermalReceipt from '@/Components/ThermalReceipt';
 
 const rupiah = (n) => 'Rp ' + Number(n).toLocaleString('id-ID');
 
@@ -50,15 +51,21 @@ export default function History({ sales, search: initialSearch, summary }) {
         return () => document.removeEventListener('keydown', handleKey);
     }, [selectedReceipt]);
 
-    // Modal keyboard shortcuts (Esc to close, Ctrl+P to print)
+    // Modal keyboard shortcuts (Esc to close, P to print)
     useEffect(() => {
         if (!selectedReceipt) return;
 
+        // Blur background active element if it's an input/textarea so shortcut isn't blocked or leaked
+        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) {
+            document.activeElement.blur();
+        }
+
         function handleModalKey(e) {
+            const isTyping = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName) || document.activeElement?.isContentEditable;
             if (e.key === 'Escape') {
                 e.preventDefault();
                 setSelectedReceipt(null);
-            } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p') {
+            } else if (!isTyping && e.key.toLowerCase() === 'p' && !e.altKey && !(e.ctrlKey && e.shiftKey)) {
                 e.preventDefault();
                 window.print();
             }
@@ -90,7 +97,7 @@ export default function History({ sales, search: initialSearch, summary }) {
         <CashierLayout active="Riwayat Shift">
             <Head title="Riwayat Shift Kasir" />
 
-            <div className="flex flex-col gap-6">
+            <div className={`flex flex-col gap-6 ${selectedReceipt ? 'print:hidden' : ''}`}>
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <div>
@@ -261,10 +268,10 @@ export default function History({ sales, search: initialSearch, summary }) {
 
             {/* Modal Pop-up Cetak Ulang Salinan Struk */}
             {selectedReceipt && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-popover">
-                    <div className="relative flex max-h-[92vh] w-full max-w-[400px] flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-popover print:static print:p-0 print:m-0 print:bg-transparent print:block">
+                    <div className="relative flex max-h-[92vh] w-full max-w-[400px] flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 overflow-hidden print:static print:max-h-none print:w-full print:max-w-none print:border-none print:shadow-none print:bg-transparent print:p-0">
                         {/* Header Modal */}
-                        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3.5 dark:border-slate-800">
+                        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3.5 dark:border-slate-800 print:hidden">
                             <div className="flex items-center gap-2">
                                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400">
                                     <ReceiptText size={16} />
@@ -285,87 +292,12 @@ export default function History({ sales, search: initialSearch, summary }) {
                         </div>
 
                         {/* Struk Content */}
-                        <div className="overflow-y-auto p-4 bg-gray-50/50 dark:bg-slate-950/40">
-                            <article
-                                id="printable-receipt"
-                                className="mx-auto w-full max-w-[320px] rounded-lg border border-gray-200 bg-white p-4 text-xs shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
-                            >
-                                <header className="flex flex-col items-center gap-0.5 text-center">
-                                    <span className="rounded bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-950 dark:text-amber-300 mb-1">
-                                        *** SALINAN STRUK ***
-                                    </span>
-                                    <p className="text-base font-bold text-gray-900 dark:text-white">TRIPOS</p>
-                                    <p className="text-[13px] font-medium text-gray-800 dark:text-slate-200">UMKM Fotocopy Trisanet</p>
-                                    <p className="text-[11px] text-gray-500 dark:text-slate-400">Cipeucang, Cileungsi, Kab. Bogor</p>
-                                </header>
-
-                                <div className="my-2.5 h-px bg-gray-200 dark:bg-slate-800" />
-
-                                <dl className="flex flex-col gap-1 text-[11px]">
-                                    <div className="flex justify-between">
-                                        <dt className="text-gray-500 dark:text-slate-400">No. transaksi</dt>
-                                        <dd className="font-mono font-medium text-gray-900 dark:text-white">{selectedReceipt.number}</dd>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <dt className="text-gray-500 dark:text-slate-400">Tanggal</dt>
-                                        <dd className="font-medium text-gray-900 dark:text-white">{selectedReceipt.date}</dd>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <dt className="text-gray-500 dark:text-slate-400">Kasir</dt>
-                                        <dd className="font-medium text-gray-900 dark:text-white">{selectedReceipt.cashier}</dd>
-                                    </div>
-                                </dl>
-
-                                <div className="my-2.5 h-px bg-gray-200 dark:bg-slate-800" />
-
-                                <ul className="flex flex-col gap-2">
-                                    {selectedReceipt.lines.map((line, i) => (
-                                        <li key={i} className="flex justify-between gap-2 text-xs">
-                                            <div className="min-w-0 pr-2">
-                                                <p className="font-medium text-gray-900 dark:text-white">{line.name}</p>
-                                                <p className="text-[11px] text-gray-500 dark:text-slate-400">{line.detail}</p>
-                                            </div>
-                                            <p className="whitespace-nowrap font-medium text-gray-900 dark:text-white">{rupiah(line.subtotal)}</p>
-                                        </li>
-                                    ))}
-                                </ul>
-
-                                <div className="my-2.5 h-px bg-gray-200 dark:bg-slate-800" />
-
-                                <dl className="flex flex-col gap-1 text-xs">
-                                    <div className="flex justify-between text-sm font-bold text-gray-900 dark:text-white">
-                                        <dt>Total</dt>
-                                        <dd>{rupiah(selectedReceipt.total)}</dd>
-                                    </div>
-                                    <div className="flex justify-between text-[11px]">
-                                        <dt className="text-gray-500 dark:text-slate-400">Metode</dt>
-                                        <dd className="font-medium text-gray-900 dark:text-white">{selectedReceipt.method}</dd>
-                                    </div>
-                                    {selectedReceipt.is_cash && (
-                                        <>
-                                            <div className="flex justify-between text-[11px]">
-                                                <dt className="text-gray-500 dark:text-slate-400">Tunai diterima</dt>
-                                                <dd className="font-medium text-gray-900 dark:text-white">{rupiah(selectedReceipt.amount_paid)}</dd>
-                                            </div>
-                                            <div className="flex justify-between text-[11px]">
-                                                <dt className="text-gray-500 dark:text-slate-400">Kembalian</dt>
-                                                <dd className="font-semibold text-emerald-600 dark:text-emerald-400">{rupiah(selectedReceipt.change)}</dd>
-                                            </div>
-                                        </>
-                                    )}
-                                </dl>
-
-                                <div className="my-2.5 h-px bg-gray-200 dark:bg-slate-800" />
-
-                                <p className="text-center text-[10px] text-gray-500 dark:text-slate-400">
-                                    [SALINAN CETAK ULANG]<br />
-                                    Terima kasih atas kunjungan Anda.
-                                </p>
-                            </article>
+                        <div className="overflow-y-auto p-4 bg-gray-50/50 dark:bg-slate-950/40 print:overflow-visible print:p-0 print:bg-transparent">
+                            <ThermalReceipt receipt={selectedReceipt} isCopy={true} />
                         </div>
 
                         {/* Modal Actions */}
-                        <div className="flex flex-col gap-2 border-t border-gray-100 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+                        <div className="flex flex-col gap-2 border-t border-gray-100 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 print:hidden">
                             <button
                                 type="button"
                                 onClick={() => window.print()}
