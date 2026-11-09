@@ -196,6 +196,87 @@ class ReportServiceTest extends TestCase
         $card = collect($this->reports->dashboard(30)['recommendations'])->firstWhere('tag', 'Modal mengendap');
 
         $this->assertSame('Rp 15.000 tertahan di 5 barang', $card['title']);
-        $this->assertSame('Barang 0, Barang 1, dan Barang 2 dan lainnya jarang terjual.', $card['text']);
+        $this->assertSame('Barang 0, Barang 1, Barang 2, dan lainnya jarang terjual.', $card['text']);
+    }
+
+    public function test_top_profit_item_is_excluded_from_idle_capital_card(): void
+    {
+        $flashdisk = $this->makeItem(['name' => 'Flashdisk', 'sell_price' => 100_000, 'cost_price' => 70_000, 'stock' => 5]);
+        $idleItem = $this->makeItem(['name' => 'Amplop', 'sell_price' => 1000, 'cost_price' => 500, 'stock' => 10]);
+
+        $this->sell($flashdisk, 2, '2026-10-23 10:00'); // 60.000 profit, but only 2 sold (< 10)
+
+        $cards = collect($this->reports->dashboard(30)['recommendations']);
+        $top = $cards->firstWhere('tag', 'Untung terbesar');
+        $idle = $cards->firstWhere('tag', 'Modal mengendap');
+
+        $this->assertNotNull($top);
+        $this->assertSame('Flashdisk', $top['title']);
+
+        $this->assertNotNull($idle);
+        $this->assertStringNotContainsString('Flashdisk', $idle['text']);
+        $this->assertStringContainsString('Amplop', $idle['text']);
+    }
+
+    public function test_raw_materials_consumed_by_services_are_not_flagged_as_idle(): void
+    {
+        $paper = $this->makeItem(['name' => 'Kertas HVS A4', 'stock' => 500, 'cost_price' => 300, 'sell_price' => 500]);
+        $service = $this->makeService(['name' => 'Fotocopy', 'unit_price' => 1000]);
+        $this->attachMaterial($service, $paper, 1.0);
+
+        app(SaleService::class)->create($this->cashier, [
+            'services' => [['service_id' => $service->id, 'qty' => 15]],
+            'payment_method' => 'cash',
+            'amount_paid' => 50_000,
+            'transacted_at' => '2026-10-23 10:00',
+        ]);
+
+        $card = collect($this->reports->dashboard(30)['recommendations'])->firstWhere('tag', 'Modal mengendap');
+
+        if ($card) {
+            $this->assertStringNotContainsString('Kertas HVS A4', $card['text']);
+        } else {
+            $this->assertNull($card);
+        }
+    }
+
+    public function test_soft_deleted_sale_does_not_prevent_item_from_being_flagged_as_idle(): void
+    {
+        $pen = $this->makeItem(['name' => 'Pulpen Gel', 'stock' => 20, 'cost_price' => 2000, 'sell_price' => 3000]);
+
+        $sale = $this->sell($pen, 15, '2026-10-23 10:00');
+        $sale->delete(); // Soft-deleted sale
+
+        $card = collect($this->reports->dashboard(30)['recommendations'])->firstWhere('tag', 'Modal mengendap');
+
+        $this->assertNotNull($card);
+        $this->assertStringContainsString('Pulpen Gel', $card['text']);
+    }
+
+    public function test_combined_retail_and_service_usage_exceeding_threshold_is_not_idle(): void
+    {
+        $paper = $this->makeItem(['name' => 'Kertas F4', 'stock' => 100, 'cost_price' => 300, 'sell_price' => 500]);
+        $service = $this->makeService(['name' => 'Cetak Dokumen', 'unit_price' => 1000]);
+        $this->attachMaterial($service, $paper, 1.0);
+
+        // 5 units retail sale
+        $this->sell($paper, 5, '2026-10-23 10:00');
+
+        // 6 units consumed via service (total = 11 >= 10)
+        app(SaleService::class)->create($this->cashier, [
+            'services' => [['service_id' => $service->id, 'qty' => 6]],
+            'payment_method' => 'cash',
+            'amount_paid' => 20_000,
+            'transacted_at' => '2026-10-23 11:00',
+        ]);
+
+        $card = collect($this->reports->dashboard(30)['recommendations'])->firstWhere('tag', 'Modal mengendap');
+
+        if ($card) {
+            $this->assertStringNotContainsString('Kertas F4', $card['text']);
+        } else {
+            $this->assertNull($card);
+        }
     }
 }
+

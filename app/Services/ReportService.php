@@ -168,20 +168,59 @@ class ReportService
                 'profit' => (int) $rows->sum(fn ($row) => ((int) $row->sell_price - (int) $row->cost_price) * (int) $row->amount),
             ]);
 
+        $stockOut = DB::table('stock_mutations as m')
+            ->leftJoin('sales_transactions as s', function ($join) {
+                $join->on('s.id', '=', 'm.reference_id')
+                    ->whereIn('m.source', ['Sales', 'Service']);
+            })
+            ->where('m.type', 'OUT')
+            ->whereNull('m.deleted_at')
+            ->where(function ($query) {
+                $query->whereNull('m.reference_id')
+                    ->orWhereNotIn('m.source', ['Sales', 'Service'])
+                    ->orWhereNull('s.deleted_at');
+            })
+            ->whereBetween('m.created_at', [$windowStart, $windowEnd])
+            ->groupBy('m.item_id')
+            ->selectRaw('m.item_id, SUM(m.amount) as qty')
+            ->pluck('qty', 'item_id');
+
+        $serviceOut = DB::table('stock_mutations as m')
+            ->leftJoin('sales_transactions as s', function ($join) {
+                $join->on('s.id', '=', 'm.reference_id')
+                    ->where('m.source', 'Service');
+            })
+            ->where('m.type', 'OUT')
+            ->where('m.source', 'Service')
+            ->whereNull('m.deleted_at')
+            ->where(function ($query) {
+                $query->whereNull('m.reference_id')
+                    ->orWhereNull('s.deleted_at');
+            })
+            ->whereBetween('m.created_at', [$windowStart, $windowEnd])
+            ->groupBy('m.item_id')
+            ->selectRaw('m.item_id, SUM(m.amount) as qty')
+            ->pluck('qty', 'item_id');
+
         $cards = [];
+        $topItemId = null;
 
         if ($top = $this->topProfitCard($sold, $window)) {
-            $cards[] = $top;
+            $cards[] = $top['card'];
+            $topItemId = $top['item_id'];
         }
 
-        if ($idle = $this->idleCapitalCard($sold)) {
+        if ($idle = $this->idleCapitalCard($sold, $stockOut, $serviceOut, $topItemId)) {
             $cards[] = $idle;
         }
 
         return $cards;
     }
 
-    /** @param  Collection<int|string, array{quantity: int, profit: int}>  $sold */
+    /**
+     * @param  Collection<int|string, array{quantity: int, profit: int}>  $sold
+     * @return array{card: array{tag: string, tone: string, title: string, text: string}, item_id: int}|null
+     */
     private function topProfitCard(Collection $sold, int $window): ?array
     {
         $best = $sold->sortByDesc('profit')->first();
@@ -190,7 +229,7 @@ class ReportService
             return null;
         }
 
-        $itemId = $sold->sortByDesc('profit')->keys()->first();
+        $itemId = (int) $sold->sortByDesc('profit')->keys()->first();
         $item = Item::withTrashed()->find($itemId);
 
         if (! $item) {
@@ -198,23 +237,38 @@ class ReportService
         }
 
         return [
-            'tag' => 'Untung terbesar',
-            'tone' => 'primary',
-            'title' => $item->name,
-            'text' => 'Sekitar '.$this->rupiah((int) round($best['profit'], -3))." keuntungan dalam {$window} hari.",
+            'item_id' => $itemId,
+            'card' => [
+                'tag' => 'Untung terbesar',
+                'tone' => 'primary',
+                'title' => $item->name,
+                'text' => 'Sekitar '.$this->rupiah((int) round($best['profit'], -3))." keuntungan dalam {$window} hari.",
+            ],
         ];
     }
 
-    /** @param  Collection<int|string, array{quantity: int, profit: int}>  $sold */
-    private function idleCapitalCard(Collection $sold): ?array
+    /**
+     * @param  Collection<int|string, array{quantity: int, profit: int}>  $sold
+     * @param  Collection<int|string, int|string>  $stockOut
+     * @param  Collection<int|string, int|string>  $serviceOut
+     */
+    private function idleCapitalCard(Collection $sold, Collection $stockOut, Collection $serviceOut, ?int $excludeItemId = null): ?array
     {
         $slowBelow = Setting::int('slow_moving_threshold', 10);
 
         $idle = Item::query()
             ->where('stock', '>', 0)
             ->where('cost_price', '>', 0)
+            ->when($excludeItemId, fn ($query) => $query->where('id', '!=', $excludeItemId))
             ->get(['id', 'name', 'stock', 'cost_price'])
-            ->filter(fn (Item $item) => ($sold->get($item->id)['quantity'] ?? 0) < $slowBelow)
+            ->filter(function (Item $item) use ($sold, $stockOut, $serviceOut, $slowBelow) {
+                $soldQty = $sold->get($item->id)['quantity'] ?? 0;
+                $serviceQty = (int) ($serviceOut->get($item->id) ?? 0);
+                $allOutQty = (int) ($stockOut->get($item->id) ?? 0);
+                $totalOut = max($soldQty + $serviceQty, $allOutQty);
+
+                return $totalOut < $slowBelow;
+            })
             ->map(fn (Item $item) => ['name' => $item->name, 'capital' => (int) $item->stock * (int) $item->cost_price])
             ->sortByDesc('capital')
             ->values();
@@ -223,11 +277,8 @@ class ReportService
             return null;
         }
 
-        $names = $this->joinNames($idle->take(3)->pluck('name')->all());
-
-        if ($idle->count() > 3) {
-            $names .= ' dan lainnya';
-        }
+        $hasMore = $idle->count() > 3;
+        $names = $this->joinNames($idle->take(3)->pluck('name')->all(), $hasMore);
 
         return [
             'tag' => 'Modal mengendap',
@@ -238,9 +289,14 @@ class ReportService
     }
 
     /** @param  list<string>  $names */
-    private function joinNames(array $names): string
+    private function joinNames(array $names, bool $hasMore = false): string
     {
+        if ($hasMore) {
+            return implode(', ', $names).', dan lainnya';
+        }
+
         return match (count($names)) {
+            0 => '',
             1 => $names[0],
             2 => $names[0].' dan '.$names[1],
             default => implode(', ', array_slice($names, 0, -1)).', dan '.end($names),
