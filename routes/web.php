@@ -191,6 +191,10 @@ Route::get('/kasir/harga', [PosController::class, 'priceList'])
     ->middleware(['auth', 'verified', 'role:cashier,admin'])
     ->name('kasir.harga');
 
+Route::get('/kasir/riwayat', [PosController::class, 'history'])
+    ->middleware(['auth', 'verified', 'role:cashier,admin'])
+    ->name('kasir.riwayat');
+
 Route::get('/kasir/struk/{sale}', [PosController::class, 'struk'])
     ->middleware(['auth', 'verified', 'role:cashier,admin'])
     ->name('kasir.struk');

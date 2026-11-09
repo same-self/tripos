@@ -28,6 +28,13 @@ export default function CashierLayout({ active = 'Transaksi (POS)', children }) 
                 >
                     Price List
                 </Link>
+                <Link
+                    href={route('kasir.riwayat')}
+                    className={tabClass(active === 'Riwayat Shift')}
+                    aria-current={active === 'Riwayat Shift' ? 'page' : undefined}
+                >
+                    Riwayat Shift
+                </Link>
             </nav>
 
             <main className="px-6 pb-6">{children}</main>
