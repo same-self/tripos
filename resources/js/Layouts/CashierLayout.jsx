@@ -30,10 +30,10 @@ export default function CashierLayout({ active = 'Transaksi (POS)', children }) 
                 </Link>
                 <Link
                     href={route('kasir.riwayat')}
-                    className={tabClass(active === 'Riwayat Shift')}
-                    aria-current={active === 'Riwayat Shift' ? 'page' : undefined}
+                    className={tabClass(active === 'Riwayat Transaksi')}
+                    aria-current={active === 'Riwayat Transaksi' ? 'page' : undefined}
                 >
-                    Riwayat Shift
+                    Riwayat Transaksi
                 </Link>
             </nav>
 

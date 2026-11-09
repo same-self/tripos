@@ -88,7 +88,17 @@ export default function Index({ items, services, paymentMethods }) {
     const [search, setSearch] = useState('');
     const [category, setCategory] = useState('Semua');
     const [sortBy, setSortBy] = useState('nama-asc');
-    const [cart, setCart] = useState([]);
+    const [cart, setCart] = useState(() => {
+        if (typeof window !== 'undefined') {
+            try {
+                const saved = sessionStorage.getItem('tripos_cart');
+                return saved ? JSON.parse(saved) : [];
+            } catch {
+                return [];
+            }
+        }
+        return [];
+    });
     const [selectedCartKeys, setSelectedCartKeys] = useState([]);
     const [method, setMethod] = useState('cash');
     const [paid, setPaid] = useState(0);
@@ -270,6 +280,30 @@ export default function Index({ items, services, paymentMethods }) {
         });
     }
 
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            try {
+                sessionStorage.setItem('tripos_cart', JSON.stringify(cart));
+            } catch {}
+        }
+    }, [cart]);
+
+    // Check if an item was added from Price List (+ Kasir action)
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            try {
+                const pending = sessionStorage.getItem('tripos_pending_add');
+                if (pending) {
+                    sessionStorage.removeItem('tripos_pending_add');
+                    const item = JSON.parse(pending);
+                    if (item && item.key && item.name && item.price) {
+                        addToCart(item.key, item.name, item.price, item.unit, item.qty || 1);
+                    }
+                }
+            } catch {}
+        }
+    }, []);
+
     function changeQty(key, delta) {
         setCart((prev) =>
             prev
@@ -369,6 +403,9 @@ export default function Index({ items, services, paymentMethods }) {
                     setCart([]);
                     setSelectedCartKeys([]);
                     setPaid(0);
+                    if (typeof window !== 'undefined') {
+                        sessionStorage.removeItem('tripos_cart');
+                    }
                     if (page.props?.flash?.recent_receipt) {
                         setActiveReceipt(page.props.flash.recent_receipt);
                     }
@@ -706,6 +743,9 @@ export default function Index({ items, services, paymentMethods }) {
                                         onClick={() => {
                                             setCart([]);
                                             setSelectedCartKeys([]);
+                                            if (typeof window !== 'undefined') {
+                                                sessionStorage.removeItem('tripos_cart');
+                                            }
                                         }}
                                         className="text-xs text-gray-400 hover:text-red-600 dark:text-slate-500 dark:hover:text-red-400"
                                     >

@@ -82,7 +82,7 @@ export default function Show({ receipt }) {
                                 <Calendar size={18} className="text-gray-400 dark:text-slate-400 shrink-0 mt-0.5" />
                                 <div>
                                     <p className="text-gray-500 dark:text-slate-400">Waktu Transaksi</p>
-                                    <p className="font-semibold text-gray-900 dark:text-white mt-0.5 font-mono">
+                                    <p className="font-semibold text-gray-900 dark:text-white mt-0.5">
                                         {receipt?.date}
                                     </p>
                                 </div>
@@ -108,7 +108,7 @@ export default function Show({ receipt }) {
                             <div className="flex items-start gap-3 rounded-xl bg-blue-50/70 p-3 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/50">
                                 <div className="w-full">
                                     <p className="text-blue-700 dark:text-blue-300 font-medium">Total Pembayaran</p>
-                                    <p className="font-bold text-blue-900 dark:text-blue-200 text-base mt-0.5 font-mono">
+                                    <p className="font-bold text-blue-900 dark:text-blue-200 text-base mt-0.5">
                                         {rupiah(receipt?.total)}
                                     </p>
                                 </div>
@@ -138,10 +138,10 @@ export default function Show({ receipt }) {
                                             <td className="px-5 py-3.5 font-medium text-gray-900 dark:text-slate-100">
                                                 {line.name}
                                             </td>
-                                            <td className="px-5 py-3.5 text-right text-gray-500 dark:text-slate-400 font-mono">
+                                            <td className="px-5 py-3.5 text-right text-gray-500 dark:text-slate-400">
                                                 {line.detail}
                                             </td>
-                                            <td className="px-5 py-3.5 text-right font-semibold text-gray-900 dark:text-white font-mono">
+                                            <td className="px-5 py-3.5 text-right font-semibold text-gray-900 dark:text-white">
                                                 {rupiah(line.subtotal)}
                                             </td>
                                         </tr>
@@ -152,7 +152,7 @@ export default function Show({ receipt }) {
                                         <td colSpan={2} className="px-5 py-3 text-gray-700 dark:text-slate-300">
                                             Total
                                         </td>
-                                        <td className="px-5 py-3 text-right text-sm font-bold text-gray-900 dark:text-white font-mono">
+                                        <td className="px-5 py-3 text-right text-sm font-bold text-gray-900 dark:text-white">
                                             {rupiah(receipt?.total)}
                                         </td>
                                     </tr>
@@ -162,7 +162,7 @@ export default function Show({ receipt }) {
                                                 <td colSpan={2} className="px-5 py-2 text-xs font-normal text-gray-500 dark:text-slate-400">
                                                     Tunai Diterima
                                                 </td>
-                                                <td className="px-5 py-2 text-right text-xs font-normal text-gray-700 dark:text-slate-300 font-mono">
+                                                <td className="px-5 py-2 text-right text-xs font-normal text-gray-700 dark:text-slate-300">
                                                     {rupiah(receipt?.amount_paid)}
                                                 </td>
                                             </tr>
@@ -170,7 +170,7 @@ export default function Show({ receipt }) {
                                                 <td colSpan={2} className="px-5 py-2 text-xs font-normal text-gray-500 dark:text-slate-400">
                                                     Kembalian
                                                 </td>
-                                                <td className="px-5 py-2 text-right text-xs font-semibold text-emerald-600 dark:text-emerald-400 font-mono">
+                                                <td className="px-5 py-2 text-right text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                                                     {rupiah(receipt?.change)}
                                                 </td>
                                             </tr>
@@ -189,7 +189,7 @@ export default function Show({ receipt }) {
                             <span className="text-xs font-semibold text-gray-500 dark:text-slate-400">
                                 Preview Struk Fisik
                             </span>
-                            <span className="text-[10px] text-gray-400 dark:text-slate-500 font-mono">
+                            <span className="text-[10px] text-gray-400 dark:text-slate-500 font-medium">
                                 58mm / 80mm
                             </span>
                         </div>

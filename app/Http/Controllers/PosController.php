@@ -91,6 +91,7 @@ class PosController extends Controller
             ->orderBy('name')
             ->get()
             ->map(fn (Item $item) => [
+                'id' => $item->id,
                 'kind' => 'barang',
                 'name' => $item->name,
                 'category' => $item->category->name,
@@ -104,6 +105,7 @@ class PosController extends Controller
             ->orderBy('name')
             ->get()
             ->map(fn (Service $service) => [
+                'id' => $service->id,
                 'kind' => 'jasa',
                 'name' => $service->name,
                 'category' => $service->category->name,
