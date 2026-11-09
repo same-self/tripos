@@ -85,13 +85,6 @@ class PosController extends Controller
         return redirect()->route('kasir.pos')->with('recent_receipt', Receipt::for($sale));
     }
 
-    public function struk(Sale $sale): Response
-    {
-        return Inertia::render('Pos/Struk', [
-            'receipt' => Receipt::for($sale),
-        ]);
-    }
-
     public function priceList(): Response
     {
         $items = Item::with('category')

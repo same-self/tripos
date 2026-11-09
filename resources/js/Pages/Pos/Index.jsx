@@ -3,6 +3,7 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { useMemo, useState, useEffect } from 'react';
 import { Trash2, Search, ArrowUpDown, X, ShoppingCart, Printer, CheckCircle2 } from 'lucide-react';
 import ItemThumb from '@/Components/ItemThumb';
+import ThermalReceipt from '@/Components/ThermalReceipt';
 
 function getQuickCashOptions(total) {
     if (total <= 0) return [20000, 50000, 100000];
@@ -122,12 +123,18 @@ export default function Index({ items, services, paymentMethods }) {
     useEffect(() => {
         if (!activeReceipt) return;
 
+        // Blur any focused input in the background so keyboard shortcuts are not captured by background inputs
+        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) {
+            document.activeElement.blur();
+        }
+
         function handleModalKeyDown(e) {
+            const isTyping = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName) || document.activeElement?.isContentEditable;
             if (e.key === 'Escape' || e.key === 'Enter') {
                 e.preventDefault();
                 setActiveReceipt(null);
                 document.getElementById('pos-search-input')?.focus();
-            } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p') {
+            } else if (!isTyping && e.key.toLowerCase() === 'p' && !e.altKey && !(e.ctrlKey && e.shiftKey)) {
                 e.preventDefault();
                 window.print();
             }
@@ -375,10 +382,10 @@ export default function Index({ items, services, paymentMethods }) {
             <Head title="Transaksi (POS)" />
 
             {flash?.success && (
-                <p className="mb-4 rounded-xl bg-[#DCFCE7] px-4 py-3 text-sm font-medium text-[#15803D] dark:bg-emerald-950/50 dark:text-emerald-300">{flash.success}</p>
+                <p className="mb-4 rounded-xl bg-[#DCFCE7] px-4 py-3 text-sm font-medium text-[#15803D] dark:bg-emerald-950/50 dark:text-emerald-300 print:hidden">{flash.success}</p>
             )}
 
-            <div className="flex flex-col gap-6 lg:flex-row">
+            <div className={`flex flex-col gap-6 lg:flex-row ${activeReceipt ? 'print:hidden' : ''}`}>
                 {/* Left: search, tabs, category filter, sorting, product cards, and the service panel */}
                 <section className="flex min-w-0 flex-1 flex-col gap-4">
                     {/* Search bar */}
@@ -932,10 +939,10 @@ export default function Index({ items, services, paymentMethods }) {
 
             {/* Modal Pop-up Struk Transaksi */}
             {activeReceipt && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-popover">
-                    <div className="relative flex max-h-[92vh] w-full max-w-[400px] flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-popover print:static print:p-0 print:m-0 print:bg-transparent print:block">
+                    <div className="relative flex max-h-[92vh] w-full max-w-[400px] flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 overflow-hidden print:static print:max-h-none print:w-full print:max-w-none print:border-none print:shadow-none print:bg-transparent print:p-0">
                         {/* Header Modal */}
-                        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3.5 dark:border-slate-800">
+                        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3.5 dark:border-slate-800 print:hidden">
                             <div className="flex items-center gap-2">
                                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400">
                                     <CheckCircle2 size={16} />
@@ -959,84 +966,12 @@ export default function Index({ items, services, paymentMethods }) {
                         </div>
 
                         {/* Struk Content */}
-                        <div className="overflow-y-auto p-4 bg-gray-50/50 dark:bg-slate-950/40">
-                            <article
-                                id="printable-receipt"
-                                className="mx-auto w-full max-w-[320px] rounded-lg border border-gray-200 bg-white p-4 text-xs shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
-                            >
-                                <header className="flex flex-col items-center gap-0.5 text-center">
-                                    <p className="text-base font-bold text-gray-900 dark:text-white">TRIPOS</p>
-                                    <p className="text-[13px] font-medium text-gray-800 dark:text-slate-200">UMKM Fotocopy Trisanet</p>
-                                    <p className="text-[11px] text-gray-500 dark:text-slate-400">Cipeucang, Cileungsi, Kab. Bogor</p>
-                                </header>
-
-                                <div className="my-2.5 h-px bg-gray-200 dark:bg-slate-800" />
-
-                                <dl className="flex flex-col gap-1 text-[11px]">
-                                    <div className="flex justify-between">
-                                        <dt className="text-gray-500 dark:text-slate-400">No. transaksi</dt>
-                                        <dd className="font-mono font-medium text-gray-900 dark:text-white">{activeReceipt.number}</dd>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <dt className="text-gray-500 dark:text-slate-400">Tanggal</dt>
-                                        <dd className="font-medium text-gray-900 dark:text-white">{activeReceipt.date}</dd>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <dt className="text-gray-500 dark:text-slate-400">Kasir</dt>
-                                        <dd className="font-medium text-gray-900 dark:text-white">{activeReceipt.cashier}</dd>
-                                    </div>
-                                </dl>
-
-                                <div className="my-2.5 h-px bg-gray-200 dark:bg-slate-800" />
-
-                                <ul className="flex flex-col gap-2">
-                                    {activeReceipt.lines.map((line, i) => (
-                                        <li key={i} className="flex justify-between gap-2 text-xs">
-                                            <div className="min-w-0 pr-2">
-                                                <p className="font-medium text-gray-900 dark:text-white">{line.name}</p>
-                                                <p className="text-[11px] text-gray-500 dark:text-slate-400">{line.detail}</p>
-                                            </div>
-                                            <p className="whitespace-nowrap font-medium text-gray-900 dark:text-white">{rupiah(line.subtotal)}</p>
-                                        </li>
-                                    ))}
-                                </ul>
-
-                                <div className="my-2.5 h-px bg-gray-200 dark:bg-slate-800" />
-
-                                <dl className="flex flex-col gap-1 text-xs">
-                                    <div className="flex justify-between text-sm font-bold text-gray-900 dark:text-white">
-                                        <dt>Total</dt>
-                                        <dd>{rupiah(activeReceipt.total)}</dd>
-                                    </div>
-                                    <div className="flex justify-between text-[11px]">
-                                        <dt className="text-gray-500 dark:text-slate-400">Metode</dt>
-                                        <dd className="font-medium text-gray-900 dark:text-white">{activeReceipt.method}</dd>
-                                    </div>
-                                    {activeReceipt.is_cash && (
-                                        <>
-                                            <div className="flex justify-between text-[11px]">
-                                                <dt className="text-gray-500 dark:text-slate-400">Tunai diterima</dt>
-                                                <dd className="font-medium text-gray-900 dark:text-white">{rupiah(activeReceipt.amount_paid)}</dd>
-                                            </div>
-                                            <div className="flex justify-between text-[11px]">
-                                                <dt className="text-gray-500 dark:text-slate-400">Kembalian</dt>
-                                                <dd className="font-semibold text-emerald-600 dark:text-emerald-400">{rupiah(activeReceipt.change)}</dd>
-                                            </div>
-                                        </>
-                                    )}
-                                </dl>
-
-                                <div className="my-2.5 h-px bg-gray-200 dark:bg-slate-800" />
-
-                                <p className="text-center text-[10px] text-gray-500 dark:text-slate-400">
-                                    Terima kasih atas kunjungan Anda.<br />
-                                    Barang yang dibeli tidak dapat ditukar/dikembalikan.
-                                </p>
-                            </article>
+                        <div className="overflow-y-auto p-4 bg-gray-50/50 dark:bg-slate-950/40 print:overflow-visible print:p-0 print:bg-transparent">
+                            <ThermalReceipt receipt={activeReceipt} />
                         </div>
 
                         {/* Tombol Aksi */}
-                        <div className="flex flex-col gap-2 border-t border-gray-100 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+                        <div className="flex flex-col gap-2 border-t border-gray-100 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 print:hidden">
                             <button
                                 type="button"
                                 onClick={() => window.print()}
