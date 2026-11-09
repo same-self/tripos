@@ -94,21 +94,21 @@ export default function History({ sales, search: initialSearch, summary }) {
     }
 
     return (
-        <CashierLayout active="Riwayat Shift">
-            <Head title="Riwayat Shift Kasir" />
+        <CashierLayout active="Riwayat Transaksi">
+            <Head title="Riwayat Transaksi" />
 
             <div className={`flex flex-col gap-6 ${selectedReceipt ? 'print:hidden' : ''}`}>
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <div>
-                        <h1 className="text-[22px] font-bold text-gray-900 dark:text-white">Riwayat Shift Kasir</h1>
+                        <h1 className="text-[22px] font-bold text-gray-900 dark:text-white">Riwayat Transaksi</h1>
                         <p className="mt-0.5 text-xs text-[#4B5563] dark:text-slate-400">
                             Daftar penjualan hari ini untuk verifikasi transaksi, serah terima kas, dan cetak salinan struk.
                         </p>
                     </div>
                     <div className="flex items-center gap-1.5 self-start sm:self-auto rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
                         <Clock size={14} />
-                        <span>Shift Hari Ini</span>
+                        <span>Hari Ini</span>
                     </div>
                 </div>
 
