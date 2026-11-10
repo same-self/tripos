@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Purchase;
 use App\Models\Supplier;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -18,6 +19,8 @@ class SupplierController extends Controller
 
         $suppliers = Supplier::query()
             ->withMax('purchases as last_purchase_at', 'transacted_at')
+            ->withCount('purchases')
+            ->withSum('purchases as total_spend', 'total_price')
             ->when($search !== '', fn ($q) => $q->where('name', 'like', '%'.$search.'%'))
             ->orderBy('name')
             ->get()
@@ -25,6 +28,9 @@ class SupplierController extends Controller
                 'id' => $supplier->id,
                 'name' => $supplier->name,
                 'phone' => $supplier->phone_number,
+                'address' => $supplier->address,
+                'purchases_count' => (int) $supplier->purchases_count,
+                'total_spend' => (int) ($supplier->total_spend ?? 0),
                 'last_purchase' => $supplier->last_purchase_at
                     ? Carbon::parse($supplier->last_purchase_at)->locale('id')->translatedFormat('j M Y')
                     : null,
@@ -42,7 +48,30 @@ class SupplierController extends Controller
                     'name' => $supplier->name,
                     'phone' => $supplier->phone_number,
                     'address' => $supplier->address,
-                    'purchases' => $supplier->purchases->take(3)->map(fn ($purchase) => [
+                    'purchases_count' => $supplier->purchases->count(),
+                    'total_spend' => (int) $supplier->purchases->sum('total_price'),
+                    'purchases' => $supplier->purchases->take(5)->map(fn ($purchase) => [
+                        'id' => $purchase->id,
+                        'date' => $purchase->transacted_at->locale('id')->translatedFormat('j M Y'),
+                        'kinds' => $purchase->details_count,
+                        'total' => (int) $purchase->total_price,
+                    ])->values(),
+                ];
+            }
+        } elseif ($suppliers->isNotEmpty()) {
+            $first = Supplier::with(['purchases' => fn ($q) => $q->latest('transacted_at')->withCount('details')])
+                ->find($suppliers->first()['id']);
+
+            if ($first) {
+                $detail = [
+                    'id' => $first->id,
+                    'name' => $first->name,
+                    'phone' => $first->phone_number,
+                    'address' => $first->address,
+                    'purchases_count' => $first->purchases->count(),
+                    'total_spend' => (int) $first->purchases->sum('total_price'),
+                    'purchases' => $first->purchases->take(5)->map(fn ($purchase) => [
+                        'id' => $purchase->id,
                         'date' => $purchase->transacted_at->locale('id')->translatedFormat('j M Y'),
                         'kinds' => $purchase->details_count,
                         'total' => (int) $purchase->total_price,
@@ -51,9 +80,17 @@ class SupplierController extends Controller
             }
         }
 
+        $metrics = [
+            'total_suppliers' => Supplier::count(),
+            'active_suppliers' => Supplier::has('purchases')->count(),
+            'total_purchases_count' => Purchase::count(),
+            'total_purchases_amount' => (int) Purchase::sum('total_price'),
+        ];
+
         return Inertia::render('Supplier/Index', [
             'suppliers' => $suppliers,
             'detail' => $detail,
+            'metrics' => $metrics,
             'filters' => [
                 'cari' => $search,
                 'pilih' => $detail['id'] ?? null,
