@@ -1,4 +1,5 @@
 import TriposLayout from '@/Layouts/TriposLayout';
+import SearchableSelect from '@/Components/SearchableSelect';
 import { Head, Link, useForm } from '@inertiajs/react';
 import {
     Calendar,
@@ -108,19 +109,36 @@ export default function Index({ suppliers, items, today }) {
                                         <Truck size={14} className="text-slate-400" />
                                         Supplier Pemasok <span className="text-red-500">*</span>
                                     </label>
-                                    <select
+                                    <SearchableSelect
                                         id="supplier"
                                         value={data.supplier_id}
-                                        onChange={(e) => setData('supplier_id', e.target.value)}
-                                        className={inputClass}
-                                    >
-                                        <option value="">Pilih supplier pemasok...</option>
-                                        {suppliers.map((s) => (
-                                            <option key={s.id} value={s.id}>
-                                                {s.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                        onChange={(val) => setData('supplier_id', val)}
+                                        options={suppliers}
+                                        placeholder="Pilih supplier pemasok..."
+                                        searchPlaceholder="Cari nama atau nomor telepon supplier..."
+                                        filterFields={['name', 'phone_number']}
+                                        hasError={!!errors.supplier_id}
+                                        emptyMessage="Supplier tidak ditemukan"
+                                        renderSelected={(supplier) => (
+                                            <span className="font-semibold text-slate-900 dark:text-white truncate">
+                                                {supplier.name}
+                                            </span>
+                                        )}
+                                        renderOption={(supplier, { isSelected }) => (
+                                            <div className="flex flex-col gap-0.5 py-0.5">
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <span className={`text-xs font-semibold ${isSelected ? 'text-blue-600 dark:text-blue-400' : 'text-slate-900 dark:text-white'}`}>
+                                                        {supplier.name}
+                                                    </span>
+                                                    {supplier.phone_number && (
+                                                        <span className="shrink-0 text-[11px] text-slate-400 dark:text-slate-500 font-mono">
+                                                            {supplier.phone_number}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+                                    />
                                     {errors.supplier_id && (
                                         <p className="text-xs text-red-600 dark:text-red-400">{errors.supplier_id}</p>
                                     )}
@@ -183,18 +201,50 @@ export default function Index({ suppliers, items, today }) {
                                                 <tr key={index} className="align-middle hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
                                                     {/* Item selection */}
                                                     <td className="px-4 py-3.5">
-                                                        <select
+                                                        <SearchableSelect
                                                             value={line.item_id}
-                                                            onChange={(e) => setLine(index, 'item_id', e.target.value)}
-                                                            className={`${inputClass} w-full`}
-                                                        >
-                                                            <option value="">Pilih barang...</option>
-                                                            {items.map((item) => (
-                                                                <option key={item.id} value={item.id}>
-                                                                    {item.name} ({item.unit})
-                                                                </option>
-                                                            ))}
-                                                        </select>
+                                                            onChange={(val) => setLine(index, 'item_id', val)}
+                                                            options={items}
+                                                            placeholder="Pilih barang..."
+                                                            searchPlaceholder="Cari nama atau barcode..."
+                                                            filterFields={['name', 'barcode']}
+                                                            hasError={!!errors[`lines.${index}.item_id`]}
+                                                            emptyMessage="Barang tidak ditemukan"
+                                                            renderSelected={(item) => (
+                                                                <div className="flex items-center gap-2 min-w-0">
+                                                                    <span className="truncate font-semibold text-slate-900 dark:text-white">
+                                                                        {item.name}
+                                                                    </span>
+                                                                    <span className="shrink-0 rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                                                        {item.unit}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                            renderOption={(item, { isSelected }) => (
+                                                                <div className="flex flex-col gap-0.5 py-0.5">
+                                                                    <div className="flex items-center justify-between gap-2">
+                                                                        <span className={`text-xs font-semibold truncate ${isSelected ? 'text-blue-600 dark:text-blue-400' : 'text-slate-900 dark:text-white'}`}>
+                                                                            {item.name}
+                                                                        </span>
+                                                                        <span className="shrink-0 rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                                                            {item.unit}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-2.5 text-[11px] text-slate-500 dark:text-slate-400">
+                                                                        {item.barcode && (
+                                                                            <span className="font-mono text-slate-400 dark:text-slate-500">
+                                                                                #{item.barcode}
+                                                                            </span>
+                                                                        )}
+                                                                        {item.cost_price > 0 && (
+                                                                            <span>
+                                                                                Modal: <span className="font-semibold text-slate-700 dark:text-slate-300">Rp {item.cost_price.toLocaleString('id-ID')}</span>
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        />
                                                         {errors[`lines.${index}.item_id`] && (
                                                             <p className="mt-1 text-xs text-red-600 dark:text-red-400">
                                                                 {errors[`lines.${index}.item_id`]}
