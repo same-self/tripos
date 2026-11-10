@@ -18,8 +18,8 @@ class RestokController extends Controller
     public function create(): Response
     {
         return Inertia::render('Restok/Index', [
-            'suppliers' => Supplier::orderBy('name')->get(['id', 'name']),
-            'items' => Item::orderBy('name')->get(['id', 'name', 'unit', 'cost_price']),
+            'suppliers' => Supplier::orderBy('name')->get(['id', 'name', 'phone_number']),
+            'items' => Item::orderBy('name')->get(['id', 'name', 'unit', 'cost_price', 'barcode']),
             'today' => now()->toDateString(),
         ]);
     }
