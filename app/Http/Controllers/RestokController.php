@@ -66,6 +66,7 @@ class RestokController extends Controller
         $purchases = Purchase::with([
             'supplier' => fn ($q) => $q->withTrashed(),
             'user' => fn ($q) => $q->withTrashed(),
+            'details.item' => fn ($q) => $q->withTrashed(),
         ])
             ->withCount('details')
             ->when($search !== '', fn ($q) => $q->whereHas('supplier', fn ($s) => $s->where('name', 'like', '%'.$search.'%')))
@@ -80,6 +81,14 @@ class RestokController extends Controller
                 'kinds' => $purchase->details_count,
                 'total' => (int) $purchase->total_price,
                 'by' => $purchase->user?->name ?? '-',
+                'items' => $purchase->details->map(fn ($d) => [
+                    'id' => $d->id,
+                    'name' => $d->item?->name ?? 'Barang Dihapus',
+                    'unit' => $d->item?->unit ?? 'unit',
+                    'qty' => (int) $d->amount,
+                    'price' => (int) $d->purchase_price,
+                    'subtotal' => (int) $d->subtotal,
+                ]),
             ]);
 
         return Inertia::render('Restok/Riwayat', [
