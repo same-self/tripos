@@ -1,21 +1,38 @@
 import TriposLayout from '@/Layouts/TriposLayout';
 import PasswordInput from '@/Components/PasswordInput';
 import { Head, Link, useForm } from '@inertiajs/react';
+import {
+    ArrowLeft,
+    Check,
+    Lock,
+    Save,
+    ShieldAlert,
+    ShieldCheck,
+    Store,
+    User,
+} from 'lucide-react';
 
 const inputClass =
-    'h-11 rounded-xl border border-[#6B7280] bg-white px-3.5 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder-slate-500 focus:border-[#1D4ED8] focus:ring-1 focus:ring-[#1D4ED8]';
+    'h-11 rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 dark:border-slate-700 dark:bg-slate-950/60 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-blue-500 transition-all';
 
 const ROLE_OPTIONS = [
-    { value: 'cashier', label: 'Kasir' },
-    { value: 'admin', label: 'Admin' },
+    { value: 'cashier', label: 'Kasir', icon: Store },
+    { value: 'admin', label: 'Admin', icon: ShieldCheck },
 ];
+
+function getInitials(name) {
+    if (!name) return 'U';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
 
 function Field({ label, error, children }) {
     return (
         <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-[#4B5563] dark:text-slate-300">{label}</label>
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">{label}</label>
             {children}
-            {error && <p className="text-xs text-[#B91C1C] dark:text-red-400">{error}</p>}
+            {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
         </div>
     );
 }
@@ -36,112 +53,210 @@ export default function Edit({ user }) {
 
     return (
         <TriposLayout active="Pengguna">
-            <Head title="Ubah Pengguna" />
+            <Head title={`Ubah Pengguna - ${user.name}`} />
 
-            <div className="max-w-xl">
-                <h1 className="text-[22px] font-bold text-gray-900 dark:text-white">Ubah Pengguna</h1>
-                <p className="mt-1 text-[13px] text-[#4B5563] dark:text-slate-400">
-                    Perbarui data, peran, atau status akun. Isi password baru hanya jika ingin mengatur ulang.
-                </p>
+            <div className="max-w-2xl">
+                {/* Back navigation link */}
+                <div className="mb-4">
+                    <Link
+                        href={route('pengguna.index')}
+                        className="group inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
+                    >
+                        <ArrowLeft size={14} className="transition-transform group-hover:-translate-x-0.5" />
+                        Kembali ke Pengguna
+                    </Link>
+                </div>
 
-                <form onSubmit={submit} className="mt-6 grid gap-5 rounded-2xl border border-[#E5E7EB] bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+                {/* Header card with User Profile preview */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-slate-200/80 dark:border-slate-800">
+                    <div className="flex items-center gap-3.5">
+                        <div
+                            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-sm font-bold shadow-sm ${
+                                user.role === 'admin'
+                                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-950/80 dark:text-blue-300 dark:border dark:border-blue-800/60'
+                                    : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:border dark:border-slate-700/60'
+                            }`}
+                        >
+                            {getInitials(user.name)}
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+                                    {user.name}
+                                </h1>
+                                {user.is_self && (
+                                    <span className="rounded-md bg-blue-50 px-1.5 py-0.5 text-[11px] font-semibold text-blue-700 border border-blue-200/80 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800/60">
+                                        Akun Anda
+                                    </span>
+                                )}
+                            </div>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                @{user.username} · {user.role === 'admin' ? 'Administrator' : 'Kasir Toko'} ·{' '}
+                                <span className={user.active ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-slate-400'}>
+                                    {user.active ? 'Status Aktif' : 'Nonaktif'}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Edit Form */}
+                <form
+                    onSubmit={submit}
+                    className="mt-6 flex flex-col gap-5 rounded-2xl border border-slate-200/80 bg-white p-6 sm:p-7 shadow-sm dark:border-slate-800/80 dark:bg-slate-900/90"
+                >
+                    {/* Self Account Guard Warning */}
                     {user.is_self && (
-                        <p className="rounded-xl bg-[#FEF3C7] px-4 py-3 text-sm text-[#92400E] dark:border dark:border-amber-800/50 dark:bg-amber-950/40 dark:text-amber-300">
-                            Ini akun yang sedang dipakai. Akunnya tidak bisa dinonaktifkan atau diturunkan perannya.
-                        </p>
+                        <div className="flex items-start gap-3 rounded-xl border border-amber-200/80 bg-amber-50/80 p-4 text-xs text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200 leading-relaxed">
+                            <ShieldAlert size={18} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                            <div>
+                                <p className="font-bold text-amber-900 dark:text-amber-200">Akun Sesi Aktif Anda</p>
+                                <p className="mt-0.5 text-amber-800/90 dark:text-amber-300/80">
+                                    Ini adalah akun yang sedang Anda gunakan saat ini. Demi keamanan sistem dan menjaga akses, peran dan status akun ini dikunci agar tidak dapat dinonaktifkan atau diturunkan.
+                                </p>
+                            </div>
+                        </div>
                     )}
 
-                    <Field label="Nama lengkap" error={errors.name}>
+                    {/* Full Name */}
+                    <Field label="Nama Lengkap" error={errors.name}>
                         <input
                             type="text"
                             value={data.name}
                             onChange={(e) => setData('name', e.target.value)}
+                            placeholder="Nama lengkap staf"
                             className={inputClass}
                         />
                     </Field>
 
-                    <Field label="Username" error={errors.username}>
+                    {/* Username */}
+                    <Field label="Username Login" error={errors.username}>
                         <input
                             type="text"
                             value={data.username}
                             onChange={(e) => setData('username', e.target.value)}
+                            placeholder="username.login"
                             className={inputClass}
                         />
                     </Field>
 
+                    {/* Role Picker (Apple Segmented Control) */}
                     <div className="flex flex-col gap-1.5">
-                        <span className="text-xs font-medium text-[#4B5563] dark:text-slate-300">Peran</span>
-                        <div className="flex gap-1 rounded-xl bg-[#EEF2F7] p-1 dark:border dark:border-slate-800 dark:bg-slate-950" role="group" aria-label="Peran">
-                            {ROLE_OPTIONS.map((r) => (
-                                <button
-                                    key={r.value}
-                                    type="button"
-                                    onClick={() => setData('role', r.value)}
-                                    aria-pressed={data.role === r.value}
-                                    className={`flex-1 rounded-lg py-2 text-sm transition-colors ${
-                                        data.role === r.value
-                                            ? 'bg-white font-semibold shadow-sm dark:bg-slate-800 dark:text-white'
-                                            : 'font-medium text-[#4B5563] dark:text-slate-400 hover:text-gray-900 dark:hover:text-white'
-                                    }`}
-                                >
-                                    {r.label}
-                                </button>
-                            ))}
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Peran Pengguna</span>
+                            {user.is_self && (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 dark:text-amber-400">
+                                    <Lock size={11} /> Dikunci untuk akun Anda
+                                </span>
+                            )}
                         </div>
-                        {errors.role && <p className="text-xs text-[#B91C1C] dark:text-red-400">{errors.role}</p>}
+                        <div
+                            className="flex gap-1 rounded-xl bg-slate-100/80 p-1 dark:bg-slate-950/80 border border-slate-200/60 dark:border-slate-800"
+                            role="group"
+                            aria-label="Peran"
+                        >
+                            {ROLE_OPTIONS.map((r) => {
+                                const Icon = r.icon;
+                                const isLocked = user.is_self && r.value !== 'admin';
+                                return (
+                                    <button
+                                        key={r.value}
+                                        type="button"
+                                        disabled={isLocked}
+                                        onClick={() => !isLocked && setData('role', r.value)}
+                                        aria-pressed={data.role === r.value}
+                                        className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-xs transition-all ${
+                                            data.role === r.value
+                                                ? 'bg-white font-semibold text-slate-900 shadow-sm dark:bg-slate-800 dark:text-white'
+                                                : isLocked
+                                                  ? 'opacity-40 cursor-not-allowed text-slate-400 dark:text-slate-600'
+                                                  : 'font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+                                        }`}
+                                    >
+                                        <Icon size={14} className="shrink-0" />
+                                        <span>{r.label}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        {errors.role && <p className="text-xs text-red-600 dark:text-red-400">{errors.role}</p>}
                     </div>
 
+                    {/* Status Picker (Active / Inactive) */}
                     <div className="flex flex-col gap-1.5">
-                        <span className="text-xs font-medium text-[#4B5563] dark:text-slate-300">Status</span>
-                        <div className="flex gap-1 rounded-xl bg-[#EEF2F7] p-1 dark:border dark:border-slate-800 dark:bg-slate-950" role="group" aria-label="Status">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Status Akun</span>
+                            {user.is_self && (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 dark:text-amber-400">
+                                    <Lock size={11} /> Dikunci untuk akun Anda
+                                </span>
+                            )}
+                        </div>
+                        <div
+                            className="flex gap-1 rounded-xl bg-slate-100/80 p-1 dark:bg-slate-950/80 border border-slate-200/60 dark:border-slate-800"
+                            role="group"
+                            aria-label="Status"
+                        >
                             <button
                                 type="button"
                                 onClick={() => setData('active', true)}
                                 aria-pressed={data.active}
-                                className={`flex-1 rounded-lg py-2 text-sm transition-colors ${
+                                className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-xs transition-all ${
                                     data.active
-                                        ? 'bg-white font-semibold shadow-sm dark:bg-slate-800 dark:text-white'
-                                        : 'font-medium text-[#4B5563] dark:text-slate-400 hover:text-gray-900 dark:hover:text-white'
+                                        ? 'bg-white font-semibold text-slate-900 shadow-sm dark:bg-slate-800 dark:text-white'
+                                        : 'font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
                                 }`}
                             >
-                                Aktif
+                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                <span>Aktif</span>
                             </button>
                             <button
                                 type="button"
-                                onClick={() => setData('active', false)}
+                                disabled={user.is_self}
+                                onClick={() => !user.is_self && setData('active', false)}
                                 aria-pressed={!data.active}
-                                className={`flex-1 rounded-lg py-2 text-sm transition-colors ${
+                                className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-xs transition-all ${
                                     !data.active
-                                        ? 'bg-white font-semibold shadow-sm dark:bg-slate-800 dark:text-white'
-                                        : 'font-medium text-[#4B5563] dark:text-slate-400 hover:text-gray-900 dark:hover:text-white'
+                                        ? 'bg-white font-semibold text-slate-900 shadow-sm dark:bg-slate-800 dark:text-white'
+                                        : user.is_self
+                                          ? 'opacity-40 cursor-not-allowed text-slate-400 dark:text-slate-600'
+                                          : 'font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
                                 }`}
                             >
-                                Nonaktif
+                                <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+                                <span>Nonaktif</span>
                             </button>
                         </div>
                     </div>
 
-                    <Field label="Password baru (kosongkan jika tidak diubah)" error={errors.password}>
+                    {/* Reset Password */}
+                    <Field label="Password Baru" error={errors.password}>
                         <PasswordInput
                             value={data.password}
                             onChange={(e) => setData('password', e.target.value)}
+                            placeholder="Isi hanya jika ingin mereset password"
                             className={inputClass}
                         />
+                        <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500 leading-relaxed">
+                            Kosongkan jika tidak ingin mengubah password. Jika diisi, pengguna akan diminta mengatur password baru saat login berikutnya.
+                        </p>
                     </Field>
 
-                    <div className="flex items-center justify-end gap-3">
+                    {/* Bottom Actions with 44pt touch targets */}
+                    <div className="mt-3 flex items-center justify-end gap-3 pt-5 border-t border-slate-100 dark:border-slate-800">
                         <Link
                             href={route('pengguna.index')}
-                            className="rounded-xl border border-[#6B7280] px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors"
+                            className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-5 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-[0.98] transition-all"
                         >
                             Batal
                         </Link>
                         <button
                             type="submit"
                             disabled={processing}
-                            className="rounded-xl bg-[#1D4ED8] px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors disabled:opacity-60 shadow-sm"
+                            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 active:scale-[0.98] transition-all disabled:opacity-60"
                         >
-                            Simpan perubahan
+                            <Save size={16} />
+                            Simpan Perubahan
                         </button>
                     </div>
                 </form>
