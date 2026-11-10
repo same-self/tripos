@@ -131,7 +131,7 @@ export default function Index({ suppliers, items, today }) {
                                                         {supplier.name}
                                                     </span>
                                                     {supplier.phone_number && (
-                                                        <span className="shrink-0 text-[11px] text-slate-400 dark:text-slate-500 font-mono">
+                                                        <span className="shrink-0 text-[11px] text-slate-400 dark:text-slate-500 tabular-nums">
                                                             {supplier.phone_number}
                                                         </span>
                                                     )}
@@ -206,8 +206,8 @@ export default function Index({ suppliers, items, today }) {
                                                             onChange={(val) => setLine(index, 'item_id', val)}
                                                             options={items}
                                                             placeholder="Pilih barang..."
-                                                            searchPlaceholder="Cari nama atau barcode..."
-                                                            filterFields={['name', 'barcode']}
+                                                            searchPlaceholder="Cari nama barang..."
+                                                            filterFields={['name']}
                                                             hasError={!!errors[`lines.${index}.item_id`]}
                                                             emptyMessage="Barang tidak ditemukan"
                                                             renderSelected={(item) => (
@@ -230,18 +230,11 @@ export default function Index({ suppliers, items, today }) {
                                                                             {item.unit}
                                                                         </span>
                                                                     </div>
-                                                                    <div className="flex items-center gap-2.5 text-[11px] text-slate-500 dark:text-slate-400">
-                                                                        {item.barcode && (
-                                                                            <span className="font-mono text-slate-400 dark:text-slate-500">
-                                                                                #{item.barcode}
-                                                                            </span>
-                                                                        )}
-                                                                        {item.cost_price > 0 && (
-                                                                            <span>
-                                                                                Modal: <span className="font-semibold text-slate-700 dark:text-slate-300">Rp {item.cost_price.toLocaleString('id-ID')}</span>
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
+                                                                    {item.cost_price > 0 && (
+                                                                        <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                                                                            Modal: <span className="font-semibold text-slate-700 dark:text-slate-300 tabular-nums">Rp {item.cost_price.toLocaleString('id-ID')}</span>
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             )}
                                                         />
