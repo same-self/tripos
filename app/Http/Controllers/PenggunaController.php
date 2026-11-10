@@ -155,7 +155,7 @@ class PenggunaController extends Controller
             'username.max' => 'Username terlalu panjang.',
             'username.regex' => 'Username hanya boleh berisi huruf, angka, titik, garis bawah, atau tanda minus.',
             'username.unique' => 'Username sudah dipakai.',
-            'password.required' => 'Password sementara wajib diisi.',
+            'password.required' => 'Password wajib diisi.',
             'password.min' => 'Password minimal 6 karakter.',
             'role.required' => 'Pilih peran pengguna.',
             'role.enum' => 'Peran yang dipilih tidak dikenal.',
