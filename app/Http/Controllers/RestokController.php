@@ -17,7 +17,7 @@ class RestokController extends Controller
 {
     public function create(Request $request): Response
     {
-        $items = Item::orderBy('name')->get(['id', 'name', 'unit', 'cost_price']);
+        $items = Item::orderBy('name')->get(['id', 'name', 'unit', 'cost_price', 'barcode']);
 
         // "?isi=3:40,7:10" (item id : quantity) comes from the Stok page's restock suggestions
         $prefill = collect(explode(',', (string) $request->query('isi')))
@@ -36,7 +36,7 @@ class RestokController extends Controller
             ->values();
 
         return Inertia::render('Restok/Index', [
-            'suppliers' => Supplier::orderBy('name')->get(['id', 'name']),
+            'suppliers' => Supplier::orderBy('name')->get(['id', 'name', 'phone_number']),
             'items' => $items,
             'today' => now()->toDateString(),
             'prefill' => $prefill,
@@ -85,6 +85,7 @@ class RestokController extends Controller
         $purchases = Purchase::with([
             'supplier' => fn ($q) => $q->withTrashed(),
             'user' => fn ($q) => $q->withTrashed(),
+            'details.item' => fn ($q) => $q->withTrashed(),
         ])
             ->withCount('details')
             ->when($search !== '', fn ($q) => $q->whereHas('supplier', fn ($s) => $s->where('name', 'like', '%'.$search.'%')))
@@ -99,6 +100,14 @@ class RestokController extends Controller
                 'kinds' => $purchase->details_count,
                 'total' => (int) $purchase->total_price,
                 'by' => $purchase->user?->name ?? '-',
+                'items' => $purchase->details->map(fn ($d) => [
+                    'id' => $d->id,
+                    'name' => $d->item?->name ?? 'Barang Dihapus',
+                    'unit' => $d->item?->unit ?? 'unit',
+                    'qty' => (int) $d->amount,
+                    'price' => (int) $d->purchase_price,
+                    'subtotal' => (int) $d->subtotal,
+                ]),
             ]);
 
         return Inertia::render('Restok/Riwayat', [
