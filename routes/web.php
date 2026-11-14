@@ -3,11 +3,11 @@
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\SalesHistoryController;
 use App\Http\Controllers\BarangController;
 use App\Http\Controllers\PenggunaController;
-use App\Http\Controllers\ForcePasswordController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\LayananController;
 use App\Http\Controllers\RestokController;
@@ -17,6 +17,19 @@ use App\Http\Controllers\KategoriController;
 
 
 Route::get('/', fn () => redirect()->route('login'));
+
+// Product and service pictures, served by the app itself from storage/app/public.
+// This is why `php artisan storage:link` is NOT needed: that link is the usual reason pictures
+// break after unzipping the project or moving it to another PC. (Laravel keeps its own /storage
+// route for private files, so pictures use /media instead.)
+// Only the two picture folders can be read, and a name cannot start with a dot, so ".." is refused.
+Route::get('/media/{path}', function (string $path) {
+    $disk = Storage::disk('public');
+
+    abort_unless($disk->exists($path), 404);
+
+    return $disk->response($path, null, ['Cache-Control' => 'public, max-age=86400']);
+})->where('path', '(barang|layanan|kategori)/[A-Za-z0-9][A-Za-z0-9._-]*')->name('media');
 
 Route::get('/dashboard', DashboardController::class)->middleware(['auth', 'verified', 'role:admin'])->name('dashboard');
 
@@ -80,6 +93,10 @@ Route::get('/pengguna', [PenggunaController::class, 'index'])
     ->middleware(['auth', 'verified', 'role:admin'])
     ->name('pengguna.index');
 
+Route::get('/pengguna/tambah', [PenggunaController::class, 'create'])
+    ->middleware(['auth', 'verified', 'role:admin'])
+    ->name('pengguna.create');
+
 Route::post('/pengguna', [PenggunaController::class, 'store'])
     ->middleware(['auth', 'verified', 'role:admin'])
     ->name('pengguna.store');
@@ -135,9 +152,6 @@ Route::post('/layanan', [LayananController::class, 'store'])
     ->middleware(['auth', 'verified', 'role:admin'])
     ->name('layanan.store');
 
-Route::put('/layanan/pengaturan', [LayananController::class, 'updateSetting'])
-    ->middleware(['auth', 'verified', 'role:admin'])
-    ->name('layanan.pengaturan');
 
 Route::get('/layanan/{service}/ubah', [LayananController::class, 'edit'])
     ->middleware(['auth', 'verified', 'role:admin'])
@@ -196,14 +210,9 @@ Route::get('/kasir/riwayat', [PosController::class, 'history'])
     ->name('kasir.riwayat');
 
 Route::middleware('auth')->group(function () {
-    Route::get('/password/ganti', [ForcePasswordController::class, 'edit'])->name('password.force');
-    Route::put('/password/ganti', [ForcePasswordController::class, 'update'])->name('password.force.update');
-});
-
-Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
 });
 
 require __DIR__.'/auth.php';

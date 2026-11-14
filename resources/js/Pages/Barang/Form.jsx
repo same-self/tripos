@@ -1,39 +1,15 @@
 import TriposLayout from '@/Layouts/TriposLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { ImagePlus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import ImageField from '@/Components/ImageField';
+import PageTitle from '@/Components/PageTitle';
+import SearchSelect from '@/Components/SearchSelect';
+import { Package } from 'lucide-react';
+import Field from '@/Components/Field';
 
 const inputClass = 'h-11 rounded-xl border border-[#6B7280] bg-white px-3.5 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder-slate-500 focus:border-[#1D4ED8] focus:ring-1 focus:ring-[#1D4ED8]';
 
-const STANDARD_UNITS = [
-    'pcs',
-    'buah',
-    'lembar',
-    'rim',
-    'pack',
-    'buku',
-    'box',
-    'meter',
-    'roll',
-    'set',
-];
-
-function Field({ label, error, children }) {
-    return (
-        <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-[#4B5563] dark:text-slate-300">{label}</label>
-            {children}
-            {error && <p className="text-xs text-[#B91C1C] dark:text-red-400">{error}</p>}
-        </div>
-    );
-}
-
-export default function Form({ item, categories }) {
+export default function Form({ item, categories, units }) {
     const isEdit = item !== null;
-    const [preview, setPreview] = useState(item?.image_url ?? null);
-    const [isCustomUnit, setIsCustomUnit] = useState(
-        Boolean(item?.unit && !STANDARD_UNITS.includes(item.unit.toLowerCase()))
-    );
 
     const { data, setData, post, transform, processing, errors } = useForm({
         item_category_id: item?.item_category_id ?? categories[0]?.id ?? '',
@@ -46,17 +22,10 @@ export default function Form({ item, categories }) {
         hapus_gambar: false,
     });
 
-    function chooseFile(e) {
-        const file = e.target.files?.[0] ?? null;
-        setData('gambar', file);
-        setData('hapus_gambar', false);
-        setPreview(file ? URL.createObjectURL(file) : (item?.image_url ?? null));
-    }
-
-    function removeImage() {
-        setData('gambar', null);
-        setData('hapus_gambar', true);
-        setPreview(null);
+    // A unit saved before the fixed list existed stays selectable, so editing doesn't lose it
+    const unitOptions = [...(units ?? [])];
+    if (data.unit && !unitOptions.some((u) => u.toLowerCase() === String(data.unit).toLowerCase())) {
+        unitOptions.unshift(data.unit);
     }
 
     function submit(e) {
@@ -76,7 +45,7 @@ export default function Form({ item, categories }) {
             <Head title={isEdit ? 'Ubah Barang' : 'Tambah Barang'} />
 
             <div className="max-w-2xl">
-                <h1 className="text-[22px] font-bold text-gray-900 dark:text-white">{isEdit ? 'Ubah Barang' : 'Tambah Barang'}</h1>
+                <PageTitle icon={Package}>{isEdit ? 'Ubah Barang' : 'Tambah Barang'}</PageTitle>
                 <p className="mt-1 text-[13px] text-[#4B5563] dark:text-slate-400">
                     {isEdit
                         ? 'Perbarui nama, satuan, harga, gambar, atau stok minimum.'
@@ -84,52 +53,26 @@ export default function Form({ item, categories }) {
                 </p>
 
                 <form onSubmit={submit} className="mt-6 grid gap-5 rounded-2xl border border-[#E5E7EB] bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-                    <Field label="Gambar barang (opsional)" error={errors.gambar}>
-                        <div className="flex items-center gap-4">
-                            <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl border border-[#E5E7EB] bg-[#F3F4F6] dark:border-slate-800 dark:bg-slate-950">
-                                {preview ? (
-                                    <img src={preview} alt="Pratinjau gambar" className="h-full w-full object-cover" />
-                                ) : (
-                                    <div className="flex h-full w-full items-center justify-center text-[#9CA3AF] dark:text-slate-600">
-                                        <ImagePlus size={28} aria-hidden="true" />
-                                    </div>
-                                )}
-                            </div>
+                    <ImageField
+                        label="Gambar barang (opsional)"
+                        initialUrl={item?.image_url ?? null}
+                        error={errors.gambar}
+                        onChange={({ file, remove }) => {
+                            setData('gambar', file);
+                            setData('hapus_gambar', remove);
+                        }}
+                    />
 
-                            <div className="flex flex-col gap-2">
-                                <input
-                                    type="file"
-                                    accept="image/jpeg,image/png,image/webp"
-                                    onChange={chooseFile}
-                                    className="text-sm dark:text-slate-300"
-                                />
-                                {preview && (
-                                    <button
-                                        type="button"
-                                        onClick={removeImage}
-                                        className="inline-flex w-fit items-center gap-1.5 text-[13px] font-medium text-[#B91C1C] dark:text-red-400"
-                                    >
-                                        <Trash2 size={14} aria-hidden="true" />
-                                        Hapus gambar
-                                    </button>
-                                )}
-                                <p className="text-xs text-[#4B5563] dark:text-slate-400">JPG, PNG, atau WEBP, maksimal 2 MB.</p>
-                            </div>
-                        </div>
-                    </Field>
 
                     <Field label="Kategori" error={errors.item_category_id}>
-                        <select
+                        <SearchSelect
+                            className="h-11"
+                            invalid={!!errors.item_category_id}
                             value={data.item_category_id}
-                            onChange={(e) => setData('item_category_id', e.target.value)}
-                            className={inputClass}
-                        >
-                            {categories.map((c) => (
-                                <option key={c.id} value={c.id}>
-                                    {c.name}
-                                </option>
-                            ))}
-                        </select>
+                            onChange={(v) => setData('item_category_id', v)}
+                            options={categories.map((c) => ({ value: c.id, label: c.name }))}
+                            placeholder="Pilih kategori"
+                        />
                     </Field>
 
                     <Field label="Nama barang" error={errors.name}>
@@ -142,42 +85,14 @@ export default function Form({ item, categories }) {
                     </Field>
 
                     <Field label="Satuan" error={errors.unit}>
-                        <div className="flex flex-col gap-2">
-                            <select
-                                value={isCustomUnit ? '__custom__' : data.unit}
-                                onChange={(e) => {
-                                    if (e.target.value === '__custom__') {
-                                        setIsCustomUnit(true);
-                                        setData('unit', '');
-                                    } else {
-                                        setIsCustomUnit(false);
-                                        setData('unit', e.target.value);
-                                    }
-                                }}
-                                className={inputClass}
-                            >
-                                <option value="" disabled>
-                                    -- Pilih satuan barang --
-                                </option>
-                                {STANDARD_UNITS.map((u) => (
-                                    <option key={u} value={u}>
-                                        {u}
-                                    </option>
-                                ))}
-                                <option value="__custom__">+ Lainnya (Ketik sendiri)</option>
-                            </select>
-
-                            {isCustomUnit && (
-                                <input
-                                    type="text"
-                                    value={data.unit}
-                                    onChange={(e) => setData('unit', e.target.value)}
-                                    placeholder="Ketik satuan baru, misal: botol, tabung..."
-                                    autoFocus
-                                    className={inputClass}
-                                />
-                            )}
-                        </div>
+                        <SearchSelect
+                            className="h-11"
+                            invalid={!!errors.unit}
+                            value={data.unit}
+                            onChange={(v) => setData('unit', v)}
+                            options={unitOptions.map((u) => ({ value: u, label: u }))}
+                            placeholder="Pilih satuan"
+                        />
                     </Field>
 
                     <div className="grid gap-5 sm:grid-cols-2">

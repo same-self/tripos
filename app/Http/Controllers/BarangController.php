@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Units;
 use App\Models\Item;
 use App\Models\ItemCategory;
+use App\Models\Setting;
 use App\Models\ServiceMaterial;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -17,6 +18,8 @@ class BarangController extends Controller
     {
         $categoryId = $request->query('kategori') ?: null;
         $search = trim((string) $request->query('cari', ''));
+        // Stock-status filter: "menipis" (still in stock, at or below the minimum) or "habis" (0 or less)
+        $stockStatus = in_array($request->query('stok'), ['menipis', 'habis'], true) ? $request->query('stok') : null;
 
         $categories = ItemCategory::withCount('items')
             ->orderBy('name')
@@ -30,6 +33,8 @@ class BarangController extends Controller
         $items = Item::with('category')
             ->when($categoryId, fn ($q) => $q->where('item_category_id', $categoryId))
             ->when($search !== '', fn ($q) => $q->where('name', 'like', '%'.$search.'%'))
+            ->when($stockStatus === 'menipis', fn ($q) => $q->runningLow())
+            ->when($stockStatus === 'habis', fn ($q) => $q->outOfStock())
             ->orderBy('name')
             ->get()
             ->map(fn (Item $item) => [
@@ -41,7 +46,8 @@ class BarangController extends Controller
                 'sell_price' => $item->sell_price,
                 'stock' => $item->stock,
                 'low_stock' => $item->isLowStock(),
-                'image_url' => $this->imageUrl($item),
+                'out_of_stock' => $item->isOutOfStock(),
+                'image_url' => $item->imageUrl(),
             ]);
 
         $all = Item::all(['stock', 'min_stock', 'cost_price']);
@@ -52,13 +58,20 @@ class BarangController extends Controller
             'total' => Item::count(),
             'summary' => [
                 'total' => $all->count(),
-                'low_stock' => $all->filter(fn (Item $item) => $item->isLowStock())->count(),
+                'low_stock' => $all->filter(fn (Item $item) => ! $item->isOutOfStock() && $item->isLowStock())->count(),
+                'out_of_stock' => $all->filter(fn (Item $item) => $item->isOutOfStock())->count(),
                 'stock_value' => (int) $all->sum(fn (Item $item) => $item->stock * $item->cost_price),
                 'categories' => $categories->count(),
+            ],
+            'thresholds' => [
+                'fast' => Setting::int('fast_moving_threshold', 80),
+                'slow' => Setting::int('slow_moving_threshold', 10),
+                'window' => max(1, Setting::int('report_window_days', 30)),
             ],
             'filters' => [
                 'kategori' => $categoryId ? (int) $categoryId : null,
                 'cari' => $search,
+                'stok' => $stockStatus,
             ],
         ]);
     }
@@ -68,18 +81,20 @@ class BarangController extends Controller
         return Inertia::render('Barang/Form', [
             'item' => null,
             'categories' => $this->categoryOptions(),
+            'units' => Units::ALL,
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate($this->rules() + $this->imageRules(), $this->messages());
+        $data['unit'] = Units::normalize($data['unit']);
 
         // New products start at 0 stock; stock changes come from restok and sales
         $item = Item::create(collect($data)->except(['gambar', 'hapus_gambar'])->all());
 
         if ($request->hasFile('gambar')) {
-            $item->forceFill(['image_path' => $request->file('gambar')->store('barang', 'public')])->save();
+            $item->replaceImage($request->file('gambar'));
         }
 
         return redirect()->route('barang.index')->with('success', 'Barang berhasil ditambahkan.');
@@ -97,24 +112,24 @@ class BarangController extends Controller
                 'sell_price' => $item->sell_price,
                 'min_stock' => $item->min_stock,
                 'stock' => $item->stock,
-                'image_url' => $this->imageUrl($item),
+                'image_url' => $item->imageUrl(),
             ],
             'categories' => $this->categoryOptions(),
+            'units' => Units::ALL,
         ]);
     }
 
     public function update(Request $request, Item $item): RedirectResponse
     {
-        $data = $request->validate($this->rules() + $this->imageRules(), $this->messages());
+        $data = $request->validate($this->rules($item->unit) + $this->imageRules(), $this->messages());
+        $data['unit'] = Units::normalize($data['unit']);
 
         $item->update(collect($data)->except(['gambar', 'hapus_gambar'])->all());
 
         if ($request->hasFile('gambar')) {
-            $this->deleteImage($item);
-            $item->forceFill(['image_path' => $request->file('gambar')->store('barang', 'public')])->save();
+            $item->replaceImage($request->file('gambar'));
         } elseif ($request->boolean('hapus_gambar')) {
-            $this->deleteImage($item);
-            $item->forceFill(['image_path' => null])->save();
+            $item->removeImage();
         }
 
         return redirect()->route('barang.index')->with('success', 'Barang berhasil diubah.');
@@ -135,29 +150,17 @@ class BarangController extends Controller
         return redirect()->route('barang.index')->with('success', 'Barang berhasil dihapus.');
     }
 
-    private function imageUrl(Item $item): ?string
-    {
-        return $item->image_path ? Storage::disk('public')->url($item->image_path) : null;
-    }
-
-    private function deleteImage(Item $item): void
-    {
-        if ($item->image_path) {
-            Storage::disk('public')->delete($item->image_path);
-        }
-    }
-
     private function categoryOptions()
     {
         return ItemCategory::orderBy('name')->get(['id', 'name']);
     }
 
-    private function rules(): array
+    private function rules(?string $currentUnit = null): array
     {
         return [
             'item_category_id' => ['required', 'exists:item_categories,id'],
             'name' => ['required', 'string', 'max:255'],
-            'unit' => ['required', 'string', 'max:50'],
+            'unit' => ['required', 'string', 'max:50', Units::rule($currentUnit)],
             'cost_price' => ['required', 'integer', 'min:0'],
             'sell_price' => ['required', 'integer', 'min:1', 'gte:cost_price'],
             'min_stock' => ['required', 'integer', 'min:0'],
@@ -178,7 +181,7 @@ class BarangController extends Controller
             'item_category_id.required' => 'Pilih kategori barang.',
             'item_category_id.exists' => 'Kategori yang dipilih tidak ada.',
             'name.required' => 'Nama barang wajib diisi.',
-            'unit.required' => 'Satuan wajib diisi, misalnya buah atau rim.',
+            'unit.required' => 'Pilih satuan dari daftar.',
             'cost_price.required' => 'Harga modal wajib diisi.',
             'cost_price.integer' => 'Harga modal harus berupa angka bulat.',
             'cost_price.min' => 'Harga modal tidak boleh negatif.',

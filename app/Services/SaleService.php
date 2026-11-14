@@ -55,7 +55,6 @@ class SaleService
         // 3 attempts: MySQL may abort one of two clashing transactions (deadlock); Laravel retries it.
         return DB::transaction(function () use ($cashier, $itemLines, $serviceLines, $method, $transactedAt, $amountPaidInput) {
             $allowNegative = Setting::bool('allow_negative_stock', true);
-            $autoDeduct = Setting::bool('auto_deduct_service_materials', true);
 
             // ---- 1. Load services and every item we may touch ---------------------------------
             $services = Service::with('materials')
@@ -70,11 +69,10 @@ class SaleService
             }
 
             $itemIds = array_keys($itemLines);
-            if ($autoDeduct) {
-                foreach ($services as $service) {
-                    foreach ($service->materials as $material) {
-                        $itemIds[] = $material->item_id;
-                    }
+            // Materials used by services always leave stock when the service is sold
+            foreach ($services as $service) {
+                foreach ($service->materials as $material) {
+                    $itemIds[] = $material->item_id;
                 }
             }
             $itemIds = array_values(array_unique($itemIds));
@@ -145,10 +143,6 @@ class SaleService
                     'unit_price' => $service->unit_price,
                     'subtotal' => $service->unit_price * $qty,
                 ]);
-
-                if (! $autoDeduct) {
-                    continue;
-                }
 
                 foreach ($service->materials as $material) {
                     // Stock is a whole number, so a fractional use (e.g. 0.5 sheet x 5) rounds up.

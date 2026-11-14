@@ -6,6 +6,7 @@ use App\Models\Item;
 use App\Models\Purchase;
 use App\Models\Sale;
 use App\Models\Setting;
+use App\Services\ProfitabilityService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -15,7 +16,7 @@ use Inertia\Response;
 
 class LaporanController extends Controller
 {
-    private const TABS = ['penjualan', 'pembelian', 'arus-kas', 'terlaris', 'keuntungan'];
+    private const TABS = ['penjualan', 'ranking', 'pembelian', 'arus-kas', 'terlaris', 'keuntungan'];
 
     public function index(Request $request): Response
     {
@@ -25,14 +26,27 @@ class LaporanController extends Controller
         $start = now()->startOfDay()->subDays($periode - 1);
         $end = now()->endOfDay();
 
+        // Rentang tanggal sendiri (kalender). Bila valid, menggantikan 7/30 hari.
+        $custom = $this->customRange($request);
+        if ($custom) {
+            [$start, $end] = $custom;
+            $periode = (int) $start->diffInDays($end->copy()->startOfDay()) + 1;
+        }
+
         $props = [
             'tab' => $tab,
             'periode' => $periode,
+            'dari' => $custom ? $start->toDateString() : null,
+            'sampai' => $custom ? $end->toDateString() : null,
             'window' => max(1, Setting::int('report_window_days', 30)),
         ];
 
         if ($tab === 'penjualan') {
             $props['penjualan'] = $this->penjualan($start, $end, $periode);
+        }
+
+        if ($tab === 'ranking') {
+            $props['ranking'] = $this->ranking();
         }
 
         if ($tab === 'pembelian') {
@@ -54,13 +68,50 @@ class LaporanController extends Controller
         return Inertia::render('Laporan/Index', $props);
     }
 
+    /** @return array{0: Carbon, 1: Carbon}|null dari/sampai (Y-m-d), dibatasi maksimum 92 hari dan tidak melewati hari ini */
+    private function customRange(Request $request): ?array
+    {
+        $dari = $request->query('dari');
+        $sampai = $request->query('sampai');
+
+        if (! is_string($dari) || ! is_string($sampai)
+            || ! preg_match('/^\d{4}-\d{2}-\d{2}$/', $dari) || ! preg_match('/^\d{4}-\d{2}-\d{2}$/', $sampai)) {
+            return null;
+        }
+
+        try {
+            $start = Carbon::createFromFormat('Y-m-d', $dari)->startOfDay();
+            $end = Carbon::createFromFormat('Y-m-d', $sampai)->endOfDay();
+        } catch (\Throwable) {
+            return null;
+        }
+
+        if ($start->gt($end)) {
+            [$start, $end] = [$end->copy()->startOfDay(), $start->copy()->endOfDay()];
+        }
+
+        if ($end->gt(now()->endOfDay())) {
+            $end = now()->endOfDay();
+        }
+
+        if ($start->gt($end)) {
+            return null;
+        }
+
+        if ($start->diffInDays($end->copy()->startOfDay()) > 91) {
+            $start = $end->copy()->startOfDay()->subDays(91);
+        }
+
+        return [$start, $end];
+    }
+
     private function penjualan(Carbon $start, Carbon $end, int $periode): array
     {
         $sales = Sale::with('payment')->whereBetween('transacted_at', [$start, $end])->get();
 
         // One row per day, newest first, days without sales included as zero
-        $days = collect(range(0, $periode - 1))->map(function (int $i) use ($sales) {
-            $day = now()->startOfDay()->subDays($i);
+        $days = collect(range(0, $periode - 1))->map(function (int $i) use ($sales, $end) {
+            $day = $end->copy()->startOfDay()->subDays($i);
             $daySales = $sales->filter(fn (Sale $sale) => $sale->transacted_at->isSameDay($day));
 
             return [
@@ -88,6 +139,9 @@ class LaporanController extends Controller
             ],
             'terlaris' => $this->terlaris(),
             'lambat' => $this->lambat(),
+            // Shown in the side cards, so the text always matches the settings
+            'fast' => Setting::int('fast_moving_threshold', 80),
+            'slow' => Setting::int('slow_moving_threshold', 10),
         ];
     }
 
@@ -152,11 +206,26 @@ class LaporanController extends Controller
             ];
         }
 
+        // One row per day, newest first. The screen shows it a page at a time.
+        $days = collect(range(0, $periode - 1))->map(function (int $i) use ($sales, $purchases, $end) {
+            $day = $end->copy()->startOfDay()->subDays($i);
+            $dayIncome = (int) $sales->filter(fn ($s) => $s->transacted_at->isSameDay($day))->sum('total_price');
+            $daySpending = (int) $purchases->filter(fn ($p) => Carbon::parse($p->transacted_at)->isSameDay($day))->sum('total_price');
+
+            return [
+                'label' => $day->copy()->locale('id')->translatedFormat('l, j M Y'),
+                'income' => $dayIncome,
+                'spending' => $daySpending,
+                'net' => $dayIncome - $daySpending,
+            ];
+        })->values();
+
         return [
             'income' => $income,
             'spending' => $spending,
             'net' => $income - $spending,
             'weeks' => $weeks,
+            'days' => $days,
         ];
     }
 
@@ -179,6 +248,7 @@ class LaporanController extends Controller
                     'unit' => $item->unit,
                     'sold' => $qty,
                     'stock' => $item->stock,
+                    'out_of_stock' => $item->stock <= 0,
                     'days_left' => $qty > 0 ? max(0, (int) round($item->stock / ($qty / $window))) : null,
                 ];
             })
@@ -193,6 +263,7 @@ class LaporanController extends Controller
                 'unit' => $item->unit,
                 'sold' => (int) ($sold[$item->id] ?? 0),
                 'stock' => $item->stock,
+                'out_of_stock' => $item->stock <= 0,
                 // Money tied up in stock that is not moving
                 'idle_capital' => (int) $item->stock * (int) $item->cost_price,
             ])
@@ -209,41 +280,42 @@ class LaporanController extends Controller
         ];
     }
 
-    private function keuntungan(): array
+    /**
+     * Everything that was sold, items and services together, biggest revenue first.
+     * Same figures as the profit ranking, ordered by sales instead of profit.
+     */
+    private function ranking(): array
     {
-        $window = max(1, Setting::int('report_window_days', 30));
-        $start = now()->startOfDay()->subDays($window - 1);
+        $data = app(ProfitabilityService::class)->ranking(max(1, Setting::int('report_window_days', 30)));
+        $totalRevenue = (int) collect($data['rows'])->sum('revenue');
 
-        // Only items sold directly to customers; paper used by services is already in the service price
-        $rows = DB::table('item_details as d')
-            ->join('sales_transactions as s', 's.id', '=', 'd.sales_id')
-            ->join('items as i', 'i.id', '=', 'd.item_id')
-            ->whereNull('d.deleted_at')
-            ->whereNull('s.deleted_at')
-            ->whereBetween('s.transacted_at', [$start, now()->endOfDay()])
-            ->groupBy('d.item_id', 'i.name', 'i.cost_price', 'i.sell_price')
-            ->selectRaw('d.item_id, i.name, i.cost_price, i.sell_price, SUM(d.amount) as qty, SUM(d.subtotal) as revenue')
-            ->get()
-            ->map(function ($row) {
-                $cost = (int) $row->cost_price;
-                $qty = (int) $row->qty;
-
-                return [
-                    'name' => $row->name,
-                    'sold' => $qty,
-                    'per_unit' => (int) $row->sell_price - $cost,
-                    'total' => (int) $row->revenue - ($qty * $cost),
-                ];
-            })
-            ->sortByDesc('total')
-            ->values();
+        $rows = collect($data['rows'])
+            ->sortByDesc('revenue')
+            ->values()
+            ->map(fn (array $row, int $i) => [
+                'rank' => $i + 1,
+                'kind' => $row['kind'],
+                'key' => $row['key'],
+                'name' => $row['name'],
+                'unit' => $row['unit'],
+                'sold' => $row['sold'],
+                'revenue' => $row['revenue'],
+                'share' => $totalRevenue > 0 ? round($row['revenue'] / $totalRevenue * 100, 1) : 0,
+            ]);
 
         return [
+            'window' => $data['window'],
             'rows' => $rows,
-            'total' => (int) $rows->sum('total'),
-            'untung' => $rows->where('per_unit', '>', 0)->count(),
-            'rugi' => $rows->where('per_unit', '<', 0)->count(),
+            'total' => $totalRevenue,
+            'items' => $rows->where('kind', 'barang')->count(),
+            'services' => $rows->where('kind', 'jasa')->count(),
         ];
+    }
+
+    private function keuntungan(): array
+    {
+        // Items and services together, using the prices saved with each sale
+        return app(ProfitabilityService::class)->ranking(max(1, Setting::int('report_window_days', 30)));
     }
 
     private function terlaris(): array

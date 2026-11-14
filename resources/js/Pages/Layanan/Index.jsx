@@ -1,10 +1,11 @@
 import TriposLayout from '@/Layouts/TriposLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import EditButton from '@/Components/EditButton';
-import { Plus, Trash2 } from 'lucide-react';
+import ItemThumb from '@/Components/ItemThumb';
+import PageTitle from '@/Components/PageTitle';
+import { Plus, Trash2, Wrench } from 'lucide-react';
 
 const rupiah = (n) => 'Rp ' + Number(n).toLocaleString('id-ID');
-const fmt = (n) => Number(n).toLocaleString('id-ID', { maximumFractionDigits: 4 });
 
 function Tab({ active, href, children }) {
     return (
@@ -23,10 +24,7 @@ function Tab({ active, href, children }) {
     );
 }
 
-export default function Index({ services, categories, total, detail, autoDeduct, filters }) {
-    function toggleAutoDeduct() {
-        router.put(route('layanan.pengaturan'), { auto_deduct: !autoDeduct }, { preserveScroll: true });
-    }
+export default function Index({ services, categories, total, filters }) {
 
     function remove(service) {
         if (window.confirm(`Hapus layanan "${service.name}"? Riwayat penjualannya tetap tersimpan.`)) {
@@ -41,7 +39,7 @@ export default function Index({ services, categories, total, detail, autoDeduct,
             <div className="flex flex-col gap-5">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-[22px] font-bold text-gray-900 dark:text-white">Layanan</h1>
+                        <PageTitle icon={Wrench}>Layanan</PageTitle>
                         <p className="mt-1 text-[13px] text-[#4B5563] dark:text-slate-400">
                             Kelola jasa fotokopi, print, dan banner, beserta bahan yang dipakai.
                         </p>
@@ -82,17 +80,13 @@ export default function Index({ services, categories, total, detail, autoDeduct,
                             </thead>
                             <tbody>
                                 {services.map((s) => {
-                                    const selected = s.id === filters.pilih;
                                     return (
-                                        <tr key={s.id} className={`border-b border-[#E5E7EB] last:border-b-0 dark:border-slate-800/80 hover:bg-gray-50/50 hover:dark:bg-slate-800/40 transition-colors ${selected ? 'bg-[#DBEAFE] dark:bg-blue-950/50' : ''}`}>
+                                        <tr key={s.id} className="border-b border-[#E5E7EB] last:border-b-0 dark:border-slate-800/80 hover:bg-gray-50/50 hover:dark:bg-slate-800/40 transition-colors">
                                             <td className="px-2 py-3.5">
-                                                <Link
-                                                    href={route('layanan.index', { kategori: filters.kategori, pilih: s.id })}
-                                                    preserveScroll
-                                                    className={`font-medium ${selected ? 'text-[#1D4ED8] dark:text-blue-400' : 'text-[#111827] dark:text-slate-100'}`}
-                                                >
-                                                    {s.name}
-                                                </Link>
+                                                <div className="flex items-center gap-3">
+                                                    <ItemThumb src={s.image_url} name={s.name} icon={Wrench} />
+                                                    <span className="font-medium text-[#111827] dark:text-slate-100">{s.name}</span>
+                                                </div>
                                             </td>
                                             <td className="px-2 py-3.5 text-[#4B5563] dark:text-slate-400">{s.category}</td>
                                             <td className="px-2 py-3.5 text-[#4B5563] dark:text-slate-400">{s.unit}</td>
@@ -103,6 +97,12 @@ export default function Index({ services, categories, total, detail, autoDeduct,
                                             <td className="px-2 py-3.5">
                                                 <div className="flex items-center gap-2">
                                                     <EditButton href={route('layanan.edit', s.id)} />
+                                                    <Link
+                                                        href={route('layanan.bahan', s.id)}
+                                                        className="inline-flex items-center rounded-lg border border-[#6B7280] px-2.5 py-1.5 text-[13px] font-semibold dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors"
+                                                    >
+                                                        Bahan
+                                                    </Link>
                                                     <button
                                                         type="button"
                                                         onClick={() => remove(s)}
@@ -124,72 +124,6 @@ export default function Index({ services, categories, total, detail, autoDeduct,
                         )}
                     </section>
 
-                    {/* Details and the paper setting */}
-                    <aside className="flex w-full shrink-0 flex-col gap-4 rounded-2xl border border-[#E5E7EB] bg-white p-5 lg:w-[320px] dark:border-slate-800 dark:bg-slate-900">
-                        {detail ? (
-                            <>
-                                <h2 className="text-base font-semibold text-gray-900 dark:text-white">{detail.name}</h2>
-                                <p className="text-xs text-[#4B5563] dark:text-slate-400">
-                                    {detail.category} · {rupiah(detail.unit_price)} per {detail.unit}
-                                </p>
-
-                                <p className="text-[13px] font-semibold text-gray-900 dark:text-slate-200">Bahan yang dipakai</p>
-                                {detail.materials.length === 0 && (
-                                    <p className="text-sm text-[#4B5563] dark:text-slate-400">Belum ada bahan untuk layanan ini.</p>
-                                )}
-                                {detail.materials.map((m, i) => (
-                                    <div key={i} className="rounded-xl bg-[#F3F4F6] p-3.5 dark:bg-slate-950/60 dark:border dark:border-slate-800/80">
-                                        <p className="text-sm font-medium text-gray-900 dark:text-slate-100">{m.name}</p>
-                                        <p className="text-xs text-[#4B5563] dark:text-slate-400">
-                                            {fmt(m.per_unit)} {m.unit} per {detail.unit}
-                                        </p>
-                                    </div>
-                                ))}
-
-                                {/* Connected to the material form in the next step */}
-                                <Link
-                                    href={route('layanan.edit', detail.id)}
-                                    className="rounded-[10px] border border-[#6B7280] py-2.5 text-center text-sm font-medium dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors"
-                                >
-                                    Ubah Layanan
-                                </Link>
-                                <Link
-                                    href={route('layanan.bahan', detail.id)}
-                                    className="rounded-[10px] border border-[#6B7280] py-2.5 text-center text-sm font-medium dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors"
-                                >
-                                    Ubah Bahan
-                                </Link>
-
-                                <div className="h-px bg-[#E5E7EB] dark:bg-slate-800" />
-                            </>
-                        ) : (
-                            <p className="text-sm text-[#4B5563] dark:text-slate-400">
-                                Pilih layanan di daftar untuk melihat bahan yang dipakainya.
-                            </p>
-                        )}
-
-                        <div className="flex items-center justify-between gap-3">
-                            <div>
-                                <p className="text-sm font-medium text-gray-900 dark:text-slate-200">Kurangi stok bahan otomatis</p>
-                                <p className="text-xs text-[#4B5563] dark:text-slate-400">Saat layanan terjual. Berlaku untuk semua layanan.</p>
-                            </div>
-                            <button
-                                type="button"
-                                role="switch"
-                                aria-checked={autoDeduct}
-                                onClick={toggleAutoDeduct}
-                                className={`relative h-6 w-11 shrink-0 rounded-full transition ${
-                                    autoDeduct ? 'bg-[#1D4ED8] dark:bg-blue-600' : 'bg-[#D1D5DB] dark:bg-slate-700'
-                                }`}
-                            >
-                                <span
-                                    className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition ${
-                                        autoDeduct ? 'left-[22px]' : 'left-0.5'
-                                    }`}
-                                />
-                            </button>
-                        </div>
-                    </aside>
                 </div>
             </div>
         </TriposLayout>

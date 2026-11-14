@@ -111,14 +111,14 @@ export default function Index({ suppliers = [], detail = null, metrics = {}, fil
 
     return (
         <TriposLayout active="Supplier">
-            <Head title="Supplier Pemasok" />
+            <Head title="Supplier" />
 
             <div className="flex flex-col gap-6">
                 {/* Header Section */}
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div>
                         <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-white">
-                            Supplier Pemasok
+                            Supplier
                         </h1>
                         <p className="mt-1 text-[13px] text-slate-500 dark:text-slate-400">
                             Kelola data mitra distributor ATK, kontak telepon, dan riwayat faktur pembelian barang.

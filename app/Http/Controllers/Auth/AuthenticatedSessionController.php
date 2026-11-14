@@ -43,9 +43,9 @@ class AuthenticatedSessionController extends Controller
             return redirect(LandingPath::for($user));
         }
 
-        // For admin, clear stale intended URLs like login or the removed password.force route
+        // For admin, clear stale intended URLs like login
         $intended = $request->session()->get('url.intended');
-        if ($intended && (str_contains($intended, '/login') || str_contains($intended, '/password/ganti'))) {
+        if ($intended && str_contains($intended, '/login')) {
             $request->session()->forget('url.intended');
         }
 

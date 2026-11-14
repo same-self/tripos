@@ -13,6 +13,7 @@ import {
     UserX,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import Field from '@/Components/Field';
 
 const inputClass =
     'h-11 rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 dark:border-slate-700 dark:bg-slate-950/60 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-blue-500 transition-all';
@@ -27,16 +28,6 @@ function getInitials(name) {
     const parts = name.trim().split(/\s+/);
     if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
-function Field({ label, error, children }) {
-    return (
-        <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-slate-600 dark:text-slate-300">{label}</label>
-            {children}
-            {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
-        </div>
-    );
 }
 
 export default function Index({ users }) {
@@ -76,7 +67,7 @@ export default function Index({ users }) {
     const inactiveCount = users.filter((u) => !u.active).length;
 
     function remove(user) {
-        if (window.confirm(`Hapus pengguna "${user.name}" secara permanen?`)) {
+        if (window.confirm(`Hapus pengguna "${user.name}"? Riwayat transaksinya tetap tersimpan, tetapi akun tidak bisa dipakai login lagi.`)) {
             router.delete(route('pengguna.destroy', user.id), { preserveScroll: true });
         }
     }
@@ -269,6 +260,9 @@ export default function Index({ users }) {
                                                                 }`}
                                                             >
                                                                 {u.name}
+                                                                {u.is_super_admin && (
+                                                                    <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:bg-amber-950/50 dark:text-amber-300">Pemilik</span>
+                                                                )}
                                                             </span>
                                                             <span className="text-xs text-slate-400 dark:text-slate-500 truncate">
                                                                 @{u.username}
@@ -313,7 +307,7 @@ export default function Index({ users }) {
 
                                                 <td className="px-4 py-3.5 whitespace-nowrap text-right">
                                                     <div className="flex items-center justify-end gap-2">
-                                                        <EditButton href={route('pengguna.edit', u.id)} />
+                                                        {u.can_edit && <EditButton href={route('pengguna.edit', u.id)} />}
                                                         {u.can_delete && (
                                                             <button
                                                                 type="button"

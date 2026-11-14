@@ -13,9 +13,9 @@ class SettingSeeder extends Seeder
         Setting::put('fast_moving_threshold', 80);   // sold >= this in the window -> "Cepat laku"
         Setting::put('slow_moving_threshold', 10);   // sold <  this in the window -> "Lambat"
         Setting::put('report_window_days', 30);
+        Setting::put('thin_margin_percent', 15);     // profit under this % of the sales amount -> "Margin tipis"
 
         // Open decisions, defaulted to the safe-for-a-busy-shop choice:
-        Setting::put('auto_deduct_service_materials', true);  // photocopy uses paper -> stock drops
         Setting::put('allow_negative_stock', true);           // never block the queue; flag it instead
     }
 }

@@ -19,11 +19,12 @@ const inputClass =
 
 const EMPTY_LINE = { item_id: '', qty: '', purchase_price: '' };
 
-export default function Index({ suppliers, items, today }) {
+export default function Index({ suppliers, items, today, prefill = [] }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         supplier_id: '',
         transacted_at: today,
-        lines: [{ ...EMPTY_LINE }],
+        // Opened from the Stok suggestions: start with the suggested items already filled in
+        lines: prefill.length > 0 ? prefill : [{ ...EMPTY_LINE }],
     });
 
     const lineTotal = (line) => (Number(line.qty) || 0) * (Number(line.purchase_price) || 0);
@@ -107,14 +108,14 @@ export default function Index({ suppliers, items, today }) {
                                 <div className="flex flex-col gap-1.5">
                                     <label htmlFor="supplier" className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
                                         <Truck size={14} className="text-slate-400" />
-                                        Supplier Pemasok <span className="text-red-500">*</span>
+                                        Supplier <span className="text-red-500">*</span>
                                     </label>
                                     <SearchableSelect
                                         id="supplier"
                                         value={data.supplier_id}
                                         onChange={(val) => setData('supplier_id', val)}
                                         options={suppliers}
-                                        placeholder="Pilih supplier pemasok..."
+                                        placeholder="Pilih supplier..."
                                         searchPlaceholder="Cari nama atau nomor telepon supplier..."
                                         filterFields={['name', 'phone_number']}
                                         hasError={!!errors.supplier_id}

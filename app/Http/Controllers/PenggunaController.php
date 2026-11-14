@@ -16,15 +16,10 @@ class PenggunaController extends Controller
 {
     public function index(): Response
     {
-        // Accounts that already made a sale or a purchase can only be deactivated, not deleted
-        $usedIds = Sale::withTrashed()->distinct()->pluck('user_id')
-            ->merge(Purchase::withTrashed()->distinct()->pluck('user_id'))
-            ->unique()
-            ->values()
-            ->all();
-
-        // withTrashed so deactivated accounts still show, marked as Nonaktif
+        // withTrashed so deactivated accounts still show, marked as Nonaktif.
+        // Accounts the owner deleted (removed_at) are kept in the database for old receipts, but not listed.
         $users = User::withTrashed()
+            ->whereNull('removed_at')
             ->orderBy('name')
             ->get()
             ->map(fn (User $user) => [
@@ -34,12 +29,20 @@ class PenggunaController extends Controller
                 'role' => $user->role->value,
                 'role_label' => $user->role === Role::Admin ? 'Admin' : 'Kasir',
                 'active' => $user->deleted_at === null,
-                'can_delete' => ! in_array($user->id, $usedIds) && ! $user->is(auth()->user()),
+                'is_super_admin' => $user->is_super_admin,
+                // Everyone can be deleted except the owner's account and the account in use
+                'can_edit' => ! $user->is_super_admin || $user->is(auth()->user()),
+                'can_delete' => ! $user->is_super_admin && ! $user->is(auth()->user()),
             ]);
 
         return Inertia::render('Pengguna/Index', [
             'users' => $users,
         ]);
+    }
+
+    public function create(): Response
+    {
+        return Inertia::render('Pengguna/Create');
     }
 
     public function store(Request $request): RedirectResponse
@@ -62,7 +65,7 @@ class PenggunaController extends Controller
         // Role and the reset flag are not fillable, so they are set separately
         $user->forceFill([
             'role' => $data['role'],
-            'must_change_password' => true,
+            'must_change_password' => false,
             // The placeholder email cannot receive a verification link, so mark it verified
             'email_verified_at' => now(),
         ])->save();
@@ -72,6 +75,8 @@ class PenggunaController extends Controller
 
     public function edit(User $user): Response
     {
+        $this->guardOwner($user);
+
         return Inertia::render('Pengguna/Edit', [
             'user' => [
                 'id' => $user->id,
@@ -80,12 +85,15 @@ class PenggunaController extends Controller
                 'role' => $user->role->value,
                 'active' => $user->deleted_at === null,
                 'is_self' => auth()->id() === $user->id,
+                'is_super_admin' => $user->is_super_admin,
             ],
         ]);
     }
 
     public function update(Request $request, User $user): RedirectResponse
     {
+        $this->guardOwner($user);
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'username' => ['required', 'string', 'max:50', 'regex:/^[A-Za-z0-9._-]+$/', Rule::unique('users', 'username')->ignore($user->id)],
@@ -93,6 +101,13 @@ class PenggunaController extends Controller
             'active' => ['required', 'boolean'],
             'password' => ['nullable', 'string', 'min:6'],
         ], $this->messages());
+
+        // The owner's account is fixed: always active and always Admin
+        if ($user->is_super_admin && (! $data['active'] || $data['role'] !== Role::Admin->value)) {
+            return back()->withErrors([
+                'role' => 'Akun pemilik toko tidak bisa dinonaktifkan atau diturunkan perannya.',
+            ]);
+        }
 
         // The owner cannot lock themselves out or remove their own admin role
         if ($user->is($request->user()) && (! $data['active'] || $data['role'] !== Role::Admin->value)) {
@@ -108,10 +123,10 @@ class PenggunaController extends Controller
         ]);
 
         if (! empty($data['password'])) {
-            // A reset password must be changed at the next sign-in
+            // The owner sets the new password directly. The user can change it later from their Profil page.
             $user->forceFill([
                 'password' => $data['password'],
-                'must_change_password' => true,
+                'must_change_password' => false,
             ]);
         }
 
@@ -128,6 +143,12 @@ class PenggunaController extends Controller
 
     public function destroy(Request $request, User $user): RedirectResponse
     {
+        $this->guardOwner($user, true);
+
+        if ($user->is_super_admin) {
+            return back()->withErrors(['hapus' => 'Akun pemilik toko tidak bisa dihapus.']);
+        }
+
         if ($user->is($request->user())) {
             return back()->withErrors(['hapus' => 'Akun yang sedang dipakai tidak bisa dihapus.']);
         }
@@ -136,15 +157,32 @@ class PenggunaController extends Controller
             || Purchase::withTrashed()->where('user_id', $user->id)->exists();
 
         if ($hasHistory) {
-            return back()->withErrors([
-                'hapus' => 'Pengguna "'.$user->name.'" sudah punya riwayat transaksi. Nonaktifkan saja.',
-            ]);
+            // Old receipts and purchases still point at this account, so the row stays (with its name)
+            // but is closed and hidden. The username is renamed so it can be used again for someone new.
+            $user->forceFill([
+                'username' => $user->username.'~dihapus'.$user->id,
+                'removed_at' => now(),
+            ])->save();
+
+            if (! $user->trashed()) {
+                $user->delete();
+            }
+
+            return redirect()->route('pengguna.index')->with('success', 'Pengguna berhasil dihapus. Riwayat transaksinya tetap tersimpan.');
         }
 
         // No sales or purchases point to this account, so it can be removed completely
         $user->forceDelete();
 
         return redirect()->route('pengguna.index')->with('success', 'Pengguna berhasil dihapus.');
+    }
+
+    /** The owner account is hard-wired: no other admin may view, change or delete it. */
+    private function guardOwner(User $user, bool $always = false): void
+    {
+        if ($user->is_super_admin && ($always || ! $user->is(auth()->user()))) {
+            abort(403, 'Akun pemilik toko tidak bisa diubah oleh pengguna lain.');
+        }
     }
 
     private function messages(): array

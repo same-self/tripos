@@ -11,6 +11,7 @@ import {
     Store,
     User,
 } from 'lucide-react';
+import Field from '@/Components/Field';
 
 const inputClass =
     'h-11 rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 dark:border-slate-700 dark:bg-slate-950/60 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-blue-500 transition-all';
@@ -25,16 +26,6 @@ function getInitials(name) {
     const parts = name.trim().split(/\s+/);
     if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
-function Field({ label, error, children }) {
-    return (
-        <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">{label}</label>
-            {children}
-            {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
-        </div>
-    );
 }
 
 export default function Edit({ user }) {
@@ -105,8 +96,20 @@ export default function Edit({ user }) {
                     onSubmit={submit}
                     className="mt-6 flex flex-col gap-5 rounded-2xl border border-slate-200/80 bg-white p-6 sm:p-7 shadow-sm dark:border-slate-800/80 dark:bg-slate-900/90"
                 >
+                    {user.is_super_admin && (
+                        <div className="flex items-start gap-3 rounded-xl border border-amber-200/80 bg-amber-50/80 p-4 text-xs text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200 leading-relaxed">
+                            <ShieldAlert size={18} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                            <div>
+                                <p className="font-bold">Akun Pemilik Toko</p>
+                                <p className="mt-0.5 text-amber-800/90 dark:text-amber-300/80">
+                                    Peran selalu Admin dan status selalu Aktif. Akun ini tidak bisa diubah oleh pengguna lain dan tidak bisa dihapus.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Self Account Guard Warning */}
-                    {user.is_self && (
+                    {user.is_self && !user.is_super_admin && (
                         <div className="flex items-start gap-3 rounded-xl border border-amber-200/80 bg-amber-50/80 p-4 text-xs text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200 leading-relaxed">
                             <ShieldAlert size={18} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
                             <div>
@@ -144,9 +147,9 @@ export default function Edit({ user }) {
                     <div className="flex flex-col gap-1.5">
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Peran Pengguna</span>
-                            {user.is_self && (
+                            {(user.is_self || user.is_super_admin) && (
                                 <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 dark:text-amber-400">
-                                    <Lock size={11} /> Dikunci untuk akun Anda
+                                    <Lock size={11} /> {user.is_super_admin ? 'Dikunci untuk akun pemilik' : 'Dikunci untuk akun Anda'}
                                 </span>
                             )}
                         </div>
@@ -157,7 +160,7 @@ export default function Edit({ user }) {
                         >
                             {ROLE_OPTIONS.map((r) => {
                                 const Icon = r.icon;
-                                const isLocked = user.is_self && r.value !== 'admin';
+                                const isLocked = (user.is_self || user.is_super_admin) && r.value !== 'admin';
                                 return (
                                     <button
                                         key={r.value}
@@ -186,9 +189,9 @@ export default function Edit({ user }) {
                     <div className="flex flex-col gap-1.5">
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Status Akun</span>
-                            {user.is_self && (
+                            {(user.is_self || user.is_super_admin) && (
                                 <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 dark:text-amber-400">
-                                    <Lock size={11} /> Dikunci untuk akun Anda
+                                    <Lock size={11} /> {user.is_super_admin ? 'Dikunci untuk akun pemilik' : 'Dikunci untuk akun Anda'}
                                 </span>
                             )}
                         </div>
@@ -212,13 +215,13 @@ export default function Edit({ user }) {
                             </button>
                             <button
                                 type="button"
-                                disabled={user.is_self}
-                                onClick={() => !user.is_self && setData('active', false)}
+                                disabled={user.is_self || user.is_super_admin}
+                                onClick={() => !(user.is_self || user.is_super_admin) && setData('active', false)}
                                 aria-pressed={!data.active}
                                 className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-xs transition-all ${
                                     !data.active
                                         ? 'bg-white font-semibold text-slate-900 shadow-sm dark:bg-slate-800 dark:text-white'
-                                        : user.is_self
+                                        : (user.is_self || user.is_super_admin)
                                           ? 'opacity-40 cursor-not-allowed text-slate-400 dark:text-slate-600'
                                           : 'font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
                                 }`}

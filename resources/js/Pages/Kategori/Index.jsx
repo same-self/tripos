@@ -2,7 +2,8 @@ import CategoryBadge from '@/Components/CategoryBadge';
 import EditButton from '@/Components/EditButton';
 import TriposLayout from '@/Layouts/TriposLayout';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Tag, Trash2 } from 'lucide-react';
+import PageTitle from '@/Components/PageTitle';
 
 export default function Index({ categories }) {
     const { errors } = usePage().props;
@@ -20,7 +21,7 @@ export default function Index({ categories }) {
             <div className="flex flex-col gap-5">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-[22px] font-bold text-gray-900 dark:text-white">Kategori</h1>
+                        <PageTitle icon={Tag}>Kategori</PageTitle>
                         <p className="mt-1 text-[13px] text-[#4B5563] dark:text-slate-400">Kelompok barang yang dipakai di Barang dan Stok.</p>
                     </div>
                     <Link
@@ -50,7 +51,7 @@ export default function Index({ categories }) {
                                 <tr key={c.id} className="border-b border-[#E5E7EB] last:border-b-0 dark:border-slate-800/80 hover:bg-gray-50/50 hover:dark:bg-slate-800/40 transition-colors">
                                     <td className="px-2 py-3.5">
                                         <div className="flex items-center gap-3">
-                                            <CategoryBadge name={c.name} />
+                                            <CategoryBadge name={c.name} icon={c.icon} imageUrl={c.image_url} />
                                             <span className="font-medium text-gray-900 dark:text-slate-100">{c.name}</span>
                                         </div>
                                     </td>

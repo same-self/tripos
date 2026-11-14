@@ -1,6 +1,9 @@
 import TriposLayout from '@/Layouts/TriposLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
+import { LayoutDashboard, Receipt, TrendingUp, Wallet } from 'lucide-react';
+import PageTitle from '@/Components/PageTitle';
+import SummaryCard from '@/Components/SummaryCard';
 
 const TAG = {
     primary: 'bg-[#DBEAFE] text-[#1D4ED8] dark:bg-blue-950/60 dark:text-blue-400',
@@ -82,9 +85,9 @@ export default function Dashboard({ report }) {
     const transactions = changeText(kpis.transactions_change);
 
     const cards = [
-        { label: 'Total Penghasilan', value: rupiah(kpis.income), delta: income.text, tone: income.tone },
-        { label: 'Jumlah Transaksi', value: new Intl.NumberFormat('id-ID').format(kpis.transactions), delta: transactions.text, tone: transactions.tone },
-        { label: 'Arus Kas Bersih', value: rupiah(kpis.net_cash_flow), delta: 'Penghasilan dikurangi pembelian', tone: 'neutral' },
+        { icon: Wallet, color: 'green', label: 'Total Penghasilan', value: rupiah(kpis.income), delta: income.text, tone: income.tone },
+        { icon: Receipt, color: 'blue', label: 'Jumlah Transaksi', value: new Intl.NumberFormat('id-ID').format(kpis.transactions), delta: transactions.text, tone: transactions.tone },
+        { icon: TrendingUp, color: 'violet', label: 'Arus Kas Bersih', value: rupiah(kpis.net_cash_flow), delta: 'Penghasilan dikurangi pembelian', tone: 'neutral' },
     ];
 
     // Bar heights are scaled so the best day reaches CHART_HEIGHT.
@@ -107,7 +110,7 @@ export default function Dashboard({ report }) {
 
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <h1 className="text-[22px] font-bold text-gray-900 dark:text-white">Dashboard</h1>
+                    <PageTitle icon={LayoutDashboard}>Dashboard</PageTitle>
                     <p className="mt-1 text-sm text-[#4B5563] dark:text-slate-400">Ringkasan {period} hari terakhir</p>
                 </div>
 
@@ -133,11 +136,15 @@ export default function Dashboard({ report }) {
             {/* Summary cards */}
             <section className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">
                 {cards.map((item) => (
-                    <div key={item.label} className="rounded-xl border border-[#E5E7EB] bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-                        <p className="text-xs text-[#4B5563] dark:text-slate-400 font-medium">{item.label}</p>
-                        <p className="mt-1.5 text-2xl font-bold text-gray-900 dark:text-white">{item.value}</p>
-                        <p className={`mt-1.5 text-xs ${DELTA_COLOR[item.tone]}`}>{item.delta}</p>
-                    </div>
+                    <SummaryCard
+                        key={item.label}
+                        icon={item.icon}
+                        tone={item.color}
+                        label={item.label}
+                        value={item.value}
+                        hint={item.delta}
+                        hintClassName={DELTA_COLOR[item.tone]}
+                    />
                 ))}
             </section>
 

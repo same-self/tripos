@@ -2,7 +2,9 @@ import TriposLayout from '@/Layouts/TriposLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import EditButton from '@/Components/EditButton';
-import { Eye } from 'lucide-react';
+import { Eye, Receipt } from 'lucide-react';
+import PageTitle from '@/Components/PageTitle';
+import DateRange from '@/Components/DateRange';
 
 const rupiah = (n) => 'Rp ' + Number(n).toLocaleString('id-ID');
 
@@ -19,7 +21,7 @@ export default function Index({ sales, filters, totals }) {
         e.preventDefault();
         router.get(
             route('riwayat.index'),
-            { periode: filters.periode, cari: search },
+            { periode: filters.periode === 'rentang' ? undefined : filters.periode, dari: filters.dari ?? undefined, sampai: filters.sampai ?? undefined, cari: search },
             { preserveState: true, replace: true },
         );
     }
@@ -28,7 +30,7 @@ export default function Index({ sales, filters, totals }) {
         <TriposLayout active="Transaksi (POS)">
             <Head title="Riwayat Transaksi" />
 
-            <h1 className="text-[22px] font-bold text-gray-900 dark:text-white">Riwayat Transaksi</h1>
+            <PageTitle icon={Receipt}>Riwayat Transaksi</PageTitle>
             <p className="mt-1 text-sm text-[#4B5563] dark:text-slate-400">
                 Daftar transaksi penjualan. Pilih transaksi untuk melihat struknya.
             </p>
@@ -66,6 +68,16 @@ export default function Index({ sales, filters, totals }) {
                         className="w-full rounded-xl border border-[#6B7280] bg-white px-4 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder-slate-500 focus:border-[#1D4ED8] focus:ring-1 focus:ring-[#1D4ED8]"
                     />
                 </form>
+            </div>
+
+            <div className="mt-3">
+                <DateRange
+                    key={`${filters.dari}-${filters.sampai}`}
+                    dari={filters.dari}
+                    sampai={filters.sampai}
+                    onApply={(dari, sampai) => router.get(route('riwayat.index'), { dari, sampai, cari: search || undefined }, { preserveState: true, replace: true })}
+                    onClear={() => router.get(route('riwayat.index'), { periode: 'minggu' }, { replace: true })}
+                />
             </div>
 
             <div className="mt-4 overflow-x-auto rounded-xl border border-[#E5E7EB] bg-white dark:border-slate-800 dark:bg-slate-900">

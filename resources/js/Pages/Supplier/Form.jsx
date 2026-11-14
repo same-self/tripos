@@ -60,7 +60,7 @@ export default function Form({ supplier }) {
                             <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                                 {isEdit
                                     ? `Perbarui kontak dan alamat untuk mitra #${supplier.id}`
-                                    : 'Daftarkan mitra distributor atau pemasok barang ATK ke dalam sistem'}
+                                    : 'Daftarkan mitra distributor atau supplier barang ATK ke dalam sistem'}
                             </p>
                         </div>
                     </div>

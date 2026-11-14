@@ -1,5 +1,9 @@
 import TriposLayout from '@/Layouts/TriposLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
+import { Wrench } from 'lucide-react';
+import PageTitle from '@/Components/PageTitle';
+import SearchSelect from '@/Components/SearchSelect';
+import { ErrorMark } from '@/Components/Field';
 
 const inputClass = 'h-11 rounded-xl border border-[#6B7280] bg-white px-3.5 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder-slate-500 focus:border-[#1D4ED8] focus:ring-1 focus:ring-[#1D4ED8]';
 
@@ -36,7 +40,7 @@ export default function Bahan({ service, materials, items }) {
             <Head title="Ubah Bahan" />
 
             <div className="max-w-3xl">
-                <h1 className="text-[22px] font-bold text-gray-900 dark:text-white">Ubah Bahan</h1>
+                <PageTitle icon={Wrench}>Ubah Bahan</PageTitle>
                 <p className="mt-1 text-[13px] text-[#4B5563] dark:text-slate-400">{service.name}</p>
 
                 <form
@@ -57,26 +61,22 @@ export default function Bahan({ service, materials, items }) {
                     {data.materials.map((row, index) => (
                         <div key={index} className="grid gap-3 sm:grid-cols-[1fr_160px_auto] sm:items-start">
                             <div className="flex flex-col gap-1.5">
-                                <label className="text-xs font-medium text-[#4B5563] dark:text-slate-300">Bahan</label>
-                                <select
+                                <label className="text-xs font-medium text-[#4B5563] dark:text-slate-300">Bahan<ErrorMark show={!!errors[`materials.${index}.item_id`]} /></label>
+                                <SearchSelect
+                                    className="h-11"
+                                    invalid={!!errors[`materials.${index}.item_id`]}
                                     value={row.item_id}
-                                    onChange={(e) => updateRow(index, 'item_id', e.target.value)}
-                                    className={inputClass}
-                                >
-                                    <option value="">Pilih bahan</option>
-                                    {items.map((item) => (
-                                        <option key={item.id} value={item.id}>
-                                            {item.name} ({item.unit})
-                                        </option>
-                                    ))}
-                                </select>
+                                    onChange={(v) => updateRow(index, 'item_id', v)}
+                                    options={items.map((item) => ({ value: item.id, label: item.name, hint: item.unit }))}
+                                    placeholder="Pilih / ketik nama bahan"
+                                />
                                 {errors[`materials.${index}.item_id`] && (
                                     <p className="text-xs text-[#B91C1C] dark:text-red-400">{errors[`materials.${index}.item_id`]}</p>
                                 )}
                             </div>
 
                             <div className="flex flex-col gap-1.5">
-                                <label className="text-xs font-medium text-[#4B5563] dark:text-slate-300">Jumlah per {service.unit}</label>
+                                <label className="text-xs font-medium text-[#4B5563] dark:text-slate-300">Jumlah per {service.unit}<ErrorMark show={!!errors[`materials.${index}.quantity`]} /></label>
                                 <input
                                     type="number"
                                     step="any"

@@ -2,6 +2,9 @@ import InputError from '@/Components/InputError';
 import PasswordInput from '@/Components/PasswordInput';
 import ThemeToggle from '@/Components/ThemeToggle';
 import { Head, useForm } from '@inertiajs/react';
+import { useEffect } from 'react';
+import { ErrorMark } from '@/Components/Field';
+
 
 const FEATURES = [
     { title: 'Transaksi kasir lebih cepat', text: 'Pilih barang, hitung kembalian, dan cetak struk dalam satu layar.' },
@@ -14,6 +17,17 @@ export default function Login({ status }) {
         username: '',
         password: '',
     });
+
+    // A refresh must leave both boxes empty. Some browsers put the old text back into the fields
+    // after a reload, so clear the form (and anything saved by an earlier version) once the page is ready.
+    useEffect(() => {
+        try {
+            window.localStorage.removeItem('tripos_last_username');
+        } catch {
+            // Blocked storage: nothing to remove
+        }
+        reset('username', 'password');
+    }, []);
 
     const submit = (e) => {
         e.preventDefault();
@@ -69,14 +83,14 @@ export default function Login({ status }) {
                         <ThemeToggle />
                     </div>
 
-                    <form onSubmit={submit} className="flex w-full max-w-[360px] flex-col">
+                    <form onSubmit={submit} autoComplete="off" className="flex w-full max-w-[360px] flex-col">
                         <h1 className="text-[22px] font-bold text-gray-900 dark:text-white">Selamat datang</h1>
                         <p className="mt-1 text-sm text-[#4B5563] dark:text-slate-400">Masuk dengan username dan password Anda.</p>
 
                         {status && <p className="mt-4 text-sm font-medium text-[#15803D] dark:text-emerald-400">{status}</p>}
 
                         <label htmlFor="username" className="mt-5 text-xs font-semibold text-gray-700 dark:text-slate-300">
-                            Username
+                            Username<ErrorMark show={!!errors.username} />
                         </label>
                         <input
                             id="username"
@@ -84,7 +98,7 @@ export default function Login({ status }) {
                             name="username"
                             value={data.username}
                             placeholder="nama.pengguna"
-                            autoComplete="username"
+                            autoComplete="off"
                             autoFocus
                             onChange={(e) => setData('username', e.target.value)}
                             className="mt-1 h-10 rounded-lg border border-[#6B7280] px-3 text-sm focus:border-[#1D4ED8] focus:outline-2 focus:outline-[#1D4ED8] dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:placeholder-slate-500"
@@ -92,14 +106,14 @@ export default function Login({ status }) {
                         <InputError message={errors.username} className="mt-1" />
 
                         <label htmlFor="password" className="mt-4 text-xs font-semibold text-gray-700 dark:text-slate-300">
-                            Password
+                            Password<ErrorMark show={!!errors.password} />
                         </label>
                         <PasswordInput
                             id="password"
                             name="password"
                             value={data.password}
                             placeholder="Password"
-                            autoComplete="current-password"
+                            autoComplete="off"
                             onChange={(e) => setData('password', e.target.value)}
                             className="mt-1 h-10 rounded-lg border border-[#6B7280] px-3 text-sm focus:border-[#1D4ED8] focus:outline-2 focus:outline-[#1D4ED8] dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:placeholder-slate-500"
                         />

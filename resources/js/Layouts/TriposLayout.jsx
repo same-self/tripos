@@ -7,6 +7,7 @@ import {
     Receipt,
     RefreshCw,
     Truck,
+    User,
     Users,
     Warehouse,
     Wrench,
@@ -90,6 +91,13 @@ export default function TriposLayout({ active = 'Dashboard', children }) {
 
                         {menuOpen && (
                             <div className="animate-popover absolute right-0 top-[calc(100%+8px)] z-20 min-w-[200px] origin-top-right rounded-xl border border-[#E5E7EB] bg-white p-2 shadow-lg dark:border-slate-800 dark:bg-slate-900">
+                                <Link
+                                    href={route('profile.edit')}
+                                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-[#111827] transition-colors duration-150 hover:bg-[#F3F4F6] active:scale-[0.99] dark:text-slate-200 dark:hover:bg-slate-800"
+                                >
+                                    <User size={16} aria-hidden="true" />
+                                    Profil Saya
+                                </Link>
                                 <Link
                                     href={route('logout')}
                                     method="post"

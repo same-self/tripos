@@ -1,10 +1,12 @@
 import TriposLayout from '@/Layouts/TriposLayout';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Info, Plus, Tag, Trash2 } from 'lucide-react';
+import { Info, Package, Plus, Search, Tag, Trash2, Wallet, Warehouse } from 'lucide-react';
 import { useState } from 'react';
 import CategoryBadge from '@/Components/CategoryBadge';
 import EditButton from '@/Components/EditButton';
 import ItemThumb from '@/Components/ItemThumb';
+import PageTitle from '@/Components/PageTitle';
+import SummaryCard from '@/Components/SummaryCard';
 
 const rupiah = (n) => 'Rp ' + Number(n).toLocaleString('id-ID');
 
@@ -20,9 +22,9 @@ function CategoryButton({ active, label, count, onClick }) {
                     : 'font-medium text-[#111827] hover:bg-[#F3F4F6] dark:text-slate-200 dark:hover:bg-slate-800'
             }`}
         >
-            <span className="flex min-w-0 items-center gap-2.5 text-left">
+            <span className="flex min-w-0 flex-1 items-center gap-2.5 text-left">
                 <CategoryBadge name={label} size="sm" />
-                <span className="truncate">{label}</span>
+                <span className="min-w-0 flex-1 truncate" title={label}>{label}</span>
             </span>
             <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${
                 active ? 'bg-white text-[#1D4ED8] dark:bg-blue-800 dark:text-white' : 'bg-white text-[#4B5563] dark:bg-slate-800 dark:text-slate-300'
@@ -33,39 +35,42 @@ function CategoryButton({ active, label, count, onClick }) {
     );
 }
 
-function SummaryCard({ label, value, tone }) {
-    // If digits are long (e.g. large currency string), scale text size down smoothly
-    const isLongText = typeof value === 'string' && value.length > 13;
-    const isVeryLongText = typeof value === 'string' && value.length > 17;
-    const textSize = isVeryLongText
-        ? 'text-base sm:text-lg'
-        : isLongText
-          ? 'text-lg sm:text-xl'
-          : 'text-xl sm:text-[22px]';
+const STOCK_FILTERS = [
+    { key: null, label: 'Semua stok' },
+    { key: 'menipis', label: 'Menipis' },
+    { key: 'habis', label: 'Habis' },
+];
 
-    return (
-        <div className="flex flex-col justify-between gap-1 rounded-2xl border border-[#E5E7EB] bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-            <p className="text-xs font-medium text-[#4B5563] dark:text-slate-400">{label}</p>
-            <p
-                title={String(value)}
-                className={`truncate font-bold tracking-tight ${textSize} ${
-                    tone === 'danger' ? 'text-[#B91C1C] dark:text-red-400' : 'text-[#111827] dark:text-white'
-                }`}
-            >
-                {value}
-            </p>
-        </div>
-    );
+function StockCell({ item }) {
+    if (item.out_of_stock) {
+        return (
+            <span className="inline-flex items-center gap-2">
+                <span className="font-semibold text-[#B91C1C] dark:text-red-400">{item.stock}</span>
+                <span className="rounded-full bg-[#FEE2E2] px-2 py-0.5 text-xs font-semibold text-[#B91C1C] dark:bg-red-950/60 dark:text-red-300">Habis</span>
+            </span>
+        );
+    }
+
+    if (item.low_stock) {
+        return (
+            <span className="inline-flex items-center gap-2">
+                <span className="font-semibold text-[#B45309] dark:text-amber-400">{item.stock}</span>
+                <span className="rounded-full bg-[#FEF3C7] px-2 py-0.5 text-xs font-semibold text-[#B45309] dark:bg-amber-950/60 dark:text-amber-300">Menipis</span>
+            </span>
+        );
+    }
+
+    return <span>{item.stock}</span>;
 }
 
-export default function Index({ items, categories, total, filters, summary }) {
+export default function Index({ items, categories, total, filters, summary, thresholds }) {
     const [search, setSearch] = useState(filters.cari);
 
     // Every filter change reloads the list from the server with the other filters kept
     function go(changes) {
         router.get(
             route('barang.index'),
-            { kategori: filters.kategori, cari: filters.cari, ...changes },
+            { kategori: filters.kategori, cari: filters.cari, stok: filters.stok, ...changes },
             { preserveState: true, preserveScroll: true, replace: true },
         );
     }
@@ -85,7 +90,7 @@ export default function Index({ items, categories, total, filters, summary }) {
             <div className="flex flex-col gap-5">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-[22px] font-bold text-gray-900 dark:text-white">Barang</h1>
+                        <PageTitle icon={Package}>Barang</PageTitle>
                         <p className="mt-1 text-[13px] text-[#4B5563] dark:text-slate-400">Kelola data barang ATK, harga jual, dan kategorinya.</p>
                     </div>
                     <div className="flex items-center gap-2.5">
@@ -106,16 +111,29 @@ export default function Index({ items, categories, total, filters, summary }) {
                     </div>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                    <SummaryCard label="Total barang" value={summary.total} />
-                    <SummaryCard label="Stok menipis" value={summary.low_stock} tone="danger" />
-                    <SummaryCard label="Nilai stok (modal)" value={rupiah(summary.stock_value)} />
-                    <SummaryCard label="Kategori" value={summary.categories} />
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+                    <SummaryCard icon={Package} tone="blue" label="Total barang" value={summary.total} />
+                    <SummaryCard
+                        icon={Warehouse}
+                        tone="amber"
+                        label="Stok menipis"
+                        value={summary.low_stock}
+                        valueClassName={summary.low_stock > 0 ? 'text-[#B45309] dark:text-amber-400' : undefined}
+                    />
+                    <SummaryCard
+                        icon={Warehouse}
+                        tone="red"
+                        label="Stok habis"
+                        value={summary.out_of_stock}
+                        valueClassName={summary.out_of_stock > 0 ? 'text-[#B91C1C] dark:text-red-400' : undefined}
+                    />
+                    <SummaryCard icon={Wallet} tone="green" label="Nilai stok (modal)" value={rupiah(summary.stock_value)} />
+                    <SummaryCard icon={Tag} tone="violet" label="Kategori" value={summary.categories} />
                 </div>
 
                 <div className="flex flex-col gap-5 lg:flex-row">
                     {/* Category panel */}
-                    <aside className="flex w-full shrink-0 flex-col gap-1 rounded-2xl border border-[#E5E7EB] bg-white p-4 lg:w-[220px] dark:border-slate-800 dark:bg-slate-900">
+                    <aside className="flex w-full shrink-0 flex-col gap-1 rounded-2xl border border-[#E5E7EB] bg-white p-4 lg:w-[250px] dark:border-slate-800 dark:bg-slate-900">
                         <h2 className="mb-2 text-[15px] font-semibold text-gray-900 dark:text-white">Kategori</h2>
                         <CategoryButton
                             active={filters.kategori === null}
@@ -141,19 +159,19 @@ export default function Index({ items, categories, total, filters, summary }) {
                                 <Info size={14} className="text-[#1D4ED8] dark:text-blue-400" />
                                 Ambang Status Stok
                             </div>
-                            <p className="mt-1 text-[11px] text-[#6B7280] dark:text-slate-400">Perputaran 30 hari terakhir:</p>
+                            <p className="mt-1 text-[11px] text-[#6B7280] dark:text-slate-400">Perputaran {thresholds.window} hari terakhir:</p>
                             <ul className="mt-2 flex flex-col gap-1.5 text-[11px] dark:text-slate-300">
                                 <li className="flex items-center gap-1.5">
                                     <span className="h-2 w-2 shrink-0 rounded-full bg-[#16A34A]" />
-                                    <span><strong>Cepat:</strong> &ge; 80 unit</span>
+                                    <span><strong>Cepat:</strong> &ge; {thresholds.fast} unit</span>
                                 </li>
                                 <li className="flex items-center gap-1.5">
                                     <span className="h-2 w-2 shrink-0 rounded-full bg-[#9CA3AF]" />
-                                    <span><strong>Normal:</strong> 10–79 unit</span>
+                                    <span><strong>Normal:</strong> {thresholds.slow}–{thresholds.fast - 1} unit</span>
                                 </li>
                                 <li className="flex items-center gap-1.5">
                                     <span className="h-2 w-2 shrink-0 rounded-full bg-[#D97706]" />
-                                    <span><strong>Lambat:</strong> &lt; 10 unit</span>
+                                    <span><strong>Lambat:</strong> &lt; {thresholds.slow} unit</span>
                                 </li>
                             </ul>
                             <Link href={route('stok.index')} className="mt-2.5 block font-semibold text-[#1D4ED8] hover:underline dark:text-blue-400">
@@ -176,15 +194,37 @@ export default function Index({ items, categories, total, filters, summary }) {
                             <label htmlFor="cari" className="sr-only">
                                 Cari nama barang
                             </label>
-                            <input
-                                id="cari"
-                                type="search"
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                placeholder="Cari nama barang..."
-                                className="w-full rounded-[10px] border border-[#6B7280] px-3.5 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder-slate-500 focus:border-[#1D4ED8] focus:ring-1 focus:ring-[#1D4ED8]"
-                            />
+                            <div className="flex items-center gap-2.5 rounded-[10px] border border-[#6B7280] bg-white px-3.5 focus-within:border-[#1D4ED8] focus-within:ring-1 focus-within:ring-[#1D4ED8] dark:border-slate-700 dark:bg-slate-950">
+                                <Search size={16} className="shrink-0 text-[#6B7280] dark:text-slate-400" aria-hidden="true" />
+                                <input
+                                    id="cari"
+                                    type="search"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    placeholder="Cari nama barang..."
+                                    className="min-w-0 flex-1 border-0 bg-transparent py-2.5 text-sm focus:ring-0 dark:text-white dark:placeholder-slate-500"
+                                />
+                            </div>
                         </form>
+
+                        <div className="mt-3 flex flex-wrap items-center gap-2" role="group" aria-label="Filter stok">
+                            <span className="text-xs font-medium text-[#4B5563] dark:text-slate-400">Status stok:</span>
+                            {STOCK_FILTERS.map((f) => (
+                                <button
+                                    key={f.label}
+                                    type="button"
+                                    onClick={() => go({ stok: f.key })}
+                                    aria-pressed={filters.stok === f.key}
+                                    className={`rounded-full px-3.5 py-1.5 text-[13px] ${
+                                        filters.stok === f.key
+                                            ? 'bg-[#1D4ED8] font-semibold text-white dark:bg-blue-600'
+                                            : 'border border-[#E5E7EB] bg-white font-medium text-[#4B5563] hover:bg-[#F3F4F6] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800'
+                                    }`}
+                                >
+                                    {f.label}
+                                </button>
+                            ))}
+                        </div>
 
                         <div className="mt-4 overflow-x-auto">
                             <table className="w-full text-left text-sm">
@@ -212,11 +252,10 @@ export default function Index({ items, categories, total, filters, summary }) {
                                             <td className="px-2 py-3.5 text-[#4B5563] dark:text-slate-400">{item.unit}</td>
                                             <td className="px-2 py-3.5 text-gray-900 dark:text-slate-200">{rupiah(item.cost_price)}</td>
                                             <td className="px-2 py-3.5 font-semibold text-gray-900 dark:text-slate-100">{rupiah(item.sell_price)}</td>
-                                            <td className={`px-2 py-3.5 ${item.low_stock ? 'font-semibold text-[#B91C1C] dark:text-red-400' : 'text-gray-900 dark:text-slate-200'}`}>
-                                                {item.stock}
+                                            <td className="px-2 py-3.5 text-gray-900 dark:text-slate-200">
+                                                <StockCell item={item} />
                                             </td>
                                             <td className="px-2 py-3.5">
-                                                {/* Connected to the edit form in the next step */}
                                                 <div className="flex items-center gap-2">
                                                     <EditButton href={route('barang.edit', item.id)} />
                                                     <button

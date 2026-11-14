@@ -202,10 +202,13 @@ class ReportService
             ->selectRaw('m.item_id, SUM(m.amount) as qty')
             ->pluck('qty', 'item_id');
 
+        // The same ranking the Laporan > Keuntungan tab shows, so both screens always agree
+        $ranking = app(ProfitabilityService::class)->ranking($window, $now);
+
         $cards = [];
         $topItemId = null;
 
-        if ($top = $this->topProfitCard($sold, $window)) {
+        if ($top = $this->topProfitCard($ranking['rows'], $window)) {
             $cards[] = $top['card'];
             $topItemId = $top['item_id'];
         }
@@ -214,36 +217,59 @@ class ReportService
             $cards[] = $idle;
         }
 
+        if ($weak = $this->weakCard($ranking['rows'])) {
+            $cards[] = $weak;
+        }
+
         return $cards;
     }
 
     /**
-     * @param  Collection<int|string, array{quantity: int, profit: int}>  $sold
-     * @return array{card: array{tag: string, tone: string, title: string, text: string}, item_id: int}|null
+     * @param  list<array<string, mixed>>  $rows  already sorted by profit, biggest first
+     * @return array{card: array{tag: string, tone: string, title: string, text: string}, item_id: int|null}|null
      */
-    private function topProfitCard(Collection $sold, int $window): ?array
+    private function topProfitCard(array $rows, int $window): ?array
     {
-        $best = $sold->sortByDesc('profit')->first();
+        $best = $rows[0] ?? null;
 
         if (! $best || $best['profit'] <= 0) {
             return null;
         }
 
-        $itemId = (int) $sold->sortByDesc('profit')->keys()->first();
-        $item = Item::withTrashed()->find($itemId);
-
-        if (! $item) {
-            return null;
-        }
-
         return [
-            'item_id' => $itemId,
+            // Only an item can be left out of the "modal mengendap" card; a service holds no stock
+            'item_id' => $best['kind'] === 'barang' ? (int) substr((string) $best['key'], strlen('barang-')) : null,
             'card' => [
                 'tag' => 'Untung terbesar',
                 'tone' => 'primary',
-                'title' => $item->name,
-                'text' => 'Sekitar '.$this->rupiah((int) round($best['profit'], -3))." keuntungan dalam {$window} hari.",
+                'title' => $best['kind'] === 'jasa' ? $best['name'].' (jasa)' : $best['name'],
+                'text' => 'Sekitar '.$this->rupiah((int) round($best['profit'], -3)).($best['estimated'] ? ' perkiraan keuntungan' : ' keuntungan')." dalam {$window} hari.",
             ],
+        ];
+    }
+
+    /** Items or services that lose money or earn very little, worst first. */
+    private function weakCard(array $rows): ?array
+    {
+        $weak = collect($rows)->whereIn('verdict', ['rugi', 'tipis'])->sortBy('profit')->values();
+
+        if ($weak->isEmpty()) {
+            return null;
+        }
+
+        $names = $this->joinNames($weak->take(3)->pluck('name')->all());
+
+        if ($weak->count() > 3) {
+            $names .= ' dan lainnya';
+        }
+
+        $losses = $weak->where('verdict', 'rugi')->count();
+
+        return [
+            'tag' => 'Perlu dicek',
+            'tone' => 'danger',
+            'title' => $weak->count().' barang/jasa untungnya tipis atau rugi',
+            'text' => $names.($losses > 0 ? ". {$losses} di antaranya dijual di bawah modal." : '.'),
         ];
     }
 

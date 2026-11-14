@@ -3,6 +3,7 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { useMemo, useState, useEffect } from 'react';
 import { Trash2, Search, ArrowUpDown, X, ShoppingCart, Printer, CheckCircle2 } from 'lucide-react';
 import ItemThumb from '@/Components/ItemThumb';
+import CategoryBadge from '@/Components/CategoryBadge';
 import ThermalReceipt from '@/Components/ThermalReceipt';
 
 function getQuickCashOptions(total) {
@@ -28,38 +29,6 @@ function getQuickCashOptions(total) {
 
 const rupiah = (n) => 'Rp ' + Number(n).toLocaleString('id-ID');
 const fmt = (n) => Number(n).toLocaleString('id-ID', { maximumFractionDigits: 4 });
-
-const ICON_PATHS = {
-    'Alat Tulis': ['M12 20h9', 'M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z'],
-    Kertas: ['M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', 'M14 2v6h6'],
-    Buku: ['M4 19.5A2.5 2.5 0 0 1 6.5 17H20', 'M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z'],
-    Aksesoris: [
-        'm21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48',
-    ],
-};
-
-function CategoryIcon({ category }) {
-    const paths = ICON_PATHS[category] ?? ['M4 4h16v16H4z'];
-    return (
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#DBEAFE] text-[#1D4ED8] dark:bg-blue-950/60 dark:text-blue-400">
-            <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-            >
-                {paths.map((d) => (
-                    <path key={d} d={d} />
-                ))}
-            </svg>
-        </span>
-    );
-}
 
 function TabButton({ active, onClick, children }) {
     return (
@@ -565,7 +534,7 @@ export default function Index({ items, services, paymentMethods }) {
                                                 </div>
 
                                                 <div className="flex items-center gap-1.5 mt-1">
-                                                    <CategoryIcon category={item.category} />
+                                                    <CategoryBadge name={item.category} size="sm" />
                                                     <span className="truncate text-xs font-medium text-[#4B5563] dark:text-slate-400">{item.category}</span>
                                                 </div>
 
@@ -664,7 +633,7 @@ export default function Index({ items, services, paymentMethods }) {
                                                 inputMode="numeric"
                                                 value={pages}
                                                 onChange={(e) => setPages(Number(e.target.value) || 0)}
-                                                className="w-full border-0 p-0 text-xl font-bold focus:ring-0 dark:bg-transparent dark:text-white"
+                                                className="no-spin w-full border-0 p-0 text-xl font-bold focus:ring-0 dark:bg-transparent dark:text-white"
                                             />
                                             <span className="text-[13px] text-[#4B5563] dark:text-slate-400">{selectedService.unit}</span>
                                         </div>
@@ -842,7 +811,7 @@ export default function Index({ items, services, paymentMethods }) {
                                                     value={line.qty}
                                                     onChange={(e) => setQty(line.key, e.target.value)}
                                                     onBlur={() => handleQtyBlur(line.key)}
-                                                    className="h-7 w-12 rounded-lg border border-[#D1D5DB] text-center text-xs font-semibold focus:border-[#1D4ED8] focus:ring-1 focus:ring-[#1D4ED8] dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+                                                    className="no-spin h-7 w-12 rounded-lg border border-[#D1D5DB] text-center text-xs font-semibold focus:border-[#1D4ED8] focus:ring-1 focus:ring-[#1D4ED8] dark:border-slate-700 dark:bg-slate-950 dark:text-white"
                                                 />
                                                 <button
                                                     type="button"
@@ -906,7 +875,7 @@ export default function Index({ items, services, paymentMethods }) {
                                 value={paid === 0 ? '' : paid}
                                 onChange={(e) => setPaid(Number(e.target.value) || 0)}
                                 placeholder="0"
-                                className="h-12 rounded-xl border border-[#1D4ED8] px-4 text-lg font-bold dark:border-blue-500 dark:bg-slate-950 dark:text-white"
+                                className="no-spin h-12 rounded-xl border border-[#1D4ED8] px-4 text-lg font-bold dark:border-blue-500 dark:bg-slate-950 dark:text-white"
                             />
                             <div className="flex flex-wrap gap-2">
                                 <button
