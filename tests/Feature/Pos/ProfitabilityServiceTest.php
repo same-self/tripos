@@ -31,9 +31,6 @@ class ProfitabilityServiceTest extends TestCase
         // Saturday 24 Oct 2026, midday. Every date below is relative to this moment.
         $this->travelTo(Carbon::parse('2026-10-24 12:00:00'));
 
-        // Keep stock out of these tests: they are about money
-        Setting::put('auto_deduct_service_materials', false);
-
         $this->cashier = $this->makeCashier();
         $this->profit = app(ProfitabilityService::class);
     }

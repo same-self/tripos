@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Units;
 use App\Models\Item;
 use App\Models\ItemCategory;
+use App\Models\Setting;
 use App\Models\ServiceMaterial;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -61,6 +63,11 @@ class BarangController extends Controller
                 'stock_value' => (int) $all->sum(fn (Item $item) => $item->stock * $item->cost_price),
                 'categories' => $categories->count(),
             ],
+            'thresholds' => [
+                'fast' => Setting::int('fast_moving_threshold', 80),
+                'slow' => Setting::int('slow_moving_threshold', 10),
+                'window' => max(1, Setting::int('report_window_days', 30)),
+            ],
             'filters' => [
                 'kategori' => $categoryId ? (int) $categoryId : null,
                 'cari' => $search,
@@ -74,12 +81,14 @@ class BarangController extends Controller
         return Inertia::render('Barang/Form', [
             'item' => null,
             'categories' => $this->categoryOptions(),
+            'units' => Units::ALL,
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate($this->rules() + $this->imageRules(), $this->messages());
+        $data['unit'] = Units::normalize($data['unit']);
 
         // New products start at 0 stock; stock changes come from restok and sales
         $item = Item::create(collect($data)->except(['gambar', 'hapus_gambar'])->all());
@@ -106,12 +115,14 @@ class BarangController extends Controller
                 'image_url' => $item->imageUrl(),
             ],
             'categories' => $this->categoryOptions(),
+            'units' => Units::ALL,
         ]);
     }
 
     public function update(Request $request, Item $item): RedirectResponse
     {
-        $data = $request->validate($this->rules() + $this->imageRules(), $this->messages());
+        $data = $request->validate($this->rules($item->unit) + $this->imageRules(), $this->messages());
+        $data['unit'] = Units::normalize($data['unit']);
 
         $item->update(collect($data)->except(['gambar', 'hapus_gambar'])->all());
 
@@ -144,12 +155,12 @@ class BarangController extends Controller
         return ItemCategory::orderBy('name')->get(['id', 'name']);
     }
 
-    private function rules(): array
+    private function rules(?string $currentUnit = null): array
     {
         return [
             'item_category_id' => ['required', 'exists:item_categories,id'],
             'name' => ['required', 'string', 'max:255'],
-            'unit' => ['required', 'string', 'max:50'],
+            'unit' => ['required', 'string', 'max:50', Units::rule($currentUnit)],
             'cost_price' => ['required', 'integer', 'min:0'],
             'sell_price' => ['required', 'integer', 'min:1', 'gte:cost_price'],
             'min_stock' => ['required', 'integer', 'min:0'],
@@ -170,7 +181,7 @@ class BarangController extends Controller
             'item_category_id.required' => 'Pilih kategori barang.',
             'item_category_id.exists' => 'Kategori yang dipilih tidak ada.',
             'name.required' => 'Nama barang wajib diisi.',
-            'unit.required' => 'Satuan wajib diisi, misalnya buah atau rim.',
+            'unit.required' => 'Pilih satuan dari daftar.',
             'cost_price.required' => 'Harga modal wajib diisi.',
             'cost_price.integer' => 'Harga modal harus berupa angka bulat.',
             'cost_price.min' => 'Harga modal tidak boleh negatif.',

@@ -8,7 +8,6 @@ use App\Http\Controllers\PosController;
 use App\Http\Controllers\SalesHistoryController;
 use App\Http\Controllers\BarangController;
 use App\Http\Controllers\PenggunaController;
-use App\Http\Controllers\ForcePasswordController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\LayananController;
 use App\Http\Controllers\RestokController;
@@ -30,7 +29,7 @@ Route::get('/media/{path}', function (string $path) {
     abort_unless($disk->exists($path), 404);
 
     return $disk->response($path, null, ['Cache-Control' => 'public, max-age=86400']);
-})->where('path', '(barang|layanan)/[A-Za-z0-9][A-Za-z0-9._-]*')->name('media');
+})->where('path', '(barang|layanan|kategori)/[A-Za-z0-9][A-Za-z0-9._-]*')->name('media');
 
 Route::get('/dashboard', DashboardController::class)->middleware(['auth', 'verified', 'role:admin'])->name('dashboard');
 
@@ -153,9 +152,6 @@ Route::post('/layanan', [LayananController::class, 'store'])
     ->middleware(['auth', 'verified', 'role:admin'])
     ->name('layanan.store');
 
-Route::put('/layanan/pengaturan', [LayananController::class, 'updateSetting'])
-    ->middleware(['auth', 'verified', 'role:admin'])
-    ->name('layanan.pengaturan');
 
 Route::get('/layanan/{service}/ubah', [LayananController::class, 'edit'])
     ->middleware(['auth', 'verified', 'role:admin'])
@@ -209,19 +205,14 @@ Route::get('/kasir/harga', [PosController::class, 'priceList'])
     ->middleware(['auth', 'verified', 'role:cashier,admin'])
     ->name('kasir.harga');
 
-Route::get('/kasir/struk/{sale}', [PosController::class, 'struk'])
+Route::get('/kasir/riwayat', [PosController::class, 'history'])
     ->middleware(['auth', 'verified', 'role:cashier,admin'])
-    ->name('kasir.struk');
-
-Route::middleware('auth')->group(function () {
-    Route::get('/password/ganti', [ForcePasswordController::class, 'edit'])->name('password.force');
-    Route::put('/password/ganti', [ForcePasswordController::class, 'update'])->name('password.force.update');
-});
+    ->name('kasir.riwayat');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
 });
 
 require __DIR__.'/auth.php';

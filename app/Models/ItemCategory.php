@@ -2,16 +2,22 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasImage;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ItemCategory extends Model
 {
-    use SoftDeletes;
+    use HasImage, SoftDeletes;
 
     // Writes go through services/forms that validate input, so mass-assignment is open here.
     protected $guarded = [];
+
+    protected function imageFolder(): string
+    {
+        return 'kategori';
+    }
 
     public function items(): HasMany
     {

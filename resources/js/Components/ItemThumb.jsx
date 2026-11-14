@@ -9,7 +9,7 @@ export default function ItemThumb({ src, name, size = 'md', icon: Icon = Package
 
     return (
         <span
-            className={`flex ${box} shrink-0 items-center justify-center rounded-lg bg-[#F3F4F6] text-[#9CA3AF]`}
+            className={`flex ${box} shrink-0 items-center justify-center rounded-lg bg-[#F3F4F6] text-[#9CA3AF] dark:bg-gray-800 dark:text-gray-500`}
             aria-label={`Belum ada gambar ${name}`}
         >
             <Icon size={size === 'lg' ? 32 : 18} strokeWidth={1.75} aria-hidden="true" />

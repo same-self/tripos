@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Units;
 use App\Models\Service;
 use App\Models\ServiceCategory;
-use App\Models\Setting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -69,7 +69,6 @@ class LayananController extends Controller
             'categories' => $categories,
             'total' => Service::count(),
             'detail' => $detail,
-            'autoDeduct' => Setting::bool('auto_deduct_service_materials', true),
             'filters' => [
                 'kategori' => $categoryId ? (int) $categoryId : null,
                 'pilih' => $detail['id'] ?? null,
@@ -82,12 +81,14 @@ class LayananController extends Controller
         return Inertia::render('Layanan/Form', [
             'service' => null,
             'categories' => $this->categoryOptions(),
+            'units' => Units::ALL,
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate($this->rules() + $this->imageRules(), $this->messages());
+        $data['unit'] = Units::normalize($data['unit']);
 
         $service = Service::create(collect($data)->except(['gambar', 'hapus_gambar'])->all());
 
@@ -110,12 +111,14 @@ class LayananController extends Controller
                 'image_url' => $service->imageUrl(),
             ],
             'categories' => $this->categoryOptions(),
+            'units' => Units::ALL,
         ]);
     }
 
     public function update(Request $request, Service $service): RedirectResponse
     {
-        $data = $request->validate($this->rules() + $this->imageRules(), $this->messages());
+        $data = $request->validate($this->rules($service->unit) + $this->imageRules(), $this->messages());
+        $data['unit'] = Units::normalize($data['unit']);
 
         $service->update(collect($data)->except(['gambar', 'hapus_gambar'])->all());
 
@@ -136,17 +139,6 @@ class LayananController extends Controller
         $service->delete();
 
         return redirect()->route('layanan.index')->with('success', 'Layanan berhasil dihapus.');
-    }
-
-    public function updateSetting(Request $request): RedirectResponse
-    {
-        $data = $request->validate([
-            'auto_deduct' => ['required', 'boolean'],
-        ]);
-
-        Setting::put('auto_deduct_service_materials', $data['auto_deduct']);
-
-        return back()->with('success', 'Pengaturan stok bahan diperbarui.');
     }
 
     public function bahan(Service $service): Response
@@ -228,12 +220,12 @@ class LayananController extends Controller
         return ServiceCategory::orderBy('name')->get(['id', 'name']);
     }
 
-    private function rules(): array
+    private function rules(?string $currentUnit = null): array
     {
         return [
             'service_category_id' => ['required', 'exists:service_categories,id'],
             'name' => ['required', 'string', 'max:255'],
-            'unit' => ['required', 'string', 'max:50'],
+            'unit' => ['required', 'string', 'max:50', Units::rule($currentUnit)],
             'unit_price' => ['required', 'integer', 'min:0'],
         ];
     }
@@ -255,7 +247,7 @@ class LayananController extends Controller
             'service_category_id.required' => 'Pilih kategori layanan.',
             'service_category_id.exists' => 'Kategori yang dipilih tidak ada.',
             'name.required' => 'Nama layanan wajib diisi.',
-            'unit.required' => 'Satuan wajib diisi, misalnya lembar atau halaman.',
+            'unit.required' => 'Pilih satuan dari daftar.',
             'unit_price.required' => 'Tarif wajib diisi.',
             'unit_price.integer' => 'Tarif harus berupa angka bulat.',
             'unit_price.min' => 'Tarif tidak boleh negatif.',

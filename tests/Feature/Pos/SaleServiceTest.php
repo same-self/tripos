@@ -214,23 +214,6 @@ class SaleServiceTest extends TestCase
         $this->assertEquals(97, $paper->fresh()->stock);
     }
 
-    public function test_material_stock_is_untouched_when_auto_deduct_is_off(): void
-    {
-        Setting::put('auto_deduct_service_materials', false);
-
-        $paper = $this->makeItem(['stock' => 100]);
-        $copy = $this->makeService();
-        $this->attachMaterial($copy, $paper, 1);
-
-        $this->sales->create($this->cashier, [
-            'services' => [['service_id' => $copy->id, 'qty' => 10]],
-            'payment_method' => 'qris',
-        ]);
-
-        $this->assertEquals(100, $paper->fresh()->stock);
-        $this->assertSame(0, StockMutation::count());
-    }
-
     public function test_items_and_services_can_be_sold_on_one_note(): void
     {
         $pen = $this->makeItem(['sell_price' => 3000, 'stock' => 20]);

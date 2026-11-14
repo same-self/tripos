@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Support\Units;
 use App\Models\Item;
 use App\Models\ItemCategory;
 use App\Models\Service;
@@ -22,18 +23,18 @@ class CatalogSeeder extends Seeder
         $stationery = ItemCategory::firstOrCreate(['name' => 'Alat Tulis']);
         $accessory = ItemCategory::firstOrCreate(['name' => 'Aksesoris Komputer']);
 
-        $hvs = $this->item($paper, 'HVS A4 80gr', 'lembar', 300, 500, 2500, 500, '8990000000011');
-        $this->item($paper, 'HVS F4 80gr', 'lembar', 350, 600, 1500, 300, '8990000000028');
-        $this->item($stationery, 'Pulpen Hitam', 'pcs', 2000, 3000, 60, 10, '8990000000035');
-        $this->item($stationery, 'Buku Tulis 38 Lembar', 'pcs', 3500, 5000, 40, 10, '8990000000042');
-        $this->item($stationery, 'Map Plastik', 'pcs', 1500, 2500, 8, 10, '8990000000059'); // low stock on purpose
-        $this->item($accessory, 'Flashdisk 16GB', 'pcs', 45000, 60000, 6, 3, '8990000000066');
+        $hvs = $this->item($paper, 'HVS A4 80gr', 'Lembar', 300, 500, 2500, 500, '8990000000011');
+        $this->item($paper, 'HVS F4 80gr', 'Lembar', 350, 600, 1500, 300, '8990000000028');
+        $this->item($stationery, 'Pulpen Hitam', 'Buah', 2000, 3000, 60, 10, '8990000000035');
+        $this->item($stationery, 'Buku Tulis 38 Lembar', 'Buah', 3500, 5000, 40, 10, '8990000000042');
+        $this->item($stationery, 'Map Plastik', 'Buah', 1500, 2500, 8, 10, '8990000000059'); // low stock on purpose
+        $this->item($accessory, 'Flashdisk 16GB', 'Buah', 45000, 60000, 6, 3, '8990000000066');
 
         $copy = ServiceCategory::firstOrCreate(['name' => 'Fotokopi & Print']);
         $finishing = ServiceCategory::firstOrCreate(['name' => 'Jilid & Cetak']);
 
-        $fotokopi = $this->service($copy, 'Fotokopi A4 Hitam Putih', 'lembar', 300);
-        $print = $this->service($copy, 'Print A4 Hitam Putih', 'lembar', 500);
+        $fotokopi = $this->service($copy, 'Fotokopi A4 Hitam Putih', 'Lembar', 300);
+        $print = $this->service($copy, 'Print A4 Hitam Putih', 'Lembar', 500);
         $this->service($finishing, 'Jilid Spiral', 'buku', 8000);
         $this->service($finishing, 'Cetak Banner', 'meter', 25000);
 
@@ -58,7 +59,7 @@ class CatalogSeeder extends Seeder
             [
                 'item_category_id' => $cat->id,
                 'name' => $name,
-                'unit' => $unit,
+                'unit' => Units::normalize($unit),
                 'cost_price' => $cost,
                 'sell_price' => $sell,
                 'stock' => $stock,
@@ -71,7 +72,7 @@ class CatalogSeeder extends Seeder
     {
         return Service::updateOrCreate(
             ['name' => $name],
-            ['service_category_id' => $cat->id, 'unit' => $unit, 'unit_price' => $price],
+            ['service_category_id' => $cat->id, 'unit' => Units::normalize($unit), 'unit_price' => $price],
         );
     }
 }

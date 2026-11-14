@@ -48,6 +48,11 @@ class StokController extends Controller
                     'sell_price' => $item->sell_price,
                     // Days of stock left at the current sales pace; null when nothing sold
                     'days_left' => $perDay > 0 ? max(0, (int) round($item->stock / $perDay)) : null,
+                    'out_of_stock' => $item->isOutOfStock(),
+                    // Average units sold per day, and how many to buy so stock lasts a full window.
+                    // Rule-based (no machine learning): the owner can check the arithmetic.
+                    'per_day' => round($perDay, 1),
+                    'suggested_qty' => $perDay > 0 ? max(1, (int) ceil($perDay * $window) - max(0, $item->stock)) : 0,
                 ];
             })
             ->values();
@@ -70,6 +75,7 @@ class StokController extends Controller
             'restokNanti' => $restokNanti,
             'window' => $window,
             'segeraDays' => $segeraDays,
+            'thresholds' => ['fast' => $fast, 'slow' => $slow],
         ]);
     }
 }

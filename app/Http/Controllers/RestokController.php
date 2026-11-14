@@ -15,12 +15,31 @@ use Inertia\Response;
 
 class RestokController extends Controller
 {
-    public function create(): Response
+    public function create(Request $request): Response
     {
+        $items = Item::orderBy('name')->get(['id', 'name', 'unit', 'cost_price']);
+
+        // "?isi=3:40,7:10" (item id : quantity) comes from the Stok page's restock suggestions
+        $prefill = collect(explode(',', (string) $request->query('isi')))
+            ->map(fn (string $pair) => array_map('intval', array_pad(explode(':', $pair), 2, 0)))
+            ->filter(fn (array $pair) => $pair[0] > 0 && $pair[1] > 0)
+            ->map(function (array $pair) use ($items) {
+                $item = $items->firstWhere('id', $pair[0]);
+
+                return $item ? [
+                    'item_id' => (string) $item->id,
+                    'qty' => (string) $pair[1],
+                    'purchase_price' => (string) $item->cost_price,
+                ] : null;
+            })
+            ->filter()
+            ->values();
+
         return Inertia::render('Restok/Index', [
             'suppliers' => Supplier::orderBy('name')->get(['id', 'name']),
-            'items' => Item::orderBy('name')->get(['id', 'name', 'unit', 'cost_price']),
+            'items' => $items,
             'today' => now()->toDateString(),
+            'prefill' => $prefill,
         ]);
     }
 

@@ -12,14 +12,14 @@ class UserSeeder extends Seeder
     {
         // DEVELOPMENT ONLY. "password" is guessable: set real passwords in .env (not in Git):
         //   SEED_ADMIN_PASSWORD='...'   SEED_CASHIER_PASSWORD='...'
-        $this->upsert('admin.toko', 'Pemilik Toko', 'admin@trisanet.test', Role::Admin, env('SEED_ADMIN_PASSWORD', 'password'));
+        $this->upsert('admin.toko', 'Pemilik Toko', 'admin@trisanet.test', Role::Admin, env('SEED_ADMIN_PASSWORD', 'password'), superAdmin: true);
         $this->upsert('kasir.toko', 'Kasir Trisanet', 'kasir@trisanet.test', Role::Cashier, env('SEED_CASHIER_PASSWORD', 'password'));
     }
 
     /**
      * $username is the LOGIN id (lowercase, no spaces); $name is the label shown on screens and receipts.
      */
-    private function upsert(string $username, string $name, string $email, Role $role, string $password): void
+    private function upsert(string $username, string $name, string $email, Role $role, string $password, bool $superAdmin = false): void
     {
         $user = User::withTrashed()->where('username', $username)->first() ?? new User;
 
@@ -31,7 +31,8 @@ class UserSeeder extends Seeder
             'email' => $email,
             'password' => $password,
             'role' => $role,
-            'must_change_password' => true,
+            'is_super_admin' => $superAdmin,
+            'must_change_password' => false,
             'email_verified_at' => now(),
             'deleted_at' => null,
         ])->save();

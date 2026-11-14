@@ -39,7 +39,7 @@ class ImageUploadTest extends TestCase
         return array_merge([
             'item_category_id' => $item->item_category_id,
             'name' => $item->name,
-            'unit' => $item->unit,
+            'unit' => 'Buah', // a fixed unit, so these tests don't depend on what the test helper uses
             'cost_price' => $item->cost_price,
             'sell_price' => $item->sell_price,
             'min_stock' => $item->min_stock,
@@ -138,7 +138,7 @@ class ImageUploadTest extends TestCase
         $form = [
             'service_category_id' => $service->service_category_id,
             'name' => $service->name,
-            'unit' => $service->unit,
+            'unit' => 'Lembar',
             'unit_price' => $service->unit_price,
         ];
 

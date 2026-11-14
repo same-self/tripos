@@ -16,7 +16,6 @@ class SettingSeeder extends Seeder
         Setting::put('thin_margin_percent', 15);     // profit under this % of the sales amount -> "Margin tipis"
 
         // Open decisions, defaulted to the safe-for-a-busy-shop choice:
-        Setting::put('auto_deduct_service_materials', true);  // photocopy uses paper -> stock drops
         Setting::put('allow_negative_stock', true);           // never block the queue; flag it instead
     }
 }

@@ -1,3 +1,89 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Suppress browser-native password reveal and clear buttons in Edge/IE */
+input::-ms-reveal,
+input::-ms-clear {
+    display: none;
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.97) translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.animate-popover {
+    animation: fadeInScale 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@page {
+    margin: 0;
+    size: auto;
+}
+
+@media print {
+    html,
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        height: auto !important;
+        min-height: 0 !important;
+    }
+    body * {
+        visibility: hidden !important;
+    }
+    #printable-receipt,
+    #printable-receipt * {
+        visibility: visible !important;
+        color: black !important;
+        background-color: transparent !important;
+        border-color: black !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    /* Laporan: cetak/ekspor PDF seluruh isi laporan (tema terang dipaksa lewat Laporan/Index.jsx) */
+    #printable-report,
+    #printable-report * {
+        visibility: visible !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    #printable-report {
+        position: relative !important;
+        width: 100% !important;
+        padding: 10mm !important;
+        box-sizing: border-box !important;
+    }
+    #printable-report table {
+        break-inside: auto;
+    }
+    #printable-report tr {
+        break-inside: avoid;
+    }
+    #printable-receipt {
+        display: block !important;
+        position: relative !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        max-width: 72mm !important;
+        margin: 0 auto !important;
+        padding: 2mm 3mm !important;
+        background-color: white !important;
+        box-shadow: none !important;
+        border: none !important;
+        box-sizing: border-box !important;
+    }
+}
+
+

@@ -2,21 +2,13 @@ import TriposLayout from '@/Layouts/TriposLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import ImageField from '@/Components/ImageField';
 import PageTitle from '@/Components/PageTitle';
+import SearchSelect from '@/Components/SearchSelect';
 import { Package } from 'lucide-react';
+import Field from '@/Components/Field';
 
-const inputClass = 'h-11 rounded-xl border border-[#6B7280] bg-white px-3.5 text-sm';
+const inputClass = 'h-11 rounded-xl border border-[#6B7280] bg-white px-3.5 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder-slate-500 focus:border-[#1D4ED8] focus:ring-1 focus:ring-[#1D4ED8]';
 
-function Field({ label, error, children }) {
-    return (
-        <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-[#4B5563]">{label}</label>
-            {children}
-            {error && <p className="text-xs text-[#B91C1C]">{error}</p>}
-        </div>
-    );
-}
-
-export default function Form({ item, categories }) {
+export default function Form({ item, categories, units }) {
     const isEdit = item !== null;
 
     const { data, setData, post, transform, processing, errors } = useForm({
@@ -29,6 +21,12 @@ export default function Form({ item, categories }) {
         gambar: null,
         hapus_gambar: false,
     });
+
+    // A unit saved before the fixed list existed stays selectable, so editing doesn't lose it
+    const unitOptions = [...(units ?? [])];
+    if (data.unit && !unitOptions.some((u) => u.toLowerCase() === String(data.unit).toLowerCase())) {
+        unitOptions.unshift(data.unit);
+    }
 
     function submit(e) {
         e.preventDefault();
@@ -48,13 +46,13 @@ export default function Form({ item, categories }) {
 
             <div className="max-w-2xl">
                 <PageTitle icon={Package}>{isEdit ? 'Ubah Barang' : 'Tambah Barang'}</PageTitle>
-                <p className="mt-1 text-[13px] text-[#4B5563]">
+                <p className="mt-1 text-[13px] text-[#4B5563] dark:text-slate-400">
                     {isEdit
                         ? 'Perbarui nama, satuan, harga, gambar, atau stok minimum.'
                         : 'Isi data barang baru. Stok awal dimulai dari 0 dan diisi lewat menu Restok.'}
                 </p>
 
-                <form onSubmit={submit} className="mt-6 grid gap-5 rounded-2xl border border-[#E5E7EB] bg-white p-6">
+                <form onSubmit={submit} className="mt-6 grid gap-5 rounded-2xl border border-[#E5E7EB] bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
                     <ImageField
                         label="Gambar barang (opsional)"
                         initialUrl={item?.image_url ?? null}
@@ -65,18 +63,16 @@ export default function Form({ item, categories }) {
                         }}
                     />
 
+
                     <Field label="Kategori" error={errors.item_category_id}>
-                        <select
+                        <SearchSelect
+                            className="h-11"
+                            invalid={!!errors.item_category_id}
                             value={data.item_category_id}
-                            onChange={(e) => setData('item_category_id', e.target.value)}
-                            className={inputClass}
-                        >
-                            {categories.map((c) => (
-                                <option key={c.id} value={c.id}>
-                                    {c.name}
-                                </option>
-                            ))}
-                        </select>
+                            onChange={(v) => setData('item_category_id', v)}
+                            options={categories.map((c) => ({ value: c.id, label: c.name }))}
+                            placeholder="Pilih kategori"
+                        />
                     </Field>
 
                     <Field label="Nama barang" error={errors.name}>
@@ -89,12 +85,13 @@ export default function Form({ item, categories }) {
                     </Field>
 
                     <Field label="Satuan" error={errors.unit}>
-                        <input
-                            type="text"
+                        <SearchSelect
+                            className="h-11"
+                            invalid={!!errors.unit}
                             value={data.unit}
-                            onChange={(e) => setData('unit', e.target.value)}
-                            placeholder="buah, rim, lembar"
-                            className={inputClass}
+                            onChange={(v) => setData('unit', v)}
+                            options={unitOptions.map((u) => ({ value: u, label: u }))}
+                            placeholder="Pilih satuan"
                         />
                     </Field>
 
@@ -133,8 +130,8 @@ export default function Form({ item, categories }) {
                     </Field>
 
                     {isEdit && (
-                        <p className="rounded-xl bg-[#F3F4F6] px-4 py-3 text-sm text-[#4B5563]">
-                            Stok saat ini: <strong className="text-[#111827]">{item.stock}</strong>. Stok berubah lewat
+                        <p className="rounded-xl bg-[#F3F4F6] px-4 py-3 text-sm text-[#4B5563] dark:bg-slate-950/60 dark:text-slate-300">
+                            Stok saat ini: <strong className="text-[#111827] dark:text-white">{item.stock}</strong>. Stok berubah lewat
                             penjualan dan restok.
                         </p>
                     )}
@@ -142,14 +139,14 @@ export default function Form({ item, categories }) {
                     <div className="flex items-center justify-end gap-3">
                         <Link
                             href={route('barang.index')}
-                            className="rounded-xl border border-[#6B7280] px-4 py-2.5 text-sm font-medium"
+                            className="rounded-xl border border-[#6B7280] px-4 py-2.5 text-sm font-medium dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors"
                         >
                             Batal
                         </Link>
                         <button
                             type="submit"
                             disabled={processing}
-                            className="rounded-xl bg-[#1D4ED8] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+                            className="rounded-xl bg-[#1D4ED8] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60 dark:bg-blue-600 dark:hover:bg-blue-500 transition-colors"
                         >
                             {isEdit ? 'Simpan perubahan' : 'Tambah Barang'}
                         </button>

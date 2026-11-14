@@ -2,98 +2,98 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
+use Inertia\Testing\AssertableInertia as Assert;
+use Tests\Support\BuildsPosData;
 use Tests\TestCase;
 
 class ProfileTest extends TestCase
 {
-    use RefreshDatabase;
+    use BuildsPosData, RefreshDatabase;
 
-    public function test_profile_page_is_displayed(): void
+    public function test_admin_and_cashier_can_open_their_profile(): void
     {
-        $user = User::factory()->create();
+        $this->actingAs($this->makeAdmin())->get('/profile')->assertOk()
+            ->assertInertia(fn (Assert $p) => $p->component('Profile/Edit')->where('isAdmin', true));
 
-        $response = $this
-            ->actingAs($user)
-            ->get('/profile');
-
-        $response->assertOk();
+        $this->actingAs($this->makeCashier())->get('/profile')->assertOk()
+            ->assertInertia(fn (Assert $p) => $p->component('Profile/Edit')->where('isAdmin', false));
     }
 
-    public function test_profile_information_can_be_updated(): void
+    public function test_guests_cannot_open_the_profile(): void
     {
-        $user = User::factory()->create();
+        $this->get('/profile')->assertRedirect('/login');
+    }
 
-        $response = $this
-            ->actingAs($user)
-            ->patch('/profile', [
-                'name' => 'Test User',
-                'email' => 'test@example.com',
-            ]);
+    public function test_a_user_can_change_their_name(): void
+    {
+        $user = $this->makeCashier();
 
-        $response
-            ->assertSessionHasNoErrors()
-            ->assertRedirect('/profile');
+        $this->actingAs($user)->patch('/profile', ['name' => 'Nama Baru'])
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame('Nama Baru', $user->refresh()->name);
+    }
+
+    public function test_a_user_cannot_change_their_role_or_username_from_the_profile(): void
+    {
+        $user = $this->makeCashier();
+        $username = $user->username;
+
+        $this->actingAs($user)->patch('/profile', [
+            'name' => 'Nama Baru',
+            'role' => 'admin',
+            'username' => 'hacker',
+        ])->assertSessionHasNoErrors();
 
         $user->refresh();
-
-        $this->assertSame('Test User', $user->name);
-        $this->assertSame('test@example.com', $user->email);
-        $this->assertNull($user->email_verified_at);
+        $this->assertFalse($user->isAdmin());
+        $this->assertSame($username, $user->username);
     }
 
-    public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged(): void
+    public function test_the_name_is_required(): void
     {
-        $user = User::factory()->create();
-
-        $response = $this
-            ->actingAs($user)
-            ->patch('/profile', [
-                'name' => 'Test User',
-                'email' => $user->email,
-            ]);
-
-        $response
-            ->assertSessionHasNoErrors()
-            ->assertRedirect('/profile');
-
-        $this->assertNotNull($user->refresh()->email_verified_at);
+        $this->actingAs($this->makeCashier())->patch('/profile', ['name' => ''])
+            ->assertSessionHasErrors('name');
     }
 
-    public function test_user_can_delete_their_account(): void
+    public function test_the_password_can_be_changed_without_the_current_one(): void
     {
-        $user = User::factory()->create();
+        $user = $this->makeCashier();
+        $user->forceFill(['password' => 'lama-123'])->save();
 
-        $response = $this
-            ->actingAs($user)
-            ->delete('/profile', [
-                'password' => 'password',
-            ]);
+        $this->actingAs($user)->put('/profile/password', [
+            'password' => 'baru-4567',
+            'password_confirmation' => 'baru-4567',
+        ])->assertSessionHasNoErrors();
 
-        $response
-            ->assertSessionHasNoErrors()
-            ->assertRedirect('/');
-
-        $this->assertGuest();
-        $this->assertSoftDeleted($user);
+        $this->assertTrue(Hash::check('baru-4567', $user->refresh()->password));
     }
 
-    public function test_correct_password_must_be_provided_to_delete_account(): void
+    public function test_the_new_password_needs_six_characters_and_a_matching_repeat(): void
     {
-        $user = User::factory()->create();
+        $user = $this->makeCashier();
+        $user->forceFill(['password' => 'lama-123'])->save();
 
-        $response = $this
-            ->actingAs($user)
-            ->from('/profile')
-            ->delete('/profile', [
-                'password' => 'wrong-password',
-            ]);
+        $this->actingAs($user)->put('/profile/password', [
+            'password' => 'abc',
+            'password_confirmation' => 'abc',
+        ])->assertSessionHasErrors('password');
 
-        $response
-            ->assertSessionHasErrors('password')
-            ->assertRedirect('/profile');
+        $this->actingAs($user)->put('/profile/password', [
+            'password' => 'baru-4567',
+            'password_confirmation' => 'lain-4567',
+        ])->assertSessionHasErrors('password');
+    }
 
-        $this->assertNotNull($user->fresh());
+    public function test_there_is_no_forced_password_screen_any_more(): void
+    {
+        $user = $this->makeAdmin();
+        $user->forceFill(['must_change_password' => true])->save();
+
+        // A leftover flag on an old account must not block the app
+        $this->actingAs($user)->get('/dashboard')->assertOk();
+        $this->actingAs($user)->get('/password/ganti')->assertNotFound();
     }
 }

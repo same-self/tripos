@@ -84,14 +84,7 @@ class PosController extends Controller
             return back()->withErrors(['sale' => $e->getMessage()]);
         }
 
-        return redirect()->route('kasir.struk', $sale);
-    }
-
-    public function struk(Sale $sale): Response
-    {
-        return Inertia::render('Pos/Struk', [
-            'receipt' => Receipt::for($sale),
-        ]);
+        return redirect()->route('kasir.pos')->with('recent_receipt', Receipt::for($sale));
     }
 
     public function priceList(): Response
@@ -100,28 +93,85 @@ class PosController extends Controller
             ->orderBy('name')
             ->get()
             ->map(fn (Item $item) => [
+                'id' => $item->id,
                 'kind' => 'barang',
                 'name' => $item->name,
                 'image_url' => $item->imageUrl(),
                 'category' => $item->category->name,
                 'unit' => $item->unit,
                 'price' => $item->sell_price,
+                'stock' => $item->stock,
+                'low_stock' => $item->stock <= 5,
             ]);
 
         $services = Service::with('category')
             ->orderBy('name')
             ->get()
             ->map(fn (Service $service) => [
+                'id' => $service->id,
                 'kind' => 'jasa',
                 'name' => $service->name,
                 'image_url' => $service->imageUrl(),
                 'category' => $service->category->name,
                 'unit' => $service->unit,
                 'price' => $service->unit_price,
+                'stock' => null,
+                'low_stock' => false,
             ]);
 
         return Inertia::render('Pos/PriceList', [
             'rows' => $items->concat($services)->values(),
+        ]);
+    }
+
+    public function history(Request $request): Response
+    {
+        $user = $request->user();
+        $search = trim((string) $request->query('cari', ''));
+
+        $query = Sale::query()
+            ->when(! $user->isAdmin(), fn ($q) => $q->where('user_id', $user->id))
+            ->whereDate('transacted_at', today())
+            ->when($search !== '', fn ($q) => $q->where('receipt_number', 'like', '%'.$search.'%'));
+
+        $summary = (clone $query)
+            ->leftJoin('payments', 'sales_transactions.id', '=', 'payments.sales_id')
+            ->selectRaw('
+                COUNT(sales_transactions.id) as total_tx,
+                COALESCE(SUM(sales_transactions.total_price), 0) as total_omzet,
+                COALESCE(SUM(CASE WHEN payments.payment_method = "cash" THEN sales_transactions.total_price ELSE 0 END), 0) as total_cash,
+                COALESCE(SUM(CASE WHEN payments.payment_method != "cash" AND payments.payment_method IS NOT NULL THEN sales_transactions.total_price ELSE 0 END), 0) as total_non_cash
+            ')
+            ->first();
+
+        $sales = $query
+            ->with(['user' => fn ($q) => $q->withTrashed(), 'payment', 'itemDetails.item', 'serviceDetails.service'])
+            ->orderByDesc('transacted_at')
+            ->orderByDesc('id')
+            ->paginate(20)
+            ->withQueryString()
+            ->through(fn (Sale $sale) => [
+                'id' => $sale->id,
+                'receipt_number' => $sale->receipt_number ?? '#'.$sale->id,
+                'time' => $sale->transacted_at->format('H:i'),
+                'date' => $sale->transacted_at->format('d/m/Y'),
+                'cashier' => $sale->user?->name ?? 'Kasir',
+                'method' => $sale->payment?->payment_method->label() ?? '-',
+                'method_value' => $sale->payment?->payment_method->value ?? 'cash',
+                'items_count' => $sale->itemDetails->count() + $sale->serviceDetails->count(),
+                'total' => (int) $sale->total_price,
+                'receipt' => Receipt::for($sale),
+            ]);
+
+        return Inertia::render('Pos/History', [
+            'sales' => $sales,
+            'search' => $search,
+            'summary' => [
+                'total_tx' => (int) ($summary->total_tx ?? 0),
+                'total_omzet' => (int) ($summary->total_omzet ?? 0),
+                'total_cash' => (int) ($summary->total_cash ?? 0),
+                'total_non_cash' => (int) ($summary->total_non_cash ?? 0),
+            ],
         ]);
     }
 }

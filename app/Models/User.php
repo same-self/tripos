@@ -42,7 +42,24 @@ class User extends Authenticatable
             'password' => 'hashed',
             'role' => Role::class,
             'must_change_password' => 'boolean',
+            'is_super_admin' => 'boolean',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        // The owner account is hard-wired: always Admin, and it can never be soft-deleted (deactivated).
+        static::saving(function (User $user) {
+            if ($user->is_super_admin) {
+                $user->role = Role::Admin;
+            }
+        });
+
+        static::deleting(function (User $user) {
+            if ($user->is_super_admin && ! $user->isForceDeleting()) {
+                return false;
+            }
+        });
     }
 
     public function isAdmin(): bool

@@ -278,3 +278,19 @@ tripos/
 ## 📄 Lisensi
 
 Aplikasi ini dikembangkan untuk UMKM Fotocopy Trisanet sebagai bagian dari proyek akademik. Hak cipta dilindungi di bawah lisensi terbuka [MIT License](LICENSE).
+
+## Update November 2026 (merged with the team's main)
+
+- **Satuan** is a fixed list (`App\Support\Units`: Buah, Lembar, Rim, Pack, Dus, Botol, Meter, Halaman, Set), picked from a dropdown. A migration tidies old units ("pcs" becomes "Buah").
+- **Searchable dropdowns** (`Components/SearchSelect.jsx`): category, unit, supplier, restock item, service material. Type to filter; arrow keys and Enter work.
+- **Laporan**: new "Ranking Penjualan" tab (all items and services), paged daily cash-flow table, paged sales table, "Stok habis" shown instead of "±0 hari".
+- **Stok**: thresholds come from settings, restock suggestions show per-day sales and a suggested quantity, and "Restok sesuai saran" opens the restock form already filled.
+- **Profil Saya** (every user): change name and password. No forced password change at first sign-in any more.
+- **Login** boxes are emptied on refresh (username and password are never remembered).
+- Images, profit ranking, stock filters, delete rules and the add-user page from the earlier rounds are included.
+
+## Catatan revisi 2026-11-11
+- Hapus pengguna: semua pengguna kecuali pemilik toko (`users.is_super_admin`) dan akun sendiri. Pengguna yang sudah punya transaksi disembunyikan (soft delete) agar riwayat tetap utuh.
+- Isian yang salah diberi tanda `*` merah dan bingkai merah (`Components/Field.jsx`).
+- Ikon kategori: pilih preset (`App\Support\CategoryIcons`) atau unggah gambar sendiri.
+- Kalender: rentang tanggal Dari/Sampai di Laporan dan Riwayat; tanggal restok memakai kalender bawaan browser.

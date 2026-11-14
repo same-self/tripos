@@ -10,9 +10,7 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
 
-        // Page tests only look at the data a page receives. Without this, a test fails with
-        // "Unable to locate file in Vite manifest" whenever `npm run build` has not been run
-        // since a page was added, which says nothing about whether the code is right.
+        // Tests check what the server sends, not the compiled JavaScript, so they must not need `npm run build`
         $this->withoutVite();
     }
 }

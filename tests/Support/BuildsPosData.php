@@ -33,7 +33,7 @@ trait BuildsPosData
         return Item::create(array_merge([
             'item_category_id' => $category->id,
             'name' => 'Item '.uniqid(),
-            'unit' => 'pcs',
+            'unit' => 'Buah',
             'cost_price' => 1000,
             'sell_price' => 2500,
             'stock' => 10,
@@ -49,7 +49,7 @@ trait BuildsPosData
         return Service::create(array_merge([
             'service_category_id' => $category->id,
             'name' => 'Service '.uniqid(),
-            'unit' => 'lembar',
+            'unit' => 'Lembar',
             'unit_price' => 300,
         ], $overrides));
     }

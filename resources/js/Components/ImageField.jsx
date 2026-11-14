@@ -62,10 +62,10 @@ export default function ImageField({
 
     return (
         <div className="flex flex-col gap-1.5">
-            <span className="text-xs font-medium text-[#4B5563]">{label}</span>
+            <span className="text-xs font-medium text-[#4B5563] dark:text-slate-400">{label}</span>
 
             <div className="flex items-center gap-4">
-                <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl border border-[#E5E7EB] bg-[#F3F4F6]">
+                <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl border border-[#E5E7EB] bg-[#F3F4F6] dark:border-slate-700 dark:bg-slate-800">
                     {preview ? (
                         <img src={preview} alt="Pratinjau gambar" className="h-full w-full object-cover" />
                     ) : (
@@ -76,7 +76,7 @@ export default function ImageField({
                 </div>
 
                 <div className="flex flex-col items-start gap-2">
-                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-[#93C5FD] bg-[#DBEAFE] px-3 py-2 text-[13px] font-semibold text-[#1D4ED8] hover:bg-[#BFDBFE] focus-within:outline focus-within:outline-2 focus-within:outline-[#1D4ED8]">
+                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-[#93C5FD] bg-[#DBEAFE] px-3 py-2 text-[13px] font-semibold text-[#1D4ED8] hover:bg-[#BFDBFE] dark:border-blue-700/60 dark:bg-blue-950/60 dark:text-blue-400 dark:hover:bg-blue-900/50 focus-within:outline focus-within:outline-2 focus-within:outline-[#1D4ED8]">
                         <ImagePlus size={16} strokeWidth={2.25} aria-hidden="true" />
                         {preview ? 'Ganti gambar' : 'Pilih gambar'}
                         <input
@@ -92,14 +92,14 @@ export default function ImageField({
                         <button
                             type="button"
                             onClick={remove}
-                            className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#B91C1C]"
+                            className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#B91C1C] dark:text-red-400"
                         >
                             <Trash2 size={14} aria-hidden="true" />
                             Hapus gambar
                         </button>
                     )}
 
-                    <p className="text-xs text-[#4B5563]">JPG, PNG, atau WEBP, maksimal {maxMb} MB.</p>
+                    <p className="text-xs text-[#4B5563] dark:text-slate-400">JPG, PNG, atau WEBP, maksimal {maxMb} MB.</p>
                 </div>
             </div>
 

@@ -50,12 +50,12 @@ class PenggunaCreateTest extends TestCase
         $user = User::where('username', 'abi.kasir')->firstOrFail();
 
         $this->assertSame(Role::Cashier, $user->role);
-        $this->assertTrue($user->must_change_password, 'a temporary password must be changed at first sign-in');
+        $this->assertFalse($user->must_change_password, 'a new user goes straight in, with no forced password change');
         $this->assertNotNull($user->email_verified_at);
         $this->assertNotSame('sementara1', $user->password, 'the password is stored hashed');
     }
 
-    public function test_the_new_user_can_sign_in_with_the_temporary_password(): void
+    public function test_the_new_user_can_sign_in_with_the_password_the_owner_set(): void
     {
         $this->actingAs($this->makeAdmin())->post('/pengguna', $this->form());
         auth()->logout();
