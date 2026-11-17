@@ -22,7 +22,13 @@ trait HasImage
      */
     public function imageUrl(): ?string
     {
-        return $this->image_path ? route('media', ['path' => $this->image_path], absolute: false) : null;
+        if (! $this->image_path) {
+            return null;
+        }
+
+        $base = rtrim((string) parse_url((string) config('app.url'), PHP_URL_PATH), '/');
+
+        return $base . route('media', ['path' => $this->image_path], absolute: false);
     }
 
     /** Saves the new file first, then removes the old one, so a failed upload never loses the old picture. */

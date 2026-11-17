@@ -5,8 +5,6 @@ namespace App\Models;
 use App\Enums\Role;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -14,12 +12,22 @@ use Illuminate\Notifications\Notifiable;
 
 // role and must_change_password are deliberately NOT fillable: only the seeder and the
 // admin "Pengguna" screen may set them (with forceFill), never a normal request.
-#[Fillable(['name', 'username', 'email', 'password'])]
-#[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, SoftDeletes;
+
+    protected $fillable = [
+        'name',
+        'username',
+        'email',
+        'password',
+    ];
+
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
 
     /**
      * In-memory default (the database column has the same default).

@@ -16,15 +16,15 @@ import { useEffect, useRef, useState } from 'react';
 import ThemeToggle from '@/Components/ThemeToggle';
 
 const MENU = [
-    { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { label: 'Transaksi (POS)', href: '/riwayat', icon: Receipt },
-    { label: 'Barang', href: '/barang', icon: Package },
-    { label: 'Layanan', href: '/layanan', icon: Wrench },
-    { label: 'Supplier', href: '/supplier', icon: Truck },
-    { label: 'Restok', href: '/restok', icon: RefreshCw },
-    { label: 'Stok', href: '/stok', icon: Warehouse },
-    { label: 'Laporan', href: '/laporan', icon: FileText },
-    { label: 'Pengguna', href: '/pengguna', icon: Users },
+    { label: 'Dashboard', routeName: 'dashboard', icon: LayoutDashboard },
+    { label: 'Transaksi (POS)', routeName: 'riwayat.index', icon: Receipt },
+    { label: 'Barang', routeName: 'barang.index', icon: Package },
+    { label: 'Layanan', routeName: 'layanan.index', icon: Wrench },
+    { label: 'Supplier', routeName: 'supplier.index', icon: Truck },
+    { label: 'Restok', routeName: 'restok.create', icon: RefreshCw },
+    { label: 'Stok', routeName: 'stok.index', icon: Warehouse },
+    { label: 'Laporan', routeName: 'laporan.index', icon: FileText },
+    { label: 'Pengguna', routeName: 'pengguna.index', icon: Users },
 ];
 
 export default function TriposLayout({ active = 'Dashboard', children }) {
@@ -124,7 +124,7 @@ export default function TriposLayout({ active = 'Dashboard', children }) {
                             return (
                                 <Link
                                     key={item.label}
-                                    href={item.href}
+                                    href={route(item.routeName)}
                                     aria-current={isActive ? 'page' : undefined}
                                     className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-150 active:scale-[0.98] ${
                                         isActive
