@@ -43,9 +43,10 @@ class AuthenticatedSessionController extends Controller
             return redirect(LandingPath::for($user));
         }
 
-        // For admin, clear stale intended URLs like login
+        // For admin, clear stale intended URLs like login or cashier/POS routes
+        // left over from a previous cashier session (e.g. expired session or Back button).
         $intended = $request->session()->get('url.intended');
-        if ($intended && str_contains($intended, '/login')) {
+        if ($intended && (str_contains($intended, '/login') || str_contains($intended, '/kasir'))) {
             $request->session()->forget('url.intended');
         }
 

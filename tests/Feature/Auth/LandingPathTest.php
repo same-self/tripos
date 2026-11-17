@@ -75,4 +75,13 @@ class LandingPathTest extends TestCase
 
         $this->assertGuest();
     }
+
+    public function test_admin_logging_in_after_visiting_kasir_url_is_sent_to_dashboard(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->withSession(['url.intended' => route('kasir.pos')])
+            ->post('/login', ['username' => $admin->username, 'password' => 'password'])
+            ->assertRedirect(route('dashboard', absolute: false));
+    }
 }
