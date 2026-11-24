@@ -20,6 +20,7 @@ export default function SearchableSelect({
     id,
     name,
     className = '',
+    buttonClassName = 'h-10 text-xs',
     emptyMessage = 'Tidak ada pilihan ditemukan',
     allowClear = true,
 }) {
@@ -207,7 +208,7 @@ export default function SearchableSelect({
                 disabled={disabled}
                 onClick={() => (isOpen ? closeDropdown() : openDropdown())}
                 onKeyDown={handleTriggerKeyDown}
-                className={`group flex h-10 w-full items-center justify-between gap-2 rounded-xl border px-3 text-left text-xs transition-all ${
+                className={`group flex w-full items-center justify-between gap-2 rounded-xl border px-3 text-left transition-all ${buttonClassName} ${
                     hasError
                         ? 'border-red-500 bg-red-50/20 text-red-900 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 dark:border-red-500 dark:bg-red-950/20 dark:text-red-200'
                         : isOpen
@@ -312,7 +313,7 @@ export default function SearchableSelect({
                         <div
                             ref={listRef}
                             role="listbox"
-                            className="max-h-60 overflow-y-auto overscroll-contain p-1 divide-y divide-slate-100/60 dark:divide-slate-800/40"
+                            className="max-h-60 overflow-y-auto overscroll-contain p-1 divide-y divide-slate-100/60 dark:divide-slate-800/40 dark:[color-scheme:dark]"
                         >
                             {filteredOptions.length > 0 ? (
                                 filteredOptions.map((opt, idx) => {

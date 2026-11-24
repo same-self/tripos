@@ -2,7 +2,7 @@ import TriposLayout from '@/Layouts/TriposLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import ImageField from '@/Components/ImageField';
 import PageTitle from '@/Components/PageTitle';
-import SearchSelect from '@/Components/SearchSelect';
+import SearchableSelect from '@/Components/SearchableSelect';
 import { Wrench } from 'lucide-react';
 import Field from '@/Components/Field';
 
@@ -62,13 +62,16 @@ export default function Form({ service, categories, units }) {
                     />
 
                     <Field label="Kategori" error={errors.service_category_id}>
-                        <SearchSelect
-                            className="h-11"
-                            invalid={!!errors.service_category_id}
+                        <SearchableSelect
+                            buttonClassName="h-11 text-sm"
+                            allowClear={false}
+                            hasError={!!errors.service_category_id}
                             value={data.service_category_id}
                             onChange={(v) => setData('service_category_id', v)}
-                            options={categories.map((c) => ({ value: c.id, label: c.name }))}
+                            options={categories}
                             placeholder="Pilih kategori"
+                            searchPlaceholder="Cari kategori..."
+                            emptyMessage="Kategori tidak ditemukan"
                         />
                     </Field>
 
@@ -83,13 +86,16 @@ export default function Form({ service, categories, units }) {
 
                     <div className="grid gap-5 sm:grid-cols-2">
                         <Field label="Satuan" error={errors.unit}>
-                            <SearchSelect
-                                className="h-11"
-                                invalid={!!errors.unit}
+                            <SearchableSelect
+                                buttonClassName="h-11 text-sm"
+                                allowClear={false}
+                                hasError={!!errors.unit}
                                 value={data.unit}
                                 onChange={(v) => setData('unit', v)}
-                                options={unitOptions.map((u) => ({ value: u, label: u }))}
+                                options={unitOptions.map((u) => ({ id: u, name: u }))}
                                 placeholder="Pilih satuan"
+                                searchPlaceholder="Cari satuan..."
+                                emptyMessage="Satuan tidak ditemukan"
                             />
                         </Field>
                         <Field label="Tarif per satuan (Rp)" error={errors.unit_price}>

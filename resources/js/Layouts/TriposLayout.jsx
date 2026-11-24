@@ -60,7 +60,7 @@ export default function TriposLayout({ active = 'Dashboard', children }) {
         now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 
     return (
-        <div className="min-h-screen bg-[#F5F7FA] text-[#111827] dark:bg-slate-950 dark:text-slate-100 transition-colors duration-150">
+        <div className="min-h-screen bg-[#F5F7FA] text-[#111827] dark:bg-slate-950 dark:text-slate-100 print:bg-white print:text-[#111827] transition-colors duration-150">
             <header className="sticky top-0 z-10 flex h-[72px] items-center justify-between border-b border-[#E5E7EB] bg-white px-6 print:hidden dark:border-slate-800 dark:bg-slate-900 transition-colors duration-150">
                 <div className="flex items-baseline gap-2.5">
                     <span className="text-lg font-bold text-[#1D4ED8] dark:text-blue-400">TRIPOS</span>

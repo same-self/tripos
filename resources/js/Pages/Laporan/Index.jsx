@@ -1,7 +1,7 @@
 import TriposLayout from '@/Layouts/TriposLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { FileText } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import PageTitle from '@/Components/PageTitle';
 import Pagination, { usePagination } from '@/Components/Pagination';
 import DateRange from '@/Components/DateRange';
@@ -460,7 +460,7 @@ function Keuntungan({ data, window }) {
                         <p className="mt-1 text-xs text-[#4B5563] dark:text-slate-400">Dari penjualan {window} hari terakhir, diurutkan dari untung terbesar.</p>
                     </div>
 
-                    <div className="flex gap-1.5" role="group" aria-label="Jenis">
+                    <div className="flex gap-1.5 print:hidden" role="group" aria-label="Jenis">
                         {KIND_FILTERS.map((f) => (
                             <button
                                 key={f.key}
@@ -580,16 +580,22 @@ function Keuntungan({ data, window }) {
 export default function Index({ tab, periode, dari, sampai, window, penjualan, ranking, pembelian, arusKas, terlaris, keuntungan }) {
     const tabLabel = TABS.find((t) => t.key === tab)?.label ?? 'Penjualan';
 
+    const wasDarkRef = useRef(false);
+
     // Print / "Ekspor PDF" is always light, even when the screen is in dark mode.
     useEffect(() => {
         const root = document.documentElement;
-        let wasDark = false;
         const before = () => {
-            wasDark = root.classList.contains('dark');
-            root.classList.remove('dark');
+            if (root.classList.contains('dark')) {
+                wasDarkRef.current = true;
+                root.classList.remove('dark');
+            }
         };
         const after = () => {
-            if (wasDark) root.classList.add('dark');
+            if (wasDarkRef.current) {
+                root.classList.add('dark');
+                wasDarkRef.current = false;
+            }
         };
         globalThis.addEventListener('beforeprint', before);
         globalThis.addEventListener('afterprint', after);
@@ -599,6 +605,19 @@ export default function Index({ tab, periode, dari, sampai, window, penjualan, r
             after();
         };
     }, []);
+
+    function handlePrint() {
+        const root = document.documentElement;
+        if (root.classList.contains('dark')) {
+            wasDarkRef.current = true;
+            root.classList.remove('dark');
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => globalThis.print());
+            });
+            return;
+        }
+        globalThis.print();
+    }
 
     return (
         <TriposLayout active="Laporan">
@@ -622,7 +641,7 @@ export default function Index({ tab, periode, dari, sampai, window, penjualan, r
                         ))}
                         <button
                             type="button"
-                            onClick={() => globalThis.print()}
+                            onClick={handlePrint}
                             className="rounded-[10px] bg-[#1D4ED8] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#1E40AF] dark:bg-blue-600 dark:hover:bg-blue-500 transition-colors"
                         >
                             Ekspor PDF

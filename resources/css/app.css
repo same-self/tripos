@@ -8,6 +8,42 @@ input::-ms-clear {
     display: none;
 }
 
+/* Suppress browser-native number spinners (light-mode arrows in dark mode & accidental scroll edits) */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type='number'] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+/* Keep native scrollbars, date/number controls, and portaled dropdowns dark in dark mode */
+html.dark {
+    color-scheme: dark;
+}
+
+html.dark ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+html.dark ::-webkit-scrollbar-track {
+    background: #0f172a;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 9999px;
+    border: 2px solid #0f172a;
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+}
+
 @keyframes fadeInScale {
     from {
         opacity: 0;
@@ -30,12 +66,14 @@ input::-ms-clear {
 
 @media print {
     html,
+    html.dark,
     body {
+        color-scheme: light !important;
         margin: 0 !important;
         padding: 0 !important;
         background: #ffffff !important;
         background-color: #ffffff !important;
-        color: #000000 !important;
+        color: #111827 !important;
         height: auto !important;
         min-height: 0 !important;
     }
@@ -51,7 +89,7 @@ input::-ms-clear {
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
     }
-    /* Laporan: cetak/ekspor PDF seluruh isi laporan (tema terang dipaksa lewat Laporan/Index.jsx) */
+    /* Laporan: cetak/ekspor PDF seluruh isi laporan selalu bertema terang */
     #printable-report,
     #printable-report * {
         visibility: visible !important;
@@ -63,6 +101,56 @@ input::-ms-clear {
         width: 100% !important;
         padding: 10mm !important;
         box-sizing: border-box !important;
+        background-color: #ffffff !important;
+        color: #111827 !important;
+    }
+    #printable-report .overflow-x-auto {
+        overflow: visible !important;
+    }
+    html.dark #printable-report [class*="dark:bg-slate-"] {
+        background-color: #ffffff !important;
+    }
+    html.dark #printable-report [class*="dark:border-slate-"] {
+        border-color: #d1d5db !important;
+    }
+    html.dark #printable-report [class*="dark:text-white"],
+    html.dark #printable-report [class*="dark:text-slate-100"],
+    html.dark #printable-report [class*="dark:text-slate-200"],
+    html.dark #printable-report [class*="dark:text-slate-300"] {
+        color: #111827 !important;
+    }
+    html.dark #printable-report [class*="dark:text-slate-400"] {
+        color: #4b5563 !important;
+    }
+    html.dark #printable-report [class*="dark:bg-blue-950"] {
+        background-color: #dbeafe !important;
+    }
+    html.dark #printable-report [class*="dark:text-blue-400"] {
+        color: #1d4ed8 !important;
+    }
+    html.dark #printable-report [class*="dark:bg-emerald-950"] {
+        background-color: #dcfce7 !important;
+    }
+    html.dark #printable-report [class*="dark:text-emerald-"] {
+        color: #15803d !important;
+    }
+    html.dark #printable-report [class*="dark:bg-amber-950"] {
+        background-color: #fef3c7 !important;
+    }
+    html.dark #printable-report [class*="dark:text-amber-"] {
+        color: #92400e !important;
+    }
+    html.dark #printable-report [class*="dark:bg-red-950"] {
+        background-color: #fee2e2 !important;
+    }
+    html.dark #printable-report [class*="dark:text-red-"] {
+        color: #b91c1c !important;
+    }
+    html.dark #printable-report [class*="dark:bg-purple-950"] {
+        background-color: #ede9fe !important;
+    }
+    html.dark #printable-report [class*="dark:text-purple-"] {
+        color: #6d28d9 !important;
     }
     #printable-report table {
         break-inside: auto;

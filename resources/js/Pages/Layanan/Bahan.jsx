@@ -2,7 +2,7 @@ import TriposLayout from '@/Layouts/TriposLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { Wrench } from 'lucide-react';
 import PageTitle from '@/Components/PageTitle';
-import SearchSelect from '@/Components/SearchSelect';
+import SearchableSelect from '@/Components/SearchableSelect';
 import { ErrorMark } from '@/Components/Field';
 
 const inputClass = 'h-11 rounded-xl border border-[#6B7280] bg-white px-3.5 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder-slate-500 focus:border-[#1D4ED8] focus:ring-1 focus:ring-[#1D4ED8]';
@@ -62,13 +62,37 @@ export default function Bahan({ service, materials, items }) {
                         <div key={index} className="grid gap-3 sm:grid-cols-[1fr_160px_auto] sm:items-start">
                             <div className="flex flex-col gap-1.5">
                                 <label className="text-xs font-medium text-[#4B5563] dark:text-slate-300">Bahan<ErrorMark show={!!errors[`materials.${index}.item_id`]} /></label>
-                                <SearchSelect
-                                    className="h-11"
-                                    invalid={!!errors[`materials.${index}.item_id`]}
+                                <SearchableSelect
+                                    buttonClassName="h-11 text-sm"
+                                    allowClear={false}
+                                    hasError={!!errors[`materials.${index}.item_id`]}
                                     value={row.item_id}
-                                    onChange={(v) => updateRow(index, 'item_id', v)}
-                                    options={items.map((item) => ({ value: item.id, label: item.name, hint: item.unit }))}
+                                    onChange={(v) => updateRow(index, 'item_id', v ? String(v) : '')}
+                                    options={items}
                                     placeholder="Pilih / ketik nama bahan"
+                                    searchPlaceholder="Cari nama bahan..."
+                                    filterFields={['name', 'unit']}
+                                    emptyMessage="Bahan tidak ditemukan"
+                                    renderSelected={(item) => (
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <span className="truncate font-medium text-slate-900 dark:text-white">
+                                                {item.name}
+                                            </span>
+                                            <span className="shrink-0 rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                                {item.unit}
+                                            </span>
+                                        </div>
+                                    )}
+                                    renderOption={(item, { isSelected }) => (
+                                        <div className="flex items-center justify-between gap-2 py-0.5">
+                                            <span className={`truncate text-xs font-semibold ${isSelected ? 'text-blue-600 dark:text-blue-400' : 'text-slate-900 dark:text-white'}`}>
+                                                {item.name}
+                                            </span>
+                                            <span className="shrink-0 rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                                {item.unit}
+                                            </span>
+                                        </div>
+                                    )}
                                 />
                                 {errors[`materials.${index}.item_id`] && (
                                     <p className="text-xs text-[#B91C1C] dark:text-red-400">{errors[`materials.${index}.item_id`]}</p>
